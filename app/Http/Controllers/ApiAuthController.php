@@ -11,7 +11,24 @@ use Illuminate\Support\Str;
 
 class ApiAuthController extends Controller
 {
-    public function login (Request $request) {
+    /**
+     * Create a new AuthController instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth:api', ['except' => ['login', 'register']]);
+    }
+
+    /**
+     * Get a JWT via given credentials.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function login(Request $request)
+    {
+
         $validate = Validator::make($request->all(), [
             'email' => 'required|string|email',
             'password' => 'required|string'
@@ -36,32 +53,23 @@ class ApiAuthController extends Controller
             ], 401);
         }
 
-        $data['token'] = $user->createToken($request->email)->accessToken;
-        $data['user'] = $user;
+        $credentials = request(['email', 'password']);
 
-        $response = [
-            'status' => 'success',
-            'message' => 'User is logged in successfully.',
-            'data' => $data,
-        ];
+        if (! $token = auth()->attempt($credentials)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
 
-        return response()->json($response, 200);
+        return $this->respondWithToken($token);
     }
 
     public function register (Request $request) {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
-        ]);
-        if ($validator->fails())
-        {
-            return response(['errors'=>$validator->errors()->all()], 422);
-        }
+
+        var_dump($request->all());
+
+        // CREER LES VALIDATORS
+
         $request['password'] = Hash::make($request['password']);
-        $request['remember_token'] = Str::random(20);
         $user = User::create($request->toArray());
-        $token = $user->createToken('Laravel Password Grant Client')->accessToken;
         $response = [
             'status' => 'success',
             'message' => 'User is created successfully.',
@@ -77,5 +85,15 @@ class ApiAuthController extends Controller
         Auth::logout();
         $response = ['message' => 'You have been successfully logged out!'];
         return response($response, 200);
+    }
+
+    protected function respondWithToken($token)
+    {
+        return response()->json([
+            'token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => auth()->factory()->getTTL() * 60,
+            'status' => 'success',
+        ]);
     }
 }
