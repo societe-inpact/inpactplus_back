@@ -14,6 +14,7 @@ use League\Csv\UnavailableStream;
 use League\Csv\Writer;
 use RuntimeException;
 use Illuminate\Support\Facades\Date;
+use function Laravel\Prompts\error;
 use function PHPUnit\Framework\matches;
 
 class MarathonConverter implements ConverterInterface
@@ -65,7 +66,6 @@ class MarathonConverter implements ConverterInterface
         // Formateur pour convertir les valeurs en majuscules
         $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15');
         $formatter = fn(array $row): array => array_map('strtoupper', $row);
-
         if ($request->hasFile('csv')) {
             $file = $request->file('csv');
 
@@ -108,7 +108,7 @@ class MarathonConverter implements ConverterInterface
     {
         // Suppression du préfixe (P, 1, 3) et recherche du code Silae correspondant
         $rubriqueWithoutPrefix = preg_replace('/^([P13])/', '', $rubrique);
-        return $this->correspondenceGlobalTable[strtoupper($rubriqueWithoutPrefix)] ?? null;
+        return $this->correspondenceGlobalTable[strtoupper($rubriqueWithoutPrefix)] ?? response()->json('no');
     }
 
     /**
@@ -228,10 +228,14 @@ class MarathonConverter implements ConverterInterface
 
         if ($matches[5] === 'J' && $matches[10] === 'J') {
             if (array_key_exists($codeSilae, self::BASE_CALCUL) && self::BASE_CALCUL[$codeSilae] === 'H') {
-                $value = intval($matches[13]);
-            }
-
-            if ($start_date != $end_date) {
+                $data[] = [
+                    'Matricule' => $record['CODE SALARIE'],
+                    'Code' => $codeSilae,
+                    'Valeur' => intval($matches[13]),
+                    'Date debut' => '',
+                    'Date fin' => ''
+                ];
+            }else if ($start_date != $end_date) {
                 $data[] = [
                     'Matricule' => $record['CODE SALARIE'],
                     'Code' => $codeSilae,

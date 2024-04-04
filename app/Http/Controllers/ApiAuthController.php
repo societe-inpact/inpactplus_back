@@ -64,16 +64,37 @@ class ApiAuthController extends Controller
 
     public function register (Request $request) {
 
-        var_dump($request->all());
+        $fields = [
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:6',
+        ];
 
-        // CREER LES VALIDATORS
+        // Valider les données entrantes
+        $validator = Validator::make($request->all(), $fields);
 
-        $request['password'] = Hash::make($request['password']);
-        $user = User::create($request->toArray());
+        // Vérifier si la validation a échoué
+        if ($validator->fails()) {
+            $response = [
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ];
+            return response($response, 400);
+        }
+
+        // Hasher le mot de passe
+        $hashedPassword = Hash::make($request->password);
+
+        // Créer l'utilisateur
+        $user = User::create([
+            'email' => $request->email,
+            'password' => $hashedPassword,
+        ]);
+
         $response = [
             'status' => 'success',
             'message' => 'User is created successfully.',
-            'data' => $request,
+            'data' => $user,
         ];
         return response($response, 201);
 
