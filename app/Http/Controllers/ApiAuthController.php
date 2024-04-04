@@ -80,6 +80,7 @@ class ApiAuthController extends Controller
     }
 
     public function logout (Request $request) {
+        var_dump("logout");
         $token = $request->user()->token();
         $token->revoke();
         Auth::logout();
