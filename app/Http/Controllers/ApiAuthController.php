@@ -5,68 +5,33 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
 class ApiAuthController extends Controller
 {
-    /**
-     * Create a new AuthController instance.
-     *
-     * @return void
-     */
-    public function __construct()
+      public function user()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register']]);
+        return Auth::user();
     }
 
-    /**
-     * Get a JWT via given credentials.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function login(Request $request)
-    {
-        // Valider les champs email et mot de passe
-        $validate = Validator::make($request->all(), [
-            'email' => 'required|string|email',
-            'password' => 'required|string'
-        ]);
-
-        // Vérifier s'il y a des erreurs de validation
-        if ($validate->fails()) {
+    public function login(Request $request){
+        if (!Auth::attempt($request->only('email', 'password'))){
             return response()->json([
-                'status' => 'failed',
-                'message' => 'Validation Error!',
-                'data' => $validate->errors(),
-            ], 403);
+                'message' => 'Email ou mot de passe invalides'
+            ], ResponseAlias::HTTP_UNAUTHORIZED);
         }
+        $user = Auth::user();
+        $token = $user->createToken('token')->plainTextToken;
+        $cookie = cookie('jwt', $token, 60 * 24)->withHttpOnly(false); // 1 day
 
-        // Rechercher l'utilisateur dans la base de données par son email
-        $user = User::where('email', $request->email)->first();
-
-        // Vérifier si l'utilisateur existe et si le mot de passe correspond
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'status' => 'failed',
-                'message' => 'Invalid credentials'
-            ], 401);
-        }
-
-        // Créer les informations d'identification (credentials)
-        $credentials = request(['email', 'password']);
-
-        // Tenter d'authentifier l'utilisateur et générer le token JWT
-        if (!$token = auth()->attempt($credentials)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }else{
-            Auth::login($user);
-        }
-
-        // Retourner la réponse avec le token JWT
-        return $this->respondWithToken($token);
+        return response()->json([
+            'message' => $token
+        ])->withCookie($cookie);
     }
+
 
     public function register (Request $request) {
 
@@ -106,19 +71,13 @@ class ApiAuthController extends Controller
 
     }
 
-    public function logout () {
-        Auth::logout();
-        $response = ['message' => 'You have been successfully logged out!'];
-        return response($response, 200);
-    }
+    public function logout (Request $request) {
+        $cookie = Cookie::forget('jwt');
 
-    protected function respondWithToken($token)
-    {
-        return response()->json([
-            'token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60,
-            'status' => 'success',
-        ]);
+        return response([
+            'message' => 'Success',
+            'status' => 'success'
+        ])->withCookie($cookie);
+
     }
 }

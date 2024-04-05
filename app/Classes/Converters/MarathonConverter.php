@@ -2,6 +2,7 @@
 
 namespace App\Classes\Converters;
 
+use App\Http\Controllers\Controller;
 use App\Interfaces\ConverterInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\Date;
 use function Laravel\Prompts\error;
 use function PHPUnit\Framework\matches;
 
-class MarathonConverter implements ConverterInterface
+class MarathonConverter extends Controller implements ConverterInterface
 {
     private $correspondenceGlobalTable;
 

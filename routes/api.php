@@ -13,13 +13,14 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-Route::group(['middleware' => 'api'], function () {
-    Route::post('/register', [App\Http\Controllers\ApiAuthController::class, 'register']);
-    Route::post('/login', [App\Http\Controllers\ApiAuthController::class, 'login']);
-});
+Route::group(['middleware' => 'cors'], function () {
 
-Route::group(['middleware' => ['api', 'cors'], 'prefix' => 'auth'], function () {
+    Route::post('/register', [App\Http\Controllers\ApiAuthController::class, 'register']);
+    Route::post('/login', [App\Http\Controllers\ApiAuthController::class, 'login'])->name('login');
+});
+Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post("/import", [App\Classes\Converters\MarathonConverter::class, 'importFile']);
     Route::post("/convert", [App\Classes\Converters\MarathonConverter::class, 'convertFile']);
     Route::post("/logout", [App\Http\Controllers\ApiAuthController::class, 'logout']);
+    Route::get("/user", [App\Http\Controllers\ApiAuthController::class, 'user']);
 });
