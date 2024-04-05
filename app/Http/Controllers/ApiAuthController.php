@@ -28,13 +28,14 @@ class ApiAuthController extends Controller
      */
     public function login(Request $request)
     {
-
+        // Valider les champs email et mot de passe
         $validate = Validator::make($request->all(), [
             'email' => 'required|string|email',
             'password' => 'required|string'
         ]);
 
-        if($validate->fails()){
+        // Vérifier s'il y a des erreurs de validation
+        if ($validate->fails()) {
             return response()->json([
                 'status' => 'failed',
                 'message' => 'Validation Error!',
@@ -42,23 +43,28 @@ class ApiAuthController extends Controller
             ], 403);
         }
 
-        // Check email exist
+        // Rechercher l'utilisateur dans la base de données par son email
         $user = User::where('email', $request->email)->first();
 
-        // Check password
-        if(!$user || !Hash::check($request->password, $user->password)) {
+        // Vérifier si l'utilisateur existe et si le mot de passe correspond
+        if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'status' => 'failed',
                 'message' => 'Invalid credentials'
             ], 401);
         }
 
+        // Créer les informations d'identification (credentials)
         $credentials = request(['email', 'password']);
 
-        if (! $token = auth()->attempt($credentials)) {
+        // Tenter d'authentifier l'utilisateur et générer le token JWT
+        if (!$token = auth()->attempt($credentials)) {
             return response()->json(['error' => 'Unauthorized'], 401);
+        }else{
+            Auth::login($user);
         }
 
+        // Retourner la réponse avec le token JWT
         return $this->respondWithToken($token);
     }
 
@@ -100,9 +106,7 @@ class ApiAuthController extends Controller
 
     }
 
-    public function logout (Request $request) {
-        $token = $request->user()->token();
-        $token->revoke();
+    public function logout () {
         Auth::logout();
         $response = ['message' => 'You have been successfully logged out!'];
         return response($response, 200);

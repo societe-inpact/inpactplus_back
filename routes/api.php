@@ -18,11 +18,8 @@ Route::group(['middleware' => 'api'], function () {
     Route::post('/login', [App\Http\Controllers\ApiAuthController::class, 'login']);
 });
 
-Route::group(['middleware' => 'api', 'cors', 'prefix' => 'auth'], function () {
+Route::group(['middleware' => ['api', 'cors'], 'prefix' => 'auth'], function () {
     Route::post("/import", [App\Classes\Converters\MarathonConverter::class, 'importFile']);
     Route::post("/convert", [App\Classes\Converters\MarathonConverter::class, 'convertFile']);
-    Route::post("/logout", [App\Classes\Converters\MarathonConverter::class, 'logout']);
-});
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+    Route::post("/logout", [App\Http\Controllers\ApiAuthController::class, 'logout']);
 });
