@@ -22,5 +22,5 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post("/import", [App\Classes\Converters\MarathonConverter::class, 'importFile']);
     Route::post("/convert", [App\Classes\Converters\MarathonConverter::class, 'convertFile']);
     Route::post("/logout", [App\Http\Controllers\ApiAuthController::class, 'logout']);
-    Route::get("/user", [App\Http\Controllers\ApiAuthController::class, 'user']);
+    Route::get("/user", [App\Http\Controllers\ApiAuthController::class, 'getUser']);
 });

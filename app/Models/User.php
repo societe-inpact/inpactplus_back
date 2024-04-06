@@ -7,11 +7,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
+
+    protected $table = 'users';
+
+
+
+    public function employee(){
+        return $this->hasOne(Employee::class, 'user_id', 'id');
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -31,5 +41,7 @@ class User extends Authenticatable
      */
     protected $hidden = [
         'password',
+        'created_at',
+        'updated_at',
     ];
 }
