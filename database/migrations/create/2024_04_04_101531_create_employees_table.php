@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('employee_code', 120);
             $table->string('firstname', 120);
             $table->string('lastname', 120);
-            $table->foreignId('company_entity_id')->constrained('company_entity');
-            $table->foreignId('user_id')->constrained('users');
+            $table->foreignId('company_id')->constrained('companies')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
     }

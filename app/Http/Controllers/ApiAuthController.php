@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CompanyEntity;
 use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -17,36 +18,38 @@ class ApiAuthController extends Controller
 {
     public function getUser()
     {
-        $user = Auth::user()->load('employee.company_entity.company')->toArray();
+        $user = Auth::user()->load('employee.company');
 
-        $user['employee_infos'] = $user['employee'];
-        $user['employee_infos']['email'] = $user['email'];
+        if ($user->employee) {
+            $companyId = $user->employee->company_id;
+            $allUserEntities = CompanyEntity::where('company_id', $companyId)->get();
+            $userEntity = CompanyEntity::whereHas('employees', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })->get();
 
-        $companyEntity = $user['employee_infos']['company_entity'];
-
-        $company = $companyEntity['company'];
-        $company['folders'] = [
-            'id' => $companyEntity['id'],
-            'folder_number' => $companyEntity['folder_number'],
-            'label' => $companyEntity['label'],
-            'siret' => $companyEntity['siret'],
-            'siren' => $companyEntity['siren'],
-        ];
-
-        unset($companyEntity['id']);
-        unset($companyEntity['folder_number']);
-        unset($companyEntity['label']);
-        unset($companyEntity['siret']);
-        unset($companyEntity['siren']);
-
-        $user['employee_infos']['company'] = $company;
-        unset($user['employee_infos']['company_entity']);
-        unset($user['email']);
-        unset($user['employee']);
-
-        return response()->json(['user' => $user]);
-
-
+            if($user->hasPermissionTo('unique-access')) {
+                return response()->json([
+                    'id' => $user->id,
+                    'email' => $user->email,
+                    'firstname' => $user->employee->firstname,
+                    'lastname' => $user->employee->lastname,
+                    'code_employee' => $user->employee->employee_code,
+                    'company_name' => $user->employee->company->name,
+                    'entities' => $userEntity,
+                ]);
+            }elseif($user->hasPermissionTo('multiple-access')){
+                // TODO : Suite
+            }
+            else{
+                return response()->json([
+                    'user' => $user,
+                    'entities' => $allUserEntities,
+                ]);
+            }
+        }
+        return response()->json([
+            'user' => $user,
+        ]);
     }
 
     public function login(Request $request){
@@ -76,7 +79,7 @@ class ApiAuthController extends Controller
                 'employee_code' => 'required',
                 'firstname' => 'required',
                 'lastname' => 'required',
-                'company_entity_id' => 'required',
+                'company_id' => 'required',
                 'user_id' => 'required',
                 'created_at' => 'nullable|date',
                 'updated_at' => 'nullable|date',
@@ -118,16 +121,19 @@ class ApiAuthController extends Controller
             'employee_code' => $user->id,
             'firstname' => $request->firstname,
             'lastname' => $request->lastname,
-            'company_entity_id' => $request->company_entity_id,
+            'company_id' => $request->company_id,
             'user_id' => $user->id,
         ]);
 
         // Récupération ou création du rôle "client" et de la permission "read-only"
         $role = Role::findOrCreate('client');
-        $permission = Permission::findOrCreate('read-only');
+        $permission = Permission::findOrCreate('unique-access');
 
-        // Attribution de la permission au rôle
         $role->givePermissionTo($permission);
+        $permission->assignRole($role);
+
+        $user->assignRole($role);
+        $user->givePermissionTo($permission);
         return response()->json(['message' => 'Employé enregistré avec succès']);
 
     }

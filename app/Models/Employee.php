@@ -12,7 +12,7 @@ class Employee extends Model
     protected $table = 'employees';
 
     protected $hidden = [
-        'company_entity_id',
+        'company_id',
         'user_id',
         'created_at',
         'updated_at',
@@ -22,18 +22,21 @@ class Employee extends Model
         'employee_code',
         'firstname',
         'lastname',
-        'company_entity_id',
+        'company_id',
         'user_id',
         'created_at',
         'updated_at',
     ];
 
-    public function user()
-    {
+    public function user(){
         return $this->belongsTo(User::class);
     }
 
-    public function company_entity(){
-        return $this->belongsTo(Company_Entity::class, 'company_entity_id', 'company_id');
+    public function company() {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function companyEntities() {
+        return $this->belongsToMany(CompanyEntity::class, 'employee_entity')->withPivot('authorization');
     }
 }

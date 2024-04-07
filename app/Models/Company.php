@@ -9,14 +9,14 @@ class Company extends Model
 {
     use HasFactory;
 
-    protected $table = "company";
+    protected $table = "companies";
 
     protected $fillable = [
         "name",
         "description",
     ];
 
-    public function company_entity(){
-        return $this->hasMany(Company_Entity::class, 'company_entity');
+    public function company_entities(){
+        return $this->hasMany(CompanyEntity::class);
     }
 }

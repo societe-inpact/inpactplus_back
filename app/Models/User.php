@@ -17,12 +17,6 @@ class User extends Authenticatable
 
     protected $table = 'users';
 
-
-
-    public function employee(){
-        return $this->hasOne(Employee::class, 'user_id', 'id');
-    }
-
     /**
      * The attributes that are mass assignable.
      *
@@ -44,4 +38,8 @@ class User extends Authenticatable
         'created_at',
         'updated_at',
     ];
+
+    public function employee(){
+        return $this->hasOne(Employee::class, 'user_id', 'id');
+    }
 }
