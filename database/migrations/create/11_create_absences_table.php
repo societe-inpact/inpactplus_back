@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('hours', function (Blueprint $table) {
+        Schema::create('absences', function (Blueprint $table) {
             $table->id();
             $table->string('code', 50);
             $table->string('label', 120);
+            $table->enum('base_calcul', ['H', 'J']);
+            $table->string('therapeutic_part-time')->nullable();
         });
     }
 
@@ -23,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('hours');
+        Schema::dropIfExists('absences');
     }
 };

@@ -1,9 +1,13 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\API;
 
+use App\Http\Controllers\Controller;
+use App\Models\Absence;
+use App\Models\Company;
 use App\Models\CompanyEntity;
 use App\Models\Employee;
+use App\Models\EmployeeEntity;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,16 +22,15 @@ class ApiAuthController extends Controller
 {
     public function getUser()
     {
-        $user = Auth::user()->load('employee.company');
-
+        $user = Auth::user()->load('employee.companies.employeeEntities');
+        dd($user);
         if ($user->employee) {
             $companyId = $user->employee->company_id;
             $allUserEntities = CompanyEntity::where('company_id', $companyId)->get();
             $userEntity = CompanyEntity::whereHas('employees', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             })->get();
-
-            if($user->hasPermissionTo('unique-access')) {
+            if ($user->hasPermissionTo('unique-access')) {
                 return response()->json([
                     'id' => $user->id,
                     'email' => $user->email,
@@ -37,10 +40,7 @@ class ApiAuthController extends Controller
                     'company_name' => $user->employee->company->name,
                     'entities' => $userEntity,
                 ]);
-            }elseif($user->hasPermissionTo('multiple-access')){
-                // TODO : Suite
-            }
-            else{
+            } else {
                 return response()->json([
                     'user' => $user,
                     'entities' => $allUserEntities,
@@ -52,8 +52,9 @@ class ApiAuthController extends Controller
         ]);
     }
 
-    public function login(Request $request){
-        if (!Auth::attempt($request->only('email', 'password'))){
+    public function login(Request $request)
+    {
+        if (!Auth::attempt($request->only('email', 'password'))) {
             return response()->json([
                 'message' => 'Email ou mot de passe invalides'
             ], ResponseAlias::HTTP_UNAUTHORIZED);
@@ -67,10 +68,14 @@ class ApiAuthController extends Controller
         ])->withCookie($cookie);
     }
 
-    public function register(Request $request){
-        $fields =  [
+    public function register(Request $request)
+    {
+        $fields = [
             'email' => 'required|email|unique:users',
             'password' => 'required|min:6',
+            'civility' => 'required',
+            'lastname' => 'required',
+            'firstname' => 'required',
             'is_employee' => 'required|boolean',
         ];
 
@@ -100,6 +105,9 @@ class ApiAuthController extends Controller
         $user = User::create([
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'civility' => $request->civility,
+            'firstname' => $request->firstname,
+            'lastname' => $request->lastname,
         ]);
 
         if ($request->is_employee) {
@@ -116,13 +124,13 @@ class ApiAuthController extends Controller
     private function registerEmployee(Request $request, User $user)
     {
         // Création de l'employé
-        Employee::create([
-            'id' => $user->id,
-            'employee_code' => $user->id,
-            'firstname' => $request->firstname,
-            'lastname' => $request->lastname,
-            'company_id' => $request->company_id,
+        $employee = Employee::create([
             'user_id' => $user->id,
+        ]);
+
+        EmployeeEntity::create([
+            'employee_id' => $employee->id,
+            'company_entity_id' => $user->id,
         ]);
 
         // Récupération ou création du rôle "client" et de la permission "read-only"
@@ -138,7 +146,8 @@ class ApiAuthController extends Controller
 
     }
 
-    protected function logout (Request $request) {
+    protected function logout(Request $request)
+    {
         $cookie = Cookie::forget('jwt');
 
         return response([

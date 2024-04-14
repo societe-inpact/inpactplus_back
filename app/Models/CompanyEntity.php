@@ -12,22 +12,14 @@ class CompanyEntity extends Model
     protected $table = 'company_entities';
 
     protected $fillable = [
+        "email",
         "folder_number",
-        "label",
+        "folder_name",
         "siret",
         "siren",
     ];
 
-    protected $hidden = [
-        'company_id',
-    ];
-
-    public function company()
-    {
-        return $this->belongsTo(Company::class);
-    }
-
-    public function employees(){
-        return $this->belongsToMany(Employee::class, 'employee_entity', 'company_entity_id', 'employee_id');
+    public function company(){
+        return $this->belongsTo(Company::class, 'id', 'company_id');
     }
 }

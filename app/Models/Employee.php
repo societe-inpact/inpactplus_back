@@ -11,32 +11,22 @@ class Employee extends Model
 
     protected $table = 'employees';
 
-    protected $hidden = [
-        'company_id',
-        'user_id',
-        'created_at',
-        'updated_at',
-    ];
-
     protected $fillable = [
-        'employee_code',
-        'firstname',
-        'lastname',
-        'company_id',
         'user_id',
-        'created_at',
-        'updated_at',
     ];
 
-    public function user(){
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function company() {
-        return $this->belongsTo(Company::class);
+    public function employeeEntities()
+    {
+        return $this->hasOne(EmployeeEntity::class);
     }
 
-    public function companyEntities() {
-        return $this->belongsToMany(CompanyEntity::class, 'employee_entity')->withPivot('authorization');
+    public function companies()
+    {
+        return $this->belongsToMany(Company::class, 'employee_entity', 'employee_id', 'company_entity_id');
     }
 }

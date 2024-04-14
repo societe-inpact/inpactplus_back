@@ -64,32 +64,40 @@ class MarathonConverter extends Controller implements ConverterInterface
      */
     public function importFile(Request $request): JsonResponse
     {
-        // Formateur pour convertir les valeurs en majuscules
         $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15');
         $formatter = fn(array $row): array => array_map('strtoupper', $row);
+
         if ($request->hasFile('csv')) {
             $file = $request->file('csv');
-
             $reader = Reader::createFromPath($file->getPathname(), 'r');
             $reader->addFormatter($encoder);
             $reader->setDelimiter(';');
             $reader->addFormatter($formatter);
             $reader->setHeaderOffset(0);
-            $headersArray = $reader->getHeader();
-            $jsonArray = [];
-            foreach ($headersArray as $header) {
-                $jsonArray[] = ["field" => $header];
+
+            $header = $reader->getHeader();
+            $records = $reader->getRecords();
+            $data = [];
+
+            foreach ($records as $record) {
+                $mappedRecord = [];
+                foreach ($header as $offset => $columnName) {
+                    if (array_key_exists($columnName, $record)) {
+                        $mappedRecord[$columnName] = $record[$columnName];
+                    } else {
+                        $mappedRecord[$columnName] = null;
+                    }
+                }
+                $data[] = $mappedRecord;
             }
 
-            // Affichage des en-têtes
             return response()->json([
                 'success' => true,
-                'message' => 'Votre fichier a été convertit',
+                'message' => 'Votre fichier a été converti',
                 'status' => 200,
-                'header' => $jsonArray,
-                'data' => $reader->jsonSerialize()
+                'header' => $header,
+                'rows' => $data
             ]);
-            //$this->convertFile($reader);
         }
 
         return response()->json([
@@ -98,6 +106,7 @@ class MarathonConverter extends Controller implements ConverterInterface
             'status' => 400
         ]);
     }
+
 
     /**
      * Retourne le code Silae correspondant à une rubrique donnée.
@@ -163,18 +172,14 @@ class MarathonConverter extends Controller implements ConverterInterface
             $reader->setHeaderOffset(0);
             $data = $this->convert($reader);
             $csvConverted = $this->writeToFile($data);
-            $headersArray = ['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin'];
-            $headerInJson = [];
-            foreach ($headersArray as $header) {
-                $headerInJson[] = ["field" => $header];
-            }
+            $header = ['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin'];
             return response()->json([
                 'success' => true,
                 'message' => 'Votre fichier a été convertit',
                 'status' => 200,
                 'file' => $csvConverted,
-                'header' => $headerInJson,
-                'data' => $data
+                'header' => $header,
+                'rows' => $data
             ]);
             //$this->convertFile($reader);
         }

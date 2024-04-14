@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,12 +14,13 @@ use Illuminate\Support\Facades\Route;
 */
 Route::group(['middleware' => 'cors'], function () {
 
-    Route::post('/register', [App\Http\Controllers\ApiAuthController::class, 'register']);
-    Route::post('/login', [App\Http\Controllers\ApiAuthController::class, 'login'])->name('login');
+    Route::post('/register', [App\Http\Controllers\API\ApiAuthController::class, 'register']);
+    Route::post('/login', [App\Http\Controllers\API\ApiAuthController::class, 'login'])->name('login');
+    Route::get('/test', [App\Http\Controllers\API\ApiAuthController::class, 'test']);
 });
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post("/import", [App\Classes\Converters\MarathonConverter::class, 'importFile']);
     Route::post("/convert", [App\Classes\Converters\MarathonConverter::class, 'convertFile']);
-    Route::post("/logout", [App\Http\Controllers\ApiAuthController::class, 'logout']);
-    Route::get("/user", [App\Http\Controllers\ApiAuthController::class, 'getUser']);
+    Route::post("/logout", [App\Http\Controllers\API\ApiAuthController::class, 'logout']);
+    Route::get("/user", [App\Http\Controllers\API\ApiAuthController::class, 'getUser']);
 });

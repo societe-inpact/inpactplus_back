@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('employee_entity', function (Blueprint $table) {
+        Schema::create('custom_hours', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
-            $table->foreignId('company_entity_id')->constrained('company_entities')->onDelete('cascade');
-            $table->string('autorization');
+            $table->string('code', 50);
+            $table->string('label', 255);
         });
     }
 
@@ -24,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('company_company_entity');
+        Schema::dropIfExists('custom_hours');
     }
 };
