@@ -22,34 +22,8 @@ class ApiAuthController extends Controller
 {
     public function getUser()
     {
-        $user = Auth::user()->load('employee.companies.employeeEntities');
-        dd($user);
-        if ($user->employee) {
-            $companyId = $user->employee->company_id;
-            $allUserEntities = CompanyEntity::where('company_id', $companyId)->get();
-            $userEntity = CompanyEntity::whereHas('employees', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })->get();
-            if ($user->hasPermissionTo('unique-access')) {
-                return response()->json([
-                    'id' => $user->id,
-                    'email' => $user->email,
-                    'firstname' => $user->employee->firstname,
-                    'lastname' => $user->employee->lastname,
-                    'code_employee' => $user->employee->employee_code,
-                    'company_name' => $user->employee->company->name,
-                    'entities' => $userEntity,
-                ]);
-            } else {
-                return response()->json([
-                    'user' => $user,
-                    'entities' => $allUserEntities,
-                ]);
-            }
-        }
-        return response()->json([
-            'user' => $user,
-        ]);
+        $user = Auth::user()->with(['employee.infos', 'employee.companies'])->first();
+        return response()->json($user);
     }
 
     public function login(Request $request)

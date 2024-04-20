@@ -5,15 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Absence extends Model
+class Mapping extends Model
 {
     use HasFactory;
 
-    protected $table = "absences";
+    protected $table = "mapping";
     protected $fillable = [
-        "code",
-        "label",
-        "base_calcul",
-        "therapeutic_part-time"
+        "input_rubrique",
+        "name_rubrique",
+        "output_rubrique"
     ];
 }

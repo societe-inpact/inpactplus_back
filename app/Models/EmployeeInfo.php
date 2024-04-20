@@ -10,6 +10,8 @@ class EmployeeInfo extends Model
     use HasFactory;
 
     protected $table = 'employee_infos';
+
+    protected $hidden = ['laravel_through_key'];
     protected $fillable = ['employee_code', 'social_security_number', 'rib', 'postal_address'];
 
     public function employee(){

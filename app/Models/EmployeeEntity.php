@@ -12,18 +12,5 @@ class EmployeeEntity extends Model
     protected $table = 'employee_entity';
     protected $fillable = ['employee_id', 'company_entity_id', 'employee_informations_id', 'autorization'];
 
-    public function employee()
-    {
-        return $this->belongsTo(Employee::class);
-    }
 
-    public function companyEntity()
-    {
-        return $this->belongsTo(CompanyEntity::class);
-    }
-
-    public function employeeInfo()
-    {
-        return $this->belongsTo(EmployeeInfo::class, 'employee_informations_id');
-    }
 }

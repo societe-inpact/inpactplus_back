@@ -12,12 +12,13 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-Route::group(['middleware' => 'cors'], function () {
+Route::post("/mapping", [App\Http\Controllers\MappingController::class, 'setMapping']);
 
-    Route::post('/register', [App\Http\Controllers\API\ApiAuthController::class, 'register']);
+Route::group(['middleware' => 'cors'], function () {
     Route::post('/login', [App\Http\Controllers\API\ApiAuthController::class, 'login'])->name('login');
-    Route::get('/test', [App\Http\Controllers\API\ApiAuthController::class, 'test']);
+    Route::post('/register', [App\Http\Controllers\API\ApiAuthController::class, 'register']);
 });
+
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post("/import", [App\Classes\Converters\MarathonConverter::class, 'importFile']);
     Route::post("/convert", [App\Classes\Converters\MarathonConverter::class, 'convertFile']);

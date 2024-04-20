@@ -11,6 +11,11 @@ class Employee extends Model
 
     protected $table = 'employees';
 
+    protected $hidden = [
+        'id',
+        'user_id',
+        'laravel_through_key',
+    ];
     protected $fillable = [
         'user_id',
     ];
@@ -20,13 +25,17 @@ class Employee extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function employeeEntities()
+    public function infos()
+    {
+        return $this->hasOneThrough(EmployeeInfo::class, EmployeeEntity::class, 'employee_informations_id', 'id');
+    }
+
+    public function employee_entities()
     {
         return $this->hasOne(EmployeeEntity::class);
     }
-
     public function companies()
     {
-        return $this->belongsToMany(Company::class, 'employee_entity', 'employee_id', 'company_entity_id');
+        return $this->belongsToMany(CompanyEntity::class, 'employee_entity', 'company_entity_id');
     }
 }

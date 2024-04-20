@@ -10,7 +10,7 @@ class CompanyEntity extends Model
     use HasFactory;
 
     protected $table = 'company_entities';
-
+    protected $hidden = ['pivot'];
     protected $fillable = [
         "email",
         "folder_number",
@@ -21,5 +21,9 @@ class CompanyEntity extends Model
 
     public function company(){
         return $this->belongsTo(Company::class, 'id', 'company_id');
+    }
+
+    public function employees(){
+        return $this->hasMany(Employee::class, 'user_id');
     }
 }

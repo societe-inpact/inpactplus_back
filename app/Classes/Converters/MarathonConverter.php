@@ -4,6 +4,7 @@ namespace App\Classes\Converters;
 
 use App\Http\Controllers\Controller;
 use App\Interfaces\ConverterInterface;
+use App\Models\Absence;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Config;
@@ -21,28 +22,6 @@ use function PHPUnit\Framework\matches;
 class MarathonConverter extends Controller implements ConverterInterface
 {
     private $correspondenceGlobalTable;
-
-    const BASE_CALCUL = [
-        'AB-142' => 'H',
-        'AB-230' => 'H',
-        'AB-260' => 'H',
-        'AB-263' => 'H',
-        'AB-608' => 'H',
-        'AB-630' => 'H',
-        'AB-631' => 'H',
-        'AB-632' => 'H',
-        'AB-652' => 'H',
-        'EV-NbhRTTPris' => 'H',
-        'EV-NbhRTTSolde' => 'H',
-        'AB-100' => 'J',
-        'AB-110' => 'J',
-        'AB-120' => 'J',
-        'AB-200' => 'J',
-        'AB-210' => 'J',
-        'AB-300' => 'J',
-
-    ];
-
     const CORRESPONDENCES = [
         'absences' => [
             'J' => 0, // Correspond à une journée d'absence
@@ -81,7 +60,7 @@ class MarathonConverter extends Controller implements ConverterInterface
 
             foreach ($records as $record) {
                 $mappedRecord = [];
-                foreach ($header as $offset => $columnName) {
+                foreach ($header as $columnName) {
                     if (array_key_exists($columnName, $record)) {
                         $mappedRecord[$columnName] = $record[$columnName];
                     } else {
