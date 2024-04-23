@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('RIB', 120);
             $table->string('postal_code', 5);
             $table->string('postal_address', 120);
+            $table->string('social_security_number');
         });
     }
 

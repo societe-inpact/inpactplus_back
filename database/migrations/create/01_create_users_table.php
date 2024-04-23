@@ -18,7 +18,6 @@ return new class extends Migration
             $table->enum('civility', ['Monsieur', 'Madame']);
             $table->string('lastname');
             $table->string('firstname');
-            $table->string('social_security_number');
         });
     }
 
