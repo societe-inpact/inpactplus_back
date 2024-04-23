@@ -76,10 +76,10 @@ class MappingController extends Controller
                         // Si aucun mapping n'est trouvé, stocker la rubrique sans correspondance
                         $unmatched_rubriques[] = [
                             'input_rubrique' => $input_rubrique,
-                            'type_rubrique' => 'A définir',
-                            'output_rubrique' => 'A définir',
-                            'base_calcul' => 'A définir',
-                            'label' => 'A définir',
+                            'type_rubrique' => null,
+                            'output_rubrique' => null,
+                            'base_calcul' => null,
+                            'label' => null,
                             'is_mapped' => false
                         ];
                     }
