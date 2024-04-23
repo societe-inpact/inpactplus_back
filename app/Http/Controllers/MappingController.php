@@ -7,13 +7,14 @@ use App\Models\Mapping;
 use Illuminate\Http\Request;
 use League\Csv\CharsetConverter;
 use League\Csv\Reader;
-use \Illuminate\Support\Collection;
+use Illuminate\Support\Collection;
+
 class MappingController extends Controller
 {
     public function setMapping(Request $request)
     {
         // Initialisation de l'encodage et du formatage
-        $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15');
+        $encoder = (new CharsetConverter())->inputEncoding('utf-8');
         $formatter = fn(array $row): array => array_map('strtoupper', $row);
 
         // Vérifier si le fichier CSV est présent dans la requête
@@ -31,6 +32,7 @@ class MappingController extends Controller
             $records = $reader->getRecords();
             $results = [];
             $processed_records = new Collection(); // Ensemble pour éviter les doublons
+            $unmatched_rubriques = []; // Stockage des rubriques sans correspondance
 
             // Expression régulière pour la rubrique d'entrée
             $rubrique_regex = '/^\d{1,3}[A-Z]{0,2}$/';
@@ -53,28 +55,47 @@ class MappingController extends Controller
                     // Ajouter la rubrique traitée à l'ensemble
                     $processed_records->push($input_rubrique);
 
-                    // Rechercher le mapping correspondant dans la base de données
-                    $mapping = Mapping::where('input_rubrique', $input_rubrique)->first();
+                    // Rechercher tous les mappings correspondants dans la base de données
+                    $mappings = Mapping::where('input_rubrique', $input_rubrique)->get();
 
-                    // Vérifier si un mapping existe
-                    if ($mapping) {
-                        $absence = Absence::findOrFail($mapping->output_rubrique);
-                        $results[] = [
-                            'label' => $absence->label,
-                            'Rubrique d\'entrée' => $input_rubrique,
-                            'Rubrique de sortie' => $absence->code
-                        ];
+                    // Si au moins un mapping est trouvé
+                    if ($mappings->isNotEmpty()) {
+                        foreach ($mappings as $mapping) {
+                            // Utiliser la relation output pour obtenir les détails de la rubrique de sortie associée
+                            $output = $mapping->output;
+                            $results[] = [
+                                'input_rubrique' => $input_rubrique,
+                                'type_rubrique' => $mapping->name_rubrique,
+                                'output_rubrique' => $output->code,
+                                'base_calcul' => $output->base_calcul,
+                                'label' => $output->label
+                            ];
+                        }
                     } else {
-                        // Si aucun mapping n'est trouvé
-                        echo "Aucune correspondance trouvée pour la rubrique d'entrée : $input_rubrique\n";
+                        // Si aucun mapping n'est trouvé, stocker la rubrique sans correspondance
+                        $unmatched_rubriques[] = [
+                            'input_rubrique' => $input_rubrique,
+                            'type_rubrique' => 'A définir',
+                            'output_rubrique' => 'A définir',
+                            'base_calcul' => 'A définir',
+                            'label' => 'A définir',
+                        ];
                     }
                 }
             }
-            echo "\nCorrespondances trouvées\n";
-            return response()->json($results);
+
+            // Retourner les résultats des rubriques avec correspondance et sans correspondance
+            $response = [
+                'correspondances' => $results,
+                'sans_correspondance' => $unmatched_rubriques
+            ];
+
+            return response()->json($response);
         }
 
         return response()->json('Aucun fichier importé');
     }
+
 }
+
 

@@ -14,8 +14,10 @@ return new class extends Migration
         Schema::create('mapping', function (Blueprint $table) {
             $table->id();
             $table->string('input_rubrique');
-            $table->string('name_rubrique', 120);
-            $table->string('output_rubrique_id');
+            $table->string('name_rubrique');
+            $table->unsignedBigInteger('output_rubrique_id');
+            $table->string('output_type');
+            $table->timestamps();
         });
     }
 

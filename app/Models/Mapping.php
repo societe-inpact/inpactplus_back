@@ -13,6 +13,12 @@ class Mapping extends Model
     protected $fillable = [
         "input_rubrique",
         "name_rubrique",
-        "output_rubrique"
+        "output_rubrique_id",
+        "output_type"
     ];
+
+    public function output()
+    {
+        return $this->morphTo('output_rubrique', 'output_type', 'output_rubrique_id');
+    }
 }

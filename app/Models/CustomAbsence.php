@@ -5,17 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Absence extends Model
+class CustomAbsence extends Model
 {
     use HasFactory;
 
-    protected $table = "absences";
-    protected $fillable = [
-        "code",
-        "label",
-        "base_calcul",
-        "therapeutic_part-time"
-    ];
+    protected $table = 'custom_absences';
+    protected $fillable = ['code', 'label', 'base_calcul', 'therapeutic_part_time'];
 
     public function mappings()
     {
