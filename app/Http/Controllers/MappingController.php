@@ -68,7 +68,8 @@ class MappingController extends Controller
                                 'type_rubrique' => $mapping->name_rubrique,
                                 'output_rubrique' => $output->code,
                                 'base_calcul' => $output->base_calcul,
-                                'label' => $output->label
+                                'label' => $output->label,
+                                'is_mapped' => true
                             ];
                         }
                     } else {
@@ -79,18 +80,21 @@ class MappingController extends Controller
                             'output_rubrique' => 'A définir',
                             'base_calcul' => 'A définir',
                             'label' => 'A définir',
+                            'is_mapped' => false
                         ];
                     }
                 }
             }
 
-            // Retourner les résultats des rubriques avec correspondance et sans correspondance
-            $response = [
-                'correspondances' => $results,
-                'sans_correspondance' => $unmatched_rubriques
-            ];
+            $rubrique_merged= array_merge($results, $unmatched_rubriques);
 
-            return response()->json($response);
+            // Retourner les résultats des rubriques avec correspondance et sans correspondance
+            // $response = [
+            //     'correspondances' => $results,
+            //     'sans_correspondance' => $unmatched_rubriques
+            // ];
+
+            return response()->json($rubrique_merged);
         }
 
         return response()->json('Aucun fichier importé');

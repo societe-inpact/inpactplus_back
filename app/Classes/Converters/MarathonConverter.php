@@ -72,7 +72,7 @@ class MarathonConverter extends Controller implements ConverterInterface
 
             return response()->json([
                 'success' => true,
-                'message' => 'Votre fichier a été converti',
+                'message' => 'Votre fichier a été importé',
                 'status' => 200,
                 'header' => $header,
                 'rows' => $data
