@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 Route::post("/mapping", [App\Http\Controllers\MappingController::class, 'setMapping']);
 Route::get("/absences", [App\Http\Controllers\AbsenceController::class, 'getAbsences']);
+Route::get("/custom-absences", [App\Http\Controllers\AbsenceController::class, 'getCustomAbsences']);
 
 Route::group(['middleware' => 'cors'], function () {
     Route::post('/login', [App\Http\Controllers\API\ApiAuthController::class, 'login'])->name('login');
