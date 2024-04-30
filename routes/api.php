@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-Route::post("/mapping", [App\Http\Controllers\MappingController::class, 'setMapping']);
+Route::post("/mapping", [App\Http\Controllers\MappingController::class, 'getMapping']);
+Route::post("/store-mapping", [App\Http\Controllers\MappingController::class, 'setMapping']);
 Route::get("/absences", [App\Http\Controllers\AbsenceController::class, 'getAbsences']);
 Route::get("/custom-absences", [App\Http\Controllers\AbsenceController::class, 'getCustomAbsences']);
 
