@@ -21,6 +21,11 @@ class Company extends Model
         return $this->hasOne(Employee::class, 'user_id', 'referent');
     }
 
+    public function company_entities()
+    {
+        return $this->hasMany(CompanyEntity::class, 'company_id', 'id');
+    }
+
     public function employee_entities()
     {
         return $this->hasMany(EmployeeEntity::class, 'company_entity_id', 'id');
