@@ -26,21 +26,20 @@ class ApiAuthController extends Controller
         return response()->json($user);
     }
 
-
-    public function login(Request $request){
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
-        ]);
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            $token = $user->createToken('token')->plainTextToken;
-            $cookie = cookie('jwt', $token, 60 * 24)->withHttpOnly(); // 1 day
-
+    public function login(Request $request)
+    {
+        if (!Auth::attempt($request->only('email', 'password'))) {
             return response()->json([
-                'message' => $token
-            ])->withCookie($cookie);
+                'message' => 'Email ou mot de passe invalides'
+            ], ResponseAlias::HTTP_UNAUTHORIZED);
         }
+        $user = Auth::user();
+        $token = $user->createToken('token')->plainTextToken;
+        $cookie = cookie('jwt', $token, 60 * 24)->withHttpOnly(false); // 1 day
+
+        return response()->json([
+            'message' => $token
+        ])->withCookie($cookie);
     }
 
     public function register(Request $request)
