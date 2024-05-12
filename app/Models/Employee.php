@@ -4,38 +4,38 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class Employee extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $table = 'employees';
+    protected $hidden = ['id', 'user_id', 'laravel_through_key'];
+    protected $fillable = ['user_id', 'is_company_referent', 'is_folder_referent'];
 
-    protected $hidden = [
-        'id',
-        'user_id',
-        'laravel_through_key',
-    ];
-    protected $fillable = [
-        'user_id',
-    ];
 
+    // RELATIONS
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function infos()
+    public function informations()
     {
-        return $this->hasOneThrough(EmployeeInfo::class, EmployeeEntity::class, 'employee_informations_id', 'id');
+        return $this->hasOneThrough(EmployeeInfo::class, EmployeeFolder::class, 'employee_informations_id', 'id');
     }
 
-    public function employee_entities()
+    public function company()
     {
-        return $this->hasOne(EmployeeEntity::class);
+        return $this->belongsTo(Company::class, 'referent_id');
     }
-    public function companies()
+
+    public function folders()
     {
-        return $this->belongsToMany(CompanyEntity::class, 'employee_entity', 'company_entity_id');
+        return $this->belongsToMany(CompanyFolder::class, 'employee_folder')->withPivot('is_referent');
     }
+
 }

@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('companies', function (Blueprint $table) {
+        Schema::create('mapping_folder', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('description', 120);
-            $table->foreignId('referent_id')->nullable()->constrained('employees', 'user_id')->cascadeOnDelete();
+            $table->foreignId('company_folder_id')->constrained('company_folders')->cascadeOnDelete();
+            $table->foreignId('mapping_id')->constrained('mapping')->cascadeOnDelete();
         });
     }
 
@@ -24,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('companies');
+        Schema::dropIfExists('mapping_entity');
     }
 };

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\API;
 
+use App\Http\Controllers\Controller;
 use App\Models\Absence;
 use App\Models\CustomAbsence;
-use Illuminate\Http\Request;
 
 class AbsenceController extends Controller
 {

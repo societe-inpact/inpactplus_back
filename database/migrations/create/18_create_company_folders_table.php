@@ -11,10 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('interface_entity', function (Blueprint $table) {
+        Schema::create('company_folders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('company_entity_id')->constrained('company_entities')->cascadeOnDelete();
-            $table->foreignId('interface_entity_id')->constrained('interfaces')->cascadeOnDelete();
+            $table->foreignId('company_id')->constrained('companies')->onDelete('cascade');
+            $table->integer('folder_number');
+            $table->string('folder_name');
+            $table->string('siret', 14);
+            $table->string('siren', 9);
+
         });
     }
 
@@ -23,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('interface_entity');
+        Schema::dropIfExists('company_entities');
     }
 };
