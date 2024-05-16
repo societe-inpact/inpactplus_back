@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use function Symfony\Component\Translation\t;
 
 class Employee extends Model
 {
@@ -13,29 +14,51 @@ class Employee extends Model
     public $timestamps = false;
 
     protected $table = 'employees';
-    protected $hidden = ['id', 'user_id', 'laravel_through_key'];
-    protected $fillable = ['user_id', 'is_company_referent', 'is_folder_referent'];
+    protected $hidden = ['id', 'user_id', 'laravel_through_key','informations_id'];
+    protected $fillable = ['user_id', 'informations_id', 'is_company_referent', 'is_folder_referent'];
 
 
     // RELATIONS
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->hasOne(User::class);
     }
 
     public function informations()
     {
-        return $this->hasOneThrough(EmployeeInfo::class, EmployeeFolder::class, 'employee_informations_id', 'id');
+        return $this->hasMany(EmployeeInfo::class, 'id', 'informations_id');
     }
 
     public function company()
     {
-        return $this->belongsTo(Company::class, 'referent_id');
+        return $this->belongsTo(Company::class, 'company_id');
     }
 
     public function folders()
     {
-        return $this->belongsToMany(CompanyFolder::class, 'employee_folder')->withPivot('is_referent');
+        return $this->hasManyThrough(CompanyFolder::class, EmployeeFolder::class, 'employee_id', 'id', 'user_id', 'company_folder_id')->where('has_access', true);
+    }
+
+    public function grantAccessToFolder($folderId)
+    {
+        return $this->accessibleFolders()->updateExistingPivot($folderId, ['has_access' => true]);
+    }
+
+    public function revokeAccessToFolder($folderId)
+    {
+        return $this->accessibleFolders()->updateExistingPivot($folderId, ['has_access' => false]);
+
+    }
+
+    public function grantAccessToFolders(array $folderIds)
+    {
+        $accessData = array_fill_keys($folderIds, ['has_access' => true]);
+        return $this->accessibleFolders()->syncWithoutDetaching($accessData);
+    }
+
+    public function revokeAccessFromFolders(array $folderIds)
+    {
+        return $this->accessibleFolders()->detach($folderIds);
     }
 
 }

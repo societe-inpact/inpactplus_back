@@ -3,29 +3,38 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\CompanyFolder;
 use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Validator;
+use phpDocumentor\Reflection\Types\Collection;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
 class ApiAuthController extends Controller
 {
     public function getUser()
     {
-        $user = Auth::user()->load(['employee.informations', 'employee.company', 'employee.folders']);
-
-        if (!$user->employee) {
-            unset($user['employee']);
-            unset($user['is_employee']);
-            $user->is_admin = true;
-        } else {
-            $user->is_employee = true;
+        $user = Auth::user()->load(['employee.informations', 'employee.folders.company', 'employee.folders']);
+        $userArray = $user->toArray();
+        if ($user->employee){
+            $employeeArray = $user->employee->toArray();
+            $employee = array_merge($userArray, $employeeArray);
+            return response()->json($employee);
+        }else{
+            $folders = CompanyFolder::with('company')->get();
+            $user = [
+                'civility' => $user->civility,
+                'email' => $user->email,
+                'firstname' => $user->firstname,
+                'id' => $user->id,
+                'lastname' => $user->lastname,
+                'folders' => $folders
+            ];
+            return response()->json($user);
         }
-
-        return response()->json($user);
     }
 
     public function login(Request $request)

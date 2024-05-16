@@ -18,12 +18,13 @@ class Company extends Model
         "referent_id"
     ];
 
+
     public function referent(){
         return $this->belongsTo(Employee::class, 'referent_id');
     }
 
     public function folders()
     {
-        return $this->hasMany(CompanyFolder::class);
+        return $this->hasMany(CompanyFolder::class, 'company_id' ,);
     }
 }

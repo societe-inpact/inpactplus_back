@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('company_folders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('company_id')->constrained('companies')->onDelete('cascade');
             $table->integer('folder_number');
             $table->string('folder_name');
             $table->string('siret', 14);
             $table->string('siren', 9);
 
+            $table->foreignId('company_id')->constrained('companies')->cascadeOnDelete();
         });
     }
 

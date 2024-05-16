@@ -12,13 +12,17 @@ class CompanyFolder extends Model
     public $timestamps = false;
 
     protected $table = 'company_folders';
-    protected $fillable = ["company_id", "folder_number", "folder_name", "siret", "siren"];
+    protected $fillable = ["company_id", "folder_number","folder_name", "siret", "siren"];
 
+    protected $hidden = [
+        'company_id',
+        'laravel_through_key'
+    ];
     public function company(){
-        return $this->belongsTo(Company::class);
+        return $this->belongsTo(Company::class, 'company_id', 'id');
     }
 
-    public function employees(){
-        return $this->belongsToMany(Employee::class, 'employee_folder')->withPivot('is_referent');
-    }
+
+
+
 }
