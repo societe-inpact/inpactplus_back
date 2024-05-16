@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Company;
 use App\Models\CompanyFolder;
 use App\Models\Employee;
 use App\Models\User;
@@ -24,14 +25,14 @@ class ApiAuthController extends Controller
             $employee = array_merge($userArray, $employeeArray);
             return response()->json($employee);
         }else{
-            $folders = CompanyFolder::with('company')->get();
+            $companies = Company::with('folders')->get();
             $user = [
                 'civility' => $user->civility,
                 'email' => $user->email,
                 'firstname' => $user->firstname,
                 'id' => $user->id,
                 'lastname' => $user->lastname,
-                'folders' => $folders
+                'companies' => $companies
             ];
             return response()->json($user);
         }
