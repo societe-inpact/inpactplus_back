@@ -12,13 +12,6 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-<<<<<<< HEAD
-Route::post("/mapping", [App\Http\Controllers\MappingController::class, 'getMapping']);
-Route::post("/store-mapping", [App\Http\Controllers\MappingController::class, 'setMapping']);
-Route::get("/absences", [App\Http\Controllers\AbsenceController::class, 'getAbsences']);
-Route::get("/custom-absences", [App\Http\Controllers\AbsenceController::class, 'getCustomAbsences']);
-Route::get('/company_entities', [App\Http\Controllers\API\CompanyEntityController::class, 'getCompanyEntity']);
-=======
 Route::post("/mapping", [App\Http\Controllers\API\MappingController::class, 'getMapping']);
 Route::post("/store-mapping", [App\Http\Controllers\API\MappingController::class, 'setMapping']);
 
@@ -31,7 +24,6 @@ Route::get("/variables-elements", [App\Http\Controllers\API\VariablesElementsCon
 Route::get("/companies", [App\Http\Controllers\API\CompanyController::class, 'getCompanies']);
 Route::post("/company/create", [App\Http\Controllers\API\CompanyController::class, 'createCompany']);
 Route::post("/company_folder/create", [App\Http\Controllers\API\CompanyFolderController::class, 'createCompanyFolder']);
->>>>>>> main
 
 Route::group(['middleware' => 'cors'], function () {
     Route::post('/login', [App\Http\Controllers\API\ApiAuthController::class, 'login']);
