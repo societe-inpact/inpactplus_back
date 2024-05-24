@@ -1,0 +1,28 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class CompanyFolder extends Model
+{
+    use HasFactory;
+
+    public $timestamps = false;
+
+    protected $table = 'company_folders';
+    protected $fillable = ["company_id", "folder_number","folder_name", "siret", "siren"];
+
+    protected $hidden = [
+        'company_id',
+        'laravel_through_key'
+    ];
+    public function company(){
+        return $this->belongsTo(Company::class, 'company_id', 'id');
+    }
+
+
+
+
+}

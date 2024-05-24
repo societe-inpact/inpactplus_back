@@ -8,6 +8,7 @@
         "php": "^8.1",
         "ext-pdo": "*",
         "guzzlehttp/guzzle": "^7.2",
+        "laravel-lang/locales": "^2.7",
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
@@ -17,6 +18,9 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
+        "laravel-lang/common": "^6.2",
+        "laravel-lang/lang": "^14.0",
+        "laravel-lang/publisher": "^16.3",
         "laravel/breeze": "^1.29",
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.18",
@@ -44,7 +48,8 @@
             "@php artisan package:discover --ansi"
         ],
         "post-update-cmd": [
-            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force",
+            "@php artisan lang:update"
         ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""

@@ -37,14 +37,12 @@ class User extends Authenticatable
      */
     protected $hidden = [
         'password',
+        'employee',
     ];
 
     public function employee(){
-        return $this->hasOneThrough(Employee::class, EmployeeEntity::class, 'employee_id', 'user_id');
+        return $this->hasOne(Employee::class);
     }
 
-    public function company()
-    {
-        return $this->belongsTo(CompanyEntity::class);
-    }
+
 }

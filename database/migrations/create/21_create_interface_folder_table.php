@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('interface_entity', function (Blueprint $table) {
+        Schema::create('interface_folder', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('company_entity_id')->constrained('company_entities')->cascadeOnDelete();
-            $table->foreignId('interface_entity_id')->constrained('interfaces')->cascadeOnDelete();
+            $table->foreignId('company_folder_id')->constrained('company_folders')->cascadeOnDelete();
+            $table->foreignId('interface_folder_id')->constrained('interfaces')->cascadeOnDelete();
         });
     }
 

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CompanyEntity;
+use App\Models\CompanyFolder;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -26,7 +26,7 @@ class HomeController extends Controller
     public function index()
     {
         $users = User::with('employee')->get();
-        $folders = CompanyEntity::all();
+        $folders = CompanyFolder::all();
         return view('home', compact('users', 'folders'));
     }
 }

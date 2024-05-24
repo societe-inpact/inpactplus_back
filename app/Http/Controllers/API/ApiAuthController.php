@@ -3,27 +3,39 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Absence;
 use App\Models\Company;
-use App\Models\CompanyEntity;
+use App\Models\CompanyFolder;
 use App\Models\Employee;
-use App\Models\EmployeeEntity;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
+use phpDocumentor\Reflection\Types\Collection;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
 class ApiAuthController extends Controller
 {
     public function getUser()
     {
-        $user = Auth::user()->load(['employee.infos', 'employee.companies']);
-        return response()->json($user);
+        $user = Auth::user()->load(['employee.informations', 'employee.folders.company', 'employee.folders']);
+        $userArray = $user->toArray();
+        if ($user->employee){
+            $employeeArray = $user->employee->toArray();
+            $employee = array_merge($userArray, $employeeArray);
+            return response()->json($employee);
+        }else{
+            $companies = Company::with('folders')->get();
+            $user = [
+                'civility' => $user->civility,
+                'email' => $user->email,
+                'firstname' => $user->firstname,
+                'id' => $user->id,
+                'lastname' => $user->lastname,
+                'companies' => $companies
+            ];
+            return response()->json($user);
+        }
     }
 
     public function login(Request $request)
@@ -35,92 +47,61 @@ class ApiAuthController extends Controller
         }
         $user = Auth::user();
         $token = $user->createToken('token')->plainTextToken;
-        $cookie = cookie('jwt', $token, 60 * 24)->withHttpOnly(false); // 1 day
+        $cookie = cookie('jwt', $token, 60 * 24)->withHttpOnly(true); // 1 day
 
         return response()->json([
-            'message' => $token
+            'message' => 'Connexion réussie'
         ])->withCookie($cookie);
     }
 
     public function register(Request $request)
     {
-        $fields = [
+        $validator = Validator::make($request->all(), [
             'email' => 'required|email|unique:users',
-            'password' => 'required|min:6',
+            'password' => 'required|min:8',
             'civility' => 'required',
             'lastname' => 'required',
             'firstname' => 'required',
             'is_employee' => 'required|boolean',
-        ];
-
-        if ($request->is_employee) {
-            $fields = array_merge($fields, [
-                'employee_code' => 'required',
-                'firstname' => 'required',
-                'lastname' => 'required',
-                'company_id' => 'required',
-                'user_id' => 'required',
-                'created_at' => 'nullable|date',
-                'updated_at' => 'nullable|date',
-            ]);
-        }
-
-        $validator = Validator::make($request->all(), $fields);
+            'is_company_referent' => 'nullable|boolean',
+            'is_folder_referent' => 'nullable|boolean'
+        ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Erreur de validation des données, veuillez réessayer',
-                'errors' => $validator->errors(),
-            ], 400);
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Création de l'utilisateur
-        $user = User::create([
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'civility' => $request->civility,
-            'firstname' => $request->firstname,
-            'lastname' => $request->lastname,
-        ]);
+        try {
+            // Créer un nouvel utilisateur
+            $user = User::create([
+                'email' => $request->email,
+                'password' => bcrypt($request->password),
+                'civility' => $request->civility,
+                'lastname' => $request->lastname,
+                'firstname' => $request->firstname
+            ]);
 
-        if ($request->is_employee) {
-            $this->registerEmployee($request, $user); // Appel de la méthode registerEmployee
+            // Si l'utilisateur est un employé, créez une entrée correspondante dans la table employees
+            if ($request->is_employee) {
+                $employee = new Employee([
+                    'user_id' => $user->id,
+                    'is_company_referent' => $request->is_company_referent ?? false,
+                    'is_folder_referent' => $request->is_folder_referent ?? false
+                ]);
+                $user->employee()->save($employee);
+                return response()->json(['message' => 'Employé créé avec succès'], 200);
+
+            }else{
+                return response()->json(['message' => 'Utilisateur créé avec succès'], 200);
+            }
+
+        } catch (\Exception $e) {
+            // Gestion des erreurs
+            return response()->json(['error' => 'Une erreur est survenue lors de la création de l\'utilisateur.'], 500);
         }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => "L'utilisateur a bien été créé",
-            'data' => $user,
-        ], 201);
     }
 
-    private function registerEmployee(Request $request, User $user)
-    {
-        // Création de l'employé
-        $employee = Employee::create([
-            'user_id' => $user->id,
-        ]);
-
-        EmployeeEntity::create([
-            'employee_id' => $employee->id,
-            'company_entity_id' => $user->id,
-        ]);
-
-        // Récupération ou création du rôle "client" et de la permission "read-only"
-        $role = Role::findOrCreate('client');
-        $permission = Permission::findOrCreate('unique-access');
-
-        $role->givePermissionTo($permission);
-        $permission->assignRole($role);
-
-        $user->assignRole($role);
-        $user->givePermissionTo($permission);
-        return response()->json(['message' => 'Employé enregistré avec succès']);
-
-    }
-
-    protected function logout(Request $request)
+    protected function logout()
     {
         $cookie = Cookie::forget('jwt');
 
