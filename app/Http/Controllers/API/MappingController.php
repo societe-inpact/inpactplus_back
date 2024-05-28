@@ -99,6 +99,7 @@ class MappingController extends Controller
             'name_rubrique' => 'required|string|max:255',
             'output_rubrique_id' => 'required|integer',
             'output_type' => 'required|string',
+            'company_folder_id' => 'required|integer',
         ]);
 
         // Vérifier s'il existe déjà un mapping avec la même `input_rubrique` et le même `output_type`
@@ -151,15 +152,19 @@ class MappingController extends Controller
             $mapping->output_rubrique_id = $validatedData['output_rubrique_id'];
             $mapping->output_type = $validatedData['output_type'];
 
-            $mapping_id = $mapping->id;
-            dd($mapping_id);
-
             // Enregistrer le mappage dans la base de données
-            // if ($mapping->save()) {
-            //     return response()->json(['success' => 'Mappage ajouté avec succès'], 201);
-            // } else {
-            //     return response()->json(['error' => 'Erreur lors de l\'ajout du mappage'], 500);
-            // }
+            if ($mapping->save()) {
+                // Créer un mappage de dossier associé
+                $mapping_id = $mapping->id;
+                $mappingFolder = new MappingFolder();
+                $mappingFolder->mapping_id = $mapping_id;
+                $mappingFolder->company_folder_id = $validatedData['company_folder_id'];
+                $mappingFolder->save();
+
+                return response()->json(['success' => 'Mappage ajouté avec succès'], 201);
+            } else {
+                return response()->json(['error' => 'Erreur lors de l\'ajout du mappage'], 500);
+            }
         }
     }
 }
