@@ -23,10 +23,12 @@ class Company extends Model
         return $this->belongsTo(Employee::class, 'referent_id');
     }
 
-    public function company_entities()
+
+    public function company_folder()
     {
-        return $this->hasMany(CompanyEntity::class, 'company_id', 'id');
+        return $this->hasMany(CompanyFolder::class, 'company_id', 'id');
     }
+
 
     public function folders()
     {

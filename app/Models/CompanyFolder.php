@@ -18,11 +18,12 @@ class CompanyFolder extends Model
         'company_id',
         'laravel_through_key'
     ];
+
     public function company(){
         return $this->belongsTo(Company::class, 'company_id', 'id');
     }
 
-
-
-
+    public function software() {
+        return $this->belongsTo(Software::class, 'interface_id', 'id');
+    }
 }
