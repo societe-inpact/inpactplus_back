@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\CompanyFolder;
 use App\Models\Mapping;
+use App\Models\MappingFolder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use League\Csv\CharsetConverter;
@@ -149,12 +151,15 @@ class MappingController extends Controller
             $mapping->output_rubrique_id = $validatedData['output_rubrique_id'];
             $mapping->output_type = $validatedData['output_type'];
 
+            $mapping_id = $mapping->id;
+            dd($mapping_id);
+
             // Enregistrer le mappage dans la base de données
-            if ($mapping->save()) {
-                return response()->json(['success' => 'Mappage ajouté avec succès'], 201);
-            } else {
-                return response()->json(['error' => 'Erreur lors de l\'ajout du mappage'], 500);
-            }
+            // if ($mapping->save()) {
+            //     return response()->json(['success' => 'Mappage ajouté avec succès'], 201);
+            // } else {
+            //     return response()->json(['error' => 'Erreur lors de l\'ajout du mappage'], 500);
+            // }
         }
     }
 }
