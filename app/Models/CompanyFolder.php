@@ -16,7 +16,8 @@ class CompanyFolder extends Model
 
     protected $hidden = [
         'company_id',
-        'laravel_through_key'
+        'laravel_through_key',
+        'interface_id',
     ];
 
     public function company(){

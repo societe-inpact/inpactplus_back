@@ -12,7 +12,7 @@ class Software extends Model
     protected $table = 'interfaces';
 
     protected $fillable = [
-        "software_name"
+        "name"
     ];
 
     public function company_folder() {
