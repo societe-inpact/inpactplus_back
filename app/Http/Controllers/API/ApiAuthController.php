@@ -18,14 +18,14 @@ class ApiAuthController extends Controller
 {
     public function getUser()
     {
-        $user = Auth::user()->load(['employee.informations', 'employee.folders.company', 'employee.folders']);
+        $user = Auth::user()->load(['employee.informations', 'employee.folders', 'employee.folders.company', 'employee.folders.mappings']);
         $userArray = $user->toArray();
         if ($user->employee){
             $employeeArray = $user->employee->toArray();
             $employee = array_merge($userArray, $employeeArray);
             return response()->json($employee);
         }else{
-            $companies = Company::with('folders')->get();
+            $companies = Company::with('folders', 'folders.mappings')->get();
             $user = [
                 'civility' => $user->civility,
                 'email' => $user->email,

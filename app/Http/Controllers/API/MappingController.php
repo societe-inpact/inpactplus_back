@@ -6,13 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Models\Mapping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use League\Csv\CharsetConverter;
 use League\Csv\Reader;
+use App\Http\Controllers\API\ApiAuthController;
 
 class MappingController extends Controller
 {
     public function getMapping(Request $request)
     {
+        $companyFolder = $request->get('company_folder_id');
         // Initialisation de l'encodage et du formatage
         $encoder = (new CharsetConverter())->inputEncoding('utf-8');
 
@@ -51,8 +54,7 @@ class MappingController extends Controller
                     $processed_records->push($input_rubrique);
 
                     // Rechercher tous les mappings correspondants dans la base de données
-                    $mappings = Mapping::where('input_rubrique', $input_rubrique)->get();
-
+                    $mappings = Mapping::with('folder')->where('input_rubrique', $input_rubrique)->where('company_folder_id', $companyFolder)->get();
                     // Si au moins un mapping est trouvé
                     if ($mappings->isNotEmpty()) {
                         foreach ($mappings as $mapping) {
@@ -96,12 +98,13 @@ class MappingController extends Controller
             'input_rubrique' => 'required|string|regex:/^\d{1,3}[A-Z]{0,2}$/',
             'name_rubrique' => 'required|string|max:255',
             'output_rubrique_id' => 'required|integer',
+            'company_folder_id' => 'required|integer',
             'output_type' => 'required|string',
         ]);
 
         // Vérifier s'il existe déjà un mapping avec la même `input_rubrique` et le même `output_type`
         $existingMapping = Mapping::where('input_rubrique', $validatedData['input_rubrique'])
-            ->where('output_type', $validatedData['output_type'])
+            ->where('output_type', $validatedData['output_type'])->where('company_folder_id', $validatedData['company_folder_id'])
             ->first();
 
         if ($existingMapping) {
@@ -120,7 +123,7 @@ class MappingController extends Controller
                 $tableName = $tableNames[$existingMapping->output_type] ?? $existingMapping->output_type;
 
                 return response()->json([
-                    'error' => 'La rubrique ' . $existingMapping->input_rubrique . ' est déjà associée à ' . $output->code . ' dans la table ' . $tableName,
+                    'error' => 'La rubrique ' . $existingMapping->input_rubrique . ' est déjà associée à ' . $output->code,
                 ], 409);
             } else {
                 return response()->json([
@@ -148,6 +151,7 @@ class MappingController extends Controller
             $mapping->name_rubrique = $validatedData['name_rubrique'];
             $mapping->output_rubrique_id = $validatedData['output_rubrique_id'];
             $mapping->output_type = $validatedData['output_type'];
+            $mapping->company_folder_id = $validatedData['company_folder_id'];
 
             // Enregistrer le mappage dans la base de données
             if ($mapping->save()) {

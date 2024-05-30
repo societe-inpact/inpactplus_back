@@ -22,7 +22,9 @@ class CompanyFolder extends Model
         return $this->belongsTo(Company::class, 'company_id', 'id');
     }
 
-
+    public function mappings(){
+        return $this->hasMany(Mapping::class, 'company_folder_id', 'id');
+    }
 
 
 }
