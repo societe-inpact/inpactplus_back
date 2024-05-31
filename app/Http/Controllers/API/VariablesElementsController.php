@@ -19,6 +19,10 @@ class VariablesElementsController extends Controller
             'code' => 'required',
         ]);
 
+        if(!$validated){
+            return response()->json(['message' => 'Données invalides.'], 400);
+        }
+
         $isVariableElementExist = VariableElement::where('code', request('code'))->where('label', request('label'))->first();
         if($isVariableElementExist){
             return response()->json(['message' => 'Element variable déjà existant.'], 400);

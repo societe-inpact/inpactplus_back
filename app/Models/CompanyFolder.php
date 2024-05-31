@@ -16,15 +16,15 @@ class CompanyFolder extends Model
 
     protected $hidden = [
         'company_id',
-        'laravel_through_key'
+        'laravel_through_key',
+        'interface_id',
     ];
+
     public function company(){
         return $this->belongsTo(Company::class, 'company_id', 'id');
     }
 
-    public function mappings(){
-        return $this->hasMany(Mapping::class, 'company_folder_id', 'id');
+    public function software() {
+        return $this->belongsTo(Software::class, 'interface_id', 'id');
     }
-
-
 }

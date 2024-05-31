@@ -23,7 +23,8 @@ class Mapping extends Model
         return $this->morphTo('output_rubrique', 'output_type', 'output_rubrique_id');
     }
 
-    public function folder(){
+    public function folder()
+    {
         return $this->belongsTo(CompanyFolder::class, 'company_folder_id');
     }
 }

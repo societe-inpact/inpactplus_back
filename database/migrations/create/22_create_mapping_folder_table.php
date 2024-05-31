@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('mapping_folder', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_folder_id')->constrained('company_folders')->cascadeOnDelete();
-            $table->foreignId('mapping_id')->constrained('mapping')->cascadeOnDelete();
+            $table->foreignId('mapping_id')->constrained('mappings')->cascadeOnDelete();
         });
     }
 

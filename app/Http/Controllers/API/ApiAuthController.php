@@ -25,14 +25,14 @@ class ApiAuthController extends Controller
             $employee = array_merge($userArray, $employeeArray);
             return response()->json($employee);
         }else{
-            $companies = Company::with('folders', 'folders.mappings')->get();
+            $companies = Company::with(['folders.software'])->get();
             $user = [
                 'civility' => $user->civility,
                 'email' => $user->email,
                 'firstname' => $user->firstname,
                 'id' => $user->id,
                 'lastname' => $user->lastname,
-                'companies' => $companies
+                'companies' => $companies,
             ];
             return response()->json($user);
         }

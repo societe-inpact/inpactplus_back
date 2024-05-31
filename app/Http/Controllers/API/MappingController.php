@@ -20,13 +20,13 @@ class MappingController extends Controller
         if (!$companyFolder) {
             return response()->json("L'id du dossier est requis", 400);
         }
+
         // Initialisation de l'encodage et du formatage
         $encoder = (new CharsetConverter())->inputEncoding('utf-8');
 
         // Vérifier si le fichier CSV est présent dans la requête
         if ($request->hasFile('csv')) {
             $file = $request->file('csv');
-
             $reader = Reader::createFromPath($file->getPathname(), 'r');
             $reader->addFormatter($encoder);
             $reader->setDelimiter(';');
@@ -58,6 +58,7 @@ class MappingController extends Controller
                     $processed_records->push($input_rubrique);
                     // Rechercher tous les mappings correspondants dans la base de données
                     $mappings = Mapping::with('folder')->where('input_rubrique', $input_rubrique)->where('company_folder_id', $companyFolder)->get();
+
                     // Si au moins un mapping est trouvé
                     if ($mappings->isNotEmpty()) {
                         foreach ($mappings as $mapping) {
@@ -89,7 +90,6 @@ class MappingController extends Controller
             }
 
             $rubrique_merged = array_merge($results, $unmatched_rubriques);
-
             return response()->json($rubrique_merged);
         }
 
@@ -109,9 +109,10 @@ class MappingController extends Controller
 
         // Vérifier s'il existe déjà un mapping avec la même `input_rubrique` et le même `output_type`
         $existingMapping = Mapping::where('input_rubrique', $validatedData['input_rubrique'])
-        ->where('output_type', $validatedData['output_type'])->where('company_folder_id', $validatedData['company_folder_id'])
-        ->first();
-        
+            ->where('output_type', $validatedData['output_type'])
+            ->where('company_folder_id', $validatedData['company_folder_id'])
+            ->first();
+
         if ($existingMapping) {
             // Si l'association existe et que l'`output_rubrique_id` est différent, renvoyer une erreur
             $tableNames = [
@@ -167,5 +168,3 @@ class MappingController extends Controller
         }
     }
 }
-
-

@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('siren', 9);
 
             $table->foreignId('company_id')->constrained('companies')->cascadeOnDelete();
+            $table->foreignId('interface_id')->constrained('interfaces')->cascadeOnDelete();
         });
     }
 
