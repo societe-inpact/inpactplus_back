@@ -26,6 +26,10 @@ class AbsenceController extends Controller
             'base_calcul' => 'required',
         ]);
 
+        if(!$validated){
+            return response()->json(['message' => 'Données invalides.'], 400);
+        }
+
         // verifie si la custom absence avec ce code et ce label existe déjà
         $isCustomAbsenceExist = CustomAbsence::where('code', request('code'))->where('label', request('label'))->first();
         if($isCustomAbsenceExist){

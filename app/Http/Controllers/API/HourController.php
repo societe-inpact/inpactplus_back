@@ -25,6 +25,10 @@ class HourController extends Controller
             'code' => 'required',
         ]);
 
+        if(!$validated){
+            return response()->json(['message' => 'Données invalides.'], 400);
+        }
+
         $isCustomHourExist = CustomHour::where('code', request('code'))->where('label', request('label'))->first();
         if($isCustomHourExist){
             return response()->json(['message' => 'Heure personnalisée déjà existante.'], 400);
