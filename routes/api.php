@@ -21,9 +21,12 @@ Route::post("/store-mapping", [App\Http\Controllers\API\MappingController::class
 
 Route::get("/absences", [App\Http\Controllers\API\AbsenceController::class, 'getAbsences']);
 Route::get("/custom-absences", [App\Http\Controllers\API\AbsenceController::class, 'getCustomAbsences']);
+Route::post("/custom-absences/create", [App\Http\Controllers\API\AbsenceController::class, 'createCustomAbsence']);
 Route::get("/hours", [App\Http\Controllers\API\HourController::class, 'getHours']);
 Route::get("/custom-hours", [App\Http\Controllers\API\HourController::class, 'getCustomHours']);
+Route::post("/custom-hours/create", [App\Http\Controllers\API\HourController::class, 'createCustomHour']);
 Route::get("/variables-elements", [App\Http\Controllers\API\VariablesElementsController::class, 'getVariablesElements']);
+Route::post("/variables-elements/create", [App\Http\Controllers\API\VariablesElementsController::class, 'createVariableElement']);
 
 Route::get("/companies", [App\Http\Controllers\API\CompanyController::class, 'getCompanies']);
 Route::post("/company/create", [App\Http\Controllers\API\CompanyController::class, 'createCompany']);

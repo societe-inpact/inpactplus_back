@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class CustomHour extends Model
 {
     use HasFactory;
+    // Désactiver les timestamps automatiques
+    public $timestamps = false;
 
     protected $table = "custom_hours";
 
