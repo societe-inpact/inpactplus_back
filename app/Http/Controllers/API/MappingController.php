@@ -15,6 +15,11 @@ class MappingController extends Controller
 {
     public function getMapping(Request $request)
     {
+        $companyFolder = $request->get('company_folder_id');
+
+        if (!$companyFolder) {
+            return response()->json("L'id du dossier est requis", 400);
+        }
         // Initialisation de l'encodage et du formatage
         $encoder = (new CharsetConverter())->inputEncoding('utf-8');
 
@@ -51,7 +56,6 @@ class MappingController extends Controller
                 if ($input_rubrique !== null && !$processed_records->contains($input_rubrique)) {
                     // Ajouter la rubrique traitée à l'ensemble
                     $processed_records->push($input_rubrique);
-
                     // Rechercher tous les mappings correspondants dans la base de données
                     $mappings = Mapping::where('input_rubrique', $input_rubrique)->get();
 
@@ -66,7 +70,8 @@ class MappingController extends Controller
                                 'output_rubrique' => $output->code,
                                 'base_calcul' => $output->base_calcul,
                                 'label' => $output->label,
-                                'is_mapped' => true
+                                'is_mapped' => true,
+                                'company_folder_id' => $companyFolder,
                             ];
                         }
                     } else {
@@ -77,7 +82,8 @@ class MappingController extends Controller
                             'output_rubrique' => null,
                             'base_calcul' => null,
                             'label' => null,
-                            'is_mapped' => false
+                            'is_mapped' => false,
+                            'company_folder_id' => $companyFolder,
                         ];
                     }
                 }
@@ -104,9 +110,9 @@ class MappingController extends Controller
 
         // Vérifier s'il existe déjà un mapping avec la même `input_rubrique` et le même `output_type`
         $existingMapping = Mapping::where('input_rubrique', $validatedData['input_rubrique'])
-            ->where('output_type', $validatedData['output_type'])
-            ->first();
-
+        ->where('output_type', $validatedData['output_type'])->where('company_folder_id', $validatedData['company_folder_id'])
+        ->first();
+        
         if ($existingMapping) {
             // Si l'association existe et que l'`output_rubrique_id` est différent, renvoyer une erreur
             $tableNames = [
