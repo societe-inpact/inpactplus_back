@@ -162,7 +162,7 @@ class MappingController extends Controller
         }
     }
 
-    public function updateMapping(Request $request){
+    public function updateMapping(Request $request, $id){
         
         $mapping = Mapping::findOrFail($request->id);
 
@@ -174,14 +174,7 @@ class MappingController extends Controller
             'output_type' => 'required|string',
         ]);    
 
-        $mapping->input_rubrique = $validatedData['input_rubrique'];
-        $mapping->name_rubrique = $validatedData['name_rubrique'];
-        $mapping->output_rubrique_id = $validatedData['output_rubrique_id'];
-        $mapping->output_type = $validatedData['output_type'];
-        $mapping->company_folder_id = $validatedData['company_folder_id'];
-
-
-        if ($mapping->update()) {
+        if($mapping->update($validatedData)){
             return response()->json(['success' => 'Mappage modifié avec succès'], 200);
         } else {
             return response()->json(['error' => 'Erreur lors de la modification du mappage'], 500);
