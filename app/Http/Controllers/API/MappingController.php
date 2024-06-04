@@ -115,12 +115,6 @@ class MappingController extends Controller
 
         if ($existingMapping) {
             // Si l'association existe et que l'`output_rubrique_id` est différent, renvoyer une erreur
-            $tableNames = [
-                'App\Models\Absence' => 'Absences',
-                'App\Models\CustomAbsence' => 'Absences personnalisées',
-                'App\Models\Hour' => 'Heures',
-                'App\Models\CustomHour' => 'Heures personnalisées',
-            ];
 
             if ($existingMapping->output_rubrique_id !== $validatedData['output_rubrique_id']) {
                 $output = $existingMapping->output;
@@ -166,5 +160,39 @@ class MappingController extends Controller
                 return response()->json(['error' => 'Erreur lors de l\'ajout du mappage'], 500);
             }
         }
+    }
+
+    public function updateMapping(Request $request){
+
+        $mapping = Mapping::findOrFail($request->id);
+
+        $validatedData = $request->validate([
+            'input_rubrique' => 'required|string|regex:/^\d{1,3}[A-Z]{0,2}$/',
+            'name_rubrique' => 'required|string|max:255',
+            'output_rubrique_id' => 'required|integer',
+            'company_folder_id' => 'required|integer',
+            'output_type' => 'required|string',
+        ]);
+        
+        // $results[] = [
+        //     'input_rubrique' = $validatedData['input_rubrique'],
+        //     'name_rubrique' = $validatedData['name_rubrique'],
+        //     'output_rubrique_id' = $validatedData['output_rubrique_id'],
+        //     'output_type' = $validatedData['output_type'],
+        //     'company_folder_id' = $validatedData['company_folder_id'],
+        // ];
+
+        $mapping->input_rubrique = $validatedData['input_rubrique'];
+        $mapping->name_rubrique = $validatedData['name_rubrique'];
+        $mapping->output_rubrique_id = $validatedData['output_rubrique_id'];
+        $mapping->output_type = $validatedData['output_type'];
+        $mapping->company_folder_id = $validatedData['company_folder_id'];
+
+        if ($mapping->update()) {
+            return response()->json(['success' => 'Mappage modifié avec succès'], 200);
+        } else {
+            return response()->json(['error' => 'Erreur lors de la modification du mappage'], 500);
+        }
+        
     }
 }
