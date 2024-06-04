@@ -63,6 +63,7 @@ class MappingController extends Controller
                             // Utiliser la relation output pour obtenir les détails de la rubrique de sortie associée
                             $output = $mapping->output;
                             $results[] = [
+                                'id' => $mapping->id,
                                 'input_rubrique' => $input_rubrique,
                                 'type_rubrique' => $mapping->name_rubrique,
                                 'output_rubrique' => $output->code,
