@@ -6,10 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Mapping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use League\Csv\CharsetConverter;
 use League\Csv\Reader;
-use App\Http\Controllers\API\ApiAuthController;
 
 class MappingController extends Controller
 {
