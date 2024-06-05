@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::post("/mapping", [App\Http\Controllers\API\MappingController::class, 'getMapping']);
 Route::post("/store-mapping", [App\Http\Controllers\API\MappingController::class, 'setMapping']);
+Route::put("/update-mapping/{id}", [App\Http\Controllers\API\MappingController::class, 'updateMapping']);
 
 Route::get("/absences", [App\Http\Controllers\API\AbsenceController::class, 'getAbsences']);
 Route::get("/custom-absences", [App\Http\Controllers\API\AbsenceController::class, 'getCustomAbsences']);
@@ -37,9 +38,10 @@ Route::group(['middleware' => 'cors'], function () {
     Route::post('/register', [App\Http\Controllers\API\ApiAuthController::class, 'register']);
 });
 
+Route::post("/import", [App\Http\Controllers\ConvertController::class, 'importFile']);
+Route::post("/convert", [App\Http\Controllers\ConvertController::class, 'convertFile']);
+
 Route::group(['middleware' => 'auth:sanctum'], function () {
-    Route::post("/import", [App\Classes\Converters\MarathonConverter::class, 'importFile']);
-    Route::post("/convert", [App\Classes\Converters\MarathonConverter::class, 'convertFile']);
     Route::post("/logout", [App\Http\Controllers\API\ApiAuthController::class, 'logout']);
     Route::get("/user", [App\Http\Controllers\API\ApiAuthController::class, 'getUser']);
 });

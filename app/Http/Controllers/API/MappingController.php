@@ -96,6 +96,22 @@ class MappingController extends Controller
         return response()->json('Aucun fichier importé');
     }
 
+    public function updateMapping(Request $request, $id){
+        $mapping = Mapping::findOrFail($id);
+        $validatedData = $request->validate([
+            'input_rubrique' => 'required|string|regex:/^\d{1,3}[A-Z]{0,2}$/',
+            'name_rubrique' => 'required|string|max:255',
+            'output_rubrique_id' => 'required|integer',
+            'company_folder_id' => 'required|integer',
+            'output_type' => 'required|string',
+        ]);
+
+        if ($mapping->update($validatedData)){
+            return response()->json(['message' => 'OK']);
+        }
+        return response()->json(['message' => 'PAS OK']);
+    }
+
     public function setMapping(Request $request)
     {
         // Validation des données entrantes
@@ -114,19 +130,8 @@ class MappingController extends Controller
             ->first();
 
         if ($existingMapping) {
-            // Si l'association existe et que l'`output_rubrique_id` est différent, renvoyer une erreur
-            $tableNames = [
-                'App\Models\Absence' => 'Absences',
-                'App\Models\CustomAbsence' => 'Absences personnalisées',
-                'App\Models\Hour' => 'Heures',
-                'App\Models\CustomHour' => 'Heures personnalisées',
-            ];
-
             if ($existingMapping->output_rubrique_id !== $validatedData['output_rubrique_id']) {
                 $output = $existingMapping->output;
-
-                // Utilisez le tableau de mappage pour obtenir le nom lisible de la table
-                $tableName = $tableNames[$existingMapping->output_type] ?? $existingMapping->output_type;
 
                 return response()->json([
                     'error' => 'La rubrique ' . $existingMapping->input_rubrique . ' est déjà associée à ' . $output->code,

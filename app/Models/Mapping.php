@@ -14,6 +14,7 @@ class Mapping extends Model
         "input_rubrique",
         "name_rubrique",
         "output_rubrique_id",
+        "output_rubrique",
         "company_folder_id",
         "output_type"
     ];
