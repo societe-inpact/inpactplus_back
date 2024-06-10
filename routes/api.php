@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::post("/mapping", [App\Http\Controllers\API\MappingController::class, 'getMapping']);
-Route::post("/store-mapping", [App\Http\Controllers\API\MappingController::class, 'setMapping']);
+Route::post("/store-mapping", [App\Http\Controllers\API\MappingController::class, 'storeMapping']);
 Route::put("/update-mapping/{id}", [App\Http\Controllers\API\MappingController::class, 'updateMapping']);
 
 Route::get("/absences", [App\Http\Controllers\API\AbsenceController::class, 'getAbsences']);

@@ -11,13 +11,11 @@ class Mapping extends Model
 
     protected $table = "mapping";
     protected $fillable = [
-        "input_rubrique",
-        "name_rubrique",
-        "output_rubrique_id",
-        "output_rubrique",
         "company_folder_id",
-        "output_type"
+        "data",
     ];
+
+    protected $casts = ['data' => 'array'];
 
     public function output()
     {
