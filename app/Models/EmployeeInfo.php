@@ -9,6 +9,8 @@ class EmployeeInfo extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $table = 'employee_infos';
 
     protected $hidden = ['laravel_through_key'];

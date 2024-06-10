@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\CompanyFolder;
 use App\Models\Employee;
+use App\Models\EmployeeInfo;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -64,7 +65,12 @@ class ApiAuthController extends Controller
             'firstname' => 'required',
             'is_employee' => 'required|boolean',
             'is_company_referent' => 'nullable|boolean',
-            'is_folder_referent' => 'nullable|boolean'
+            'is_folder_referent' => 'nullable|boolean',
+            'employee_code' => 'required_if:is_employee,true|max:120',
+            'RIB' => 'required_if:is_employee,true',
+            'postal_code' => 'required_if:is_employee,true|min:5|max:5',
+            'postal_address' => 'required_if:is_employee,true|max:120',
+            'social_security_number' => 'required_if:is_employee,true| max:255',
         ]);
 
         if ($validator->fails()) {
@@ -79,17 +85,31 @@ class ApiAuthController extends Controller
                 'civility' => $request->civility,
                 'lastname' => $request->lastname,
                 'firstname' => $request->firstname
-            ]);
-
-            // Si l'utilisateur est un employé, créez une entrée correspondante dans la table employees
-            if ($request->is_employee) {
-                $employee = new Employee([
-                    'user_id' => $user->id,
-                    'is_company_referent' => $request->is_company_referent ?? false,
-                    'is_folder_referent' => $request->is_folder_referent ?? false
                 ]);
-                $user->employee()->save($employee);
-                return response()->json(['message' => 'Employé créé avec succès'], 200);
+                
+                
+                // Si l'utilisateur est un employé, créez une entrée correspondante dans la table employees
+                if ($request->is_employee) {
+
+                $employeeInfo = EmployeeInfo::create([
+                    'employee_code' => $request->employee_code,
+                    'RIB' => $request->RIB,
+                    'postal_code' => $request->postal_code,
+                    'postal_address' => $request->postal_address,
+                    'social_security_number' => $request->social_security_number
+                ]);
+
+                if($employeeInfo->save()){
+                    $employee = Employee::create([
+                        'user_id' => $user->id,
+                        'is_company_referent' => $request->is_company_referent ?? false,
+                        'is_folder_referent' => $request->is_folder_referent ?? false,
+                        'informations_id' => $employeeInfo->id,
+                        ]);
+                        
+                    $user->employee()->save($employee);
+                    return response()->json(['message' => 'Employé créé avec succès'], 200);
+                }
 
             }else{
                 return response()->json(['message' => 'Utilisateur créé avec succès'], 200);
