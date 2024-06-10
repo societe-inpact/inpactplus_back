@@ -145,6 +145,7 @@ class MappingController extends Controller
             'name_rubrique' => 'required|string|max:255',
             'output_rubrique_id' => 'required|integer',
             'output_type' => 'required|string',
+            'company_folder_id' => 'required|integer',
         ]);
 
 
