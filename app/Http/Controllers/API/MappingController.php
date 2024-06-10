@@ -212,7 +212,6 @@ class MappingController extends Controller
             'output_rubrique_id' => $validatedData['output_rubrique_id'],
             'output_type' => $validatedData['output_type'],
         ];
-        dd($validatedData['name_rubrique']);
 
         // Convertir les mappings en chaîne JSON et les stocker dans la base de données
         if (Mapping::create([
