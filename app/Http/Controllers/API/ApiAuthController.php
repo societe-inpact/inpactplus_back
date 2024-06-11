@@ -49,17 +49,28 @@ class ApiAuthController extends Controller
                         'name' => $company['name'],
                         'description' => $company['description'],
                         'folders' => $company['folders']->map(function ($folder) {
-                            return [
-                                'id' => $folder['id'],
-                                'folder_number' => $folder['folder_number'],
-                                'folder_name' => $folder['folder_name'],
-                                'siret' => $folder['siret'],
-                                'siren' => $folder['siren'],
-                                'mappings' => [
-                                    'id' => $folder['mappings']['id'],
-                                    'data' => $folder['mappings']['data'],
-                                ]
-                            ];
+                            if (isset($folder['mappings'])){
+                                return [
+                                    'id' => $folder['id'],
+                                    'folder_number' => $folder['folder_number'],
+                                    'folder_name' => $folder['folder_name'],
+                                    'siret' => $folder['siret'],
+                                    'siren' => $folder['siren'],
+                                    'mappings' => [
+                                        'id' => $folder['mappings']['id'],
+                                        'data' => $folder['mappings']['data'],
+                                    ]
+                                ];
+                            }else {
+                                return [
+                                    'id' => $folder['id'],
+                                    'folder_number' => $folder['folder_number'],
+                                    'folder_name' => $folder['folder_name'],
+                                    'siret' => $folder['siret'],
+                                    'siren' => $folder['siren'],
+                                    'mappings' => []
+                                ];
+                            }
                         }),
                     ];
                 }),
