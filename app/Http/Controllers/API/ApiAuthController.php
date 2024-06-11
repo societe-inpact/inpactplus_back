@@ -36,7 +36,7 @@ class ApiAuthController extends Controller
             return response()->json($employee);
         } else {
             // Récupérer les informations de l'utilisateur sans les données des dossiers
-            $companies = Company::with(['folders.software'])->get();
+            $companies = Company::with(['folders.software', 'folders.mappings'])->get();
             $user = [
                 'civility' => $user->civility,
                 'email' => $user->email,
