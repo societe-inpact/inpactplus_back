@@ -12,10 +12,10 @@ use League\Csv\Reader;
 class MappingController extends Controller
 {
     protected $tableNames = [
-        'App\Models\Absence' => 'Absences',
-        'App\Models\CustomAbsence' => 'Absences personnalisées',
-        'App\Models\Hour' => 'Heures',
-        'App\Models\CustomHour' => 'Heures personnalisées',
+        'App\Models\Absence' => 'Absence',
+        'App\Models\CustomAbsence' => 'Absence personnalisée',
+        'App\Models\Hour' => 'Heure',
+        'App\Models\CustomHour' => 'Heure personnalisée',
     ];
 
     public function getMapping(Request $request)
