@@ -27,4 +27,8 @@ class CompanyFolder extends Model
     public function software() {
         return $this->belongsTo(Software::class, 'interface_id', 'id');
     }
+
+    public function mappings(){
+        return $this->belongsTo(Mapping::class, 'id', 'company_folder_id');
+    }
 }

@@ -21,11 +21,21 @@ class ApiAuthController extends Controller
     {
         $user = Auth::user()->load(['employee.informations', 'employee.folders', 'employee.folders.company', 'employee.folders.mappings']);
         $userArray = $user->toArray();
-        if ($user->employee){
+
+        if ($user->employee) {
             $employeeArray = $user->employee->toArray();
+
+            // Parcourir chaque dossier pour extraire uniquement les données 'data' de la relation 'mappings'
+            foreach ($employeeArray['folders'] as &$folder) {
+                $folder['mappings'] = $folder['mappings']['data'];
+            }
+
+            // Fusionner les données de l'employé avec les données des dossiers mises à jour
             $employee = array_merge($userArray, $employeeArray);
+
             return response()->json($employee);
-        }else{
+        } else {
+            // Récupérer les informations de l'utilisateur sans les données des dossiers
             $companies = Company::with(['folders.software'])->get();
             $user = [
                 'civility' => $user->civility,
@@ -35,6 +45,7 @@ class ApiAuthController extends Controller
                 'lastname' => $user->lastname,
                 'companies' => $companies,
             ];
+
             return response()->json($user);
         }
     }
@@ -86,8 +97,8 @@ class ApiAuthController extends Controller
                 'lastname' => $request->lastname,
                 'firstname' => $request->firstname
                 ]);
-                
-                
+
+
                 // Si l'utilisateur est un employé, créez une entrée correspondante dans la table employees
                 if ($request->is_employee) {
 
@@ -106,7 +117,7 @@ class ApiAuthController extends Controller
                         'is_folder_referent' => $request->is_folder_referent ?? false,
                         'informations_id' => $employeeInfo->id,
                         ]);
-                        
+
                     $user->employee()->save($employee);
                     return response()->json(['message' => 'Employé créé avec succès'], 200);
                 }

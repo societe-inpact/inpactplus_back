@@ -38,8 +38,8 @@ Route::group(['middleware' => 'cors'], function () {
     Route::post('/register', [App\Http\Controllers\API\ApiAuthController::class, 'register']);
 });
 
-Route::post("/import", [App\Http\Controllers\ConvertController::class, 'importFile']);
-Route::post("/convert", [App\Http\Controllers\ConvertController::class, 'convertFile']);
+Route::post("/import", [\App\Http\Controllers\API\ConvertController::class, 'importFile']);
+Route::post("/convert", [\App\Http\Controllers\API\ConvertController::class, 'convertFile']);
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post("/logout", [App\Http\Controllers\API\ApiAuthController::class, 'logout']);
