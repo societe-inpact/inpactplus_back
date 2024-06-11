@@ -43,8 +43,28 @@ class ApiAuthController extends Controller
                 'firstname' => $user->firstname,
                 'id' => $user->id,
                 'lastname' => $user->lastname,
-                'companies' => $companies,
+                'companies' => $companies->map(function ($company) {
+                    return [
+                        'id' => $company['id'],
+                        'name' => $company['name'],
+                        'description' => $company['description'],
+                        'folders' => $company['folders']->map(function ($folder) {
+                            return [
+                                'id' => $folder['id'],
+                                'folder_number' => $folder['folder_number'],
+                                'folder_name' => $folder['folder_name'],
+                                'siret' => $folder['siret'],
+                                'siren' => $folder['siren'],
+                                'mappings' => [
+                                    'id' => $folder['mappings']['id'],
+                                    'data' => $folder['mappings']['data'],
+                                ]
+                            ];
+                        }),
+                    ];
+                }),
             ];
+
 
             return response()->json($user);
         }
