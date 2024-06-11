@@ -9,6 +9,8 @@ class Mapping extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $table = "mapping";
     protected $fillable = [
         "company_folder_id",

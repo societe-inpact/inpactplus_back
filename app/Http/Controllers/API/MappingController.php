@@ -4,17 +4,20 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Mapping;
-use App\Models\MappingNew;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Auth;
 use League\Csv\CharsetConverter;
 use League\Csv\Reader;
-use App\Http\Controllers\API\ApiAuthController;
 
 class MappingController extends Controller
 {
+    protected $tableNames = [
+        'App\Models\Absence' => 'Absences',
+        'App\Models\CustomAbsence' => 'Absences personnalisées',
+        'App\Models\Hour' => 'Heures',
+        'App\Models\CustomHour' => 'Heures personnalisées',
+    ];
+
     public function getMapping(Request $request)
     {
         $companyFolder = $request->get('company_folder_id');
@@ -23,205 +26,231 @@ class MappingController extends Controller
             return response()->json("L'id du dossier est requis", 400);
         }
 
-        // Initialisation de l'encodage et du formatage
+        if (!$request->hasFile('csv')) {
+            return response()->json('Aucun fichier importé');
+        }
+
+        $file = $request->file('csv');
+        $reader = $this->prepareCsvReader($file->getPathname());
+        $records = $reader->getRecords();
+
+        $results = $this->processCsvRecords($records, $companyFolder);
+
+        return response()->json($results);
+    }
+
+    protected function prepareCsvReader($path)
+    {
+        $reader = Reader::createFromPath($path, 'r');
         $encoder = (new CharsetConverter())->inputEncoding('utf-8');
+        $reader->addFormatter($encoder);
+        $reader->setDelimiter(';');
 
-        // Vérifier si le fichier CSV est présent dans la requête
-        if ($request->hasFile('csv')) {
-            $file = $request->file('csv');
-            $reader = Reader::createFromPath($file->getPathname(), 'r');
-            $reader->addFormatter($encoder);
-            $reader->setDelimiter(';');
+        return $reader;
+    }
 
-            $records = $reader->getRecords();
-            $results = [];
-            $processed_records = new Collection();
-            $unmatched_rubriques = [];
+    protected function processCsvRecords($records, $companyFolder)
+    {
+        $processedRecords = collect();
+        $unmatchedRubriques = [];
+        $rubriqueRegex = '/^\d{1,3}[A-Z]{0,2}$/';
+        $results = [];
 
-            // Expression régulière pour la rubrique d'entrée
-            $rubrique_regex = '/^\d{1,3}[A-Z]{0,2}$/';
+        foreach ($records as $record) {
+            $inputRubrique = $this->findInputRubrique($record, $rubriqueRegex);
 
-            // Parcourir chaque enregistrement
-            foreach ($records as $record) {
-                $input_rubrique = null;
+            if ($inputRubrique && !$processedRecords->contains($inputRubrique)) {
+                $processedRecords->push($inputRubrique);
+                $mappingResult = $this->findMapping($inputRubrique, $companyFolder);
 
-                // Parcourir chaque valeur de l'enregistrement
-                foreach ($record as $value) {
-                    // Vérifier si la valeur correspond à la regex de la rubrique
-                    if (preg_match($rubrique_regex, $value)) {
-                        $input_rubrique = $value;
-                        break; // Arrêter la boucle une fois la rubrique d'entrée trouvée
-                    }
+                if ($mappingResult) {
+                    $results[] = $mappingResult;
+                } else {
+                    $unmatchedRubriques[] = [
+                        'input_rubrique' => $inputRubrique,
+                        'type_rubrique' => null,
+                        'output_rubrique' => null,
+                        'base_calcul' => null,
+                        'label' => null,
+                        'is_mapped' => false,
+                        'company_folder_id' => $companyFolder,
+                    ];
                 }
+            }
+        }
 
-                // Si la rubrique d'entrée a été trouvée et n'a pas déjà été traitée
-                if ($input_rubrique !== null && !$processed_records->contains($input_rubrique)) {
-                    // Ajouter la rubrique traitée à l'ensemble
-                    $processed_records->push($input_rubrique);
+        return array_merge($results, $unmatchedRubriques);
+    }
 
-                    // Rechercher tous les mappings correspondants dans la base de données
-                    $mappings = Mapping::with('folder')
-                        ->where('company_folder_id', $companyFolder)
-                        ->get();
+    protected function findInputRubrique($record, $regex)
+    {
+        foreach ($record as $value) {
+            if (preg_match($regex, $value)) {
+                return $value;
+            }
+        }
 
-                    $is_mapped = false;
+        return null;
+    }
 
-                    foreach ($mappings as $mapping) {
-                        // Décoder les données JSON
-                        $mappingDataArray = $mapping->data;
-                        if (is_array($mappingDataArray)) {
-                            foreach ($mappingDataArray as $data) {
-                                if (isset($data['input_rubrique']) && $data['input_rubrique'] === $input_rubrique) {
-                                    $outputType = $data['output_type'];
-                                    $outputRubriqueId = $data['output_rubrique_id'];
+    protected function findMapping($inputRubrique, $companyFolder)
+    {
+        $mappings = Mapping::with('folder')
+            ->where('company_folder_id', $companyFolder)
+            ->get();
 
-                                    // Résolvez le nom de classe du modèle à utiliser
-                                    $outputModelClass = App::make($outputType);
-
-                                    // Créez une instance du modèle correspondant
-                                    $outputModelInstance = new $outputModelClass;
-
-                                    // Recherchez l'objet OutputRubrique correspondant
-                                    $output = $outputModelInstance->findOrFail($outputRubriqueId);
-                                    $results[] = [
-                                        'input_rubrique' => $data['input_rubrique'],
-                                        'type_rubrique' => $data['name_rubrique'] ?? null, // Utilisez $data['name_rubrique'] s'il est présent dans les données
-                                        'output_rubrique' => $output->code,
-                                        'base_calcul' => $output->base_calcul,
-                                        'label' => $output->label,
-                                        'is_mapped' => true,
-                                        'company_folder_id' => $companyFolder,
-                                    ];
-                                    $is_mapped = true;
-                                    break 2; // Break out of both foreach loops
-                                }
-                            }
-                        }
-                    }
-
-                    if (!$is_mapped) {
-                        $unmatched_rubriques[] = [
-                            'input_rubrique' => $input_rubrique,
-                            'type_rubrique' => null,
-                            'output_rubrique' => null,
-                            'base_calcul' => null,
-                            'label' => null,
-                            'is_mapped' => false,
+        foreach ($mappings as $mapping) {
+            foreach ($mapping->data as $data) {
+                if ($data['input_rubrique'] === $inputRubrique) {
+                    $output = $this->resolveOutputModel($data['output_type'], $data['output_rubrique_id']);
+                    if ($output) {
+                        return [
+                            'input_rubrique' => $data['input_rubrique'],
+                            'type_rubrique' => $this->tableNames[$data['output_type']] ?? $data['output_type'],
+                            'output_rubrique' => $output->code,
+                            'base_calcul' => $output->base_calcul,
+                            'label' => $output->label,
+                            'is_mapped' => true,
                             'company_folder_id' => $companyFolder,
                         ];
                     }
                 }
             }
-
-            $rubrique_merged = array_merge($results, $unmatched_rubriques);
-            return response()->json($rubrique_merged);
         }
 
-        return response()->json('Aucun fichier importé');
+        return null;
+    }
+
+    protected function resolveOutputModel($outputType, $outputRubriqueId)
+    {
+        if (!class_exists($outputType)) {
+            return null;
+        }
+
+        $outputModelClass = App::make($outputType);
+        return $outputModelClass->find($outputRubriqueId);
     }
 
     public function updateMapping(Request $request, $id)
     {
+        $companyFolder = $request->get('company_folder_id');
+
+        if (!$companyFolder) {
+            return response()->json("L'id du dossier est requis", 400);
+        }
+
+        $validatedData = $this->validateMappingData($request);
+
         $mapping = Mapping::findOrFail($id);
-        $validatedData = $request->validate([
+
+        if ($mapping->company_folder_id !== intval($validatedData['company_folder_id'])) {
+            return response()->json(['error' => 'Le dossier de l\'entreprise ne correspond pas.'], 403);
+        }
+
+        if (!$this->updateMappingData($mapping, $validatedData)) {
+            return response()->json(['error' => 'La rubrique d\'entrée spécifiée n\'a pas été trouvée.'], 404);
+        }
+
+        return response()->json(['message' => 'Mapping mis à jour avec succès']);
+    }
+
+    protected function validateMappingData(Request $request)
+    {
+        return $request->validate([
             'input_rubrique' => 'required|string|regex:/^\d{1,3}[A-Z]{0,2}$/',
             'name_rubrique' => 'required|string|max:255',
             'output_rubrique_id' => 'required|integer',
             'company_folder_id' => 'required|integer',
             'output_type' => 'required|string',
         ]);
+    }
 
-        if ($mapping->update($validatedData)) {
-            return response()->json(['message' => 'OK']);
+    protected function updateMappingData($mapping, $validatedData)
+    {
+        $data = $mapping->data;
+
+        foreach ($data as &$entry) {
+            if ($entry['input_rubrique'] === $validatedData['input_rubrique']) {
+                $entry['name_rubrique'] = $validatedData['name_rubrique'];
+                $entry['output_rubrique_id'] = $validatedData['output_rubrique_id'];
+                $entry['output_type'] = $validatedData['output_type'];
+                $mapping->data = $data;
+                return $mapping->save();
+            }
         }
-        return response()->json(['message' => 'PAS OK']);
+
+        return false;
     }
 
     public function storeMapping(Request $request)
     {
-        // Validation des données entrantes
-        $validatedData = $request->validate([
-            'input_rubrique' => 'required|string|regex:/^\d{1,3}[A-Z]{0,2}$/',
-            'name_rubrique' => 'required|string|max:255',
-            'output_rubrique_id' => 'required|integer',
-            'output_type' => 'required|string',
-            'company_folder_id' => 'required|integer',
-        ]);
+        $validatedData = $this->validateMappingData($request);
+        $companyFolder = $validatedData['company_folder_id'];
 
+        $existingMappings = Mapping::where('company_folder_id', $companyFolder)->get();
 
-        $companyFolder = $request->get('company_folder_id');
+        foreach ($existingMappings as $mapping) {
+            $data = $mapping->data;
 
-        // Vérifier s'il existe déjà un mapping avec la même `input_rubrique` et le même `output_type`
-        $existingMapping = Mapping::with('folder')->where('company_folder_id', $companyFolder)->get();
-
-        foreach ($existingMapping as $mapping) {
-            foreach ($mapping->data as $data) {
-                $outputType = $data['output_type'];
-                $outputRubriqueId = $data['output_rubrique_id'];
-
-                // Résolvez le nom de classe du modèle à utiliser
-                $outputModelClass = App::make($outputType);
-
-                // Créez une instance du modèle correspondant
-                $outputModelInstance = new $outputModelClass;
-
-                // Recherchez l'objet OutputRubrique correspondant
-                $output = $outputModelInstance->findOrFail($outputRubriqueId);
-                if ($data['input_rubrique'] === $validatedData['input_rubrique']) {
+            foreach ($data as $entry) {
+                if ($entry['input_rubrique'] === $validatedData['input_rubrique']) {
                     return response()->json([
-                        'error' => 'La rubrique ' . $validatedData['input_rubrique'] . ' est déjà associée à ' . $output->code,
+                        'error' => 'La rubrique d\'entrée ' . $validatedData['input_rubrique'] . ' est déjà associée.',
                     ], 409);
                 }
-                $newMapping = [
-                    'input_rubrique' => $validatedData['input_rubrique'],
-                    'name_rubrique' => $validatedData['name_rubrique'],
-                    'output_rubrique_id' => $validatedData['output_rubrique_id'],
-                    'output_type' => $validatedData['output_type'],
-                ];
-
-                $data[] = $newMapping;
-
-                // Convertir les mappings en chaîne JSON et les mettre à jour dans la base de données
-                $output->update(['data' => $data]);
+                if ($entry['output_rubrique_id'] === $validatedData['output_rubrique_id']) {
+                    return response()->json([
+                        'error' => 'La rubrique de sortie ' . $validatedData['output_rubrique_id'] . ' est déjà associée.',
+                    ], 409);
+                }
             }
-            return response()->json(['success' => 'Mapping ajouté avec succès'], 201);
         }
-        
-        // Vérification de l'existence de la rubrique dans la table appropriée
-        $outputClass = $validatedData['output_type']; // La classe associée à `output_type`
-        if (!class_exists($outputClass)) {
+
+        if (!$this->validateOutputClassAndRubrique($validatedData)) {
             return response()->json([
-                'error' => 'Le type spécifié n\'existe pas: ' . $outputClass,
+                'error' => 'La rubrique spécifiée n\'existe pas ou le type spécifié n\'existe pas.',
             ], 404);
+        }
+
+        $this->saveMappingData($companyFolder, $validatedData);
+
+        return response()->json(['success' => 'Mapping ajouté avec succès'], 201);
+    }
+
+    protected function validateOutputClassAndRubrique($validatedData)
+    {
+        $outputClass = $validatedData['output_type'];
+
+        if (!class_exists($outputClass)) {
+            return false;
         }
 
         $outputRubrique = $outputClass::find($validatedData['output_rubrique_id']);
 
-        if (!$outputRubrique) {
-            return response()->json([
-                'error' => 'La rubrique spécifiée dans la table ' . $outputClass . ' n\'existe pas.',
-                'rubrique_code' => $validatedData['output_rubrique_id'],
-                'suggestion' => 'Voulez-vous créer cette rubrique ?'
-            ], 404);
-        }
+        return $outputRubrique !== null;
+    }
 
-
-        // Créer un nouveau mappage dans la base de données
-        $mappingData[] = [
+    protected function saveMappingData($companyFolder, $validatedData)
+    {
+        $newMapping = [
             'input_rubrique' => $validatedData['input_rubrique'],
             'name_rubrique' => $validatedData['name_rubrique'],
             'output_rubrique_id' => $validatedData['output_rubrique_id'],
             'output_type' => $validatedData['output_type'],
         ];
 
-        // Convertir les mappings en chaîne JSON et les stocker dans la base de données
-        if (Mapping::create([
-            'company_folder_id' => $validatedData['company_folder_id'],
-            'data' => $mappingData,
-        ])) {
-            return response()->json(['success' => 'Mappage ajouté avec succès'], 201);
+        $mapping = Mapping::where('company_folder_id', $companyFolder)->first();
+
+        if ($mapping) {
+            $existingData = $mapping->data;
+            $existingData[] = $newMapping;
+            $mapping->data = $existingData;
+            $mapping->save();
         } else {
-            return response()->json(['error' => 'Erreur lors de l\'ajout du mappage'], 500);
+            Mapping::create([
+                'company_folder_id' => $companyFolder,
+                'data' => [$newMapping],
+            ]);
         }
     }
 }
