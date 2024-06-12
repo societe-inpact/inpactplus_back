@@ -27,7 +27,11 @@ class ApiAuthController extends Controller
 
             // Parcourir chaque dossier pour extraire uniquement les données 'data' de la relation 'mappings'
             foreach ($employeeArray['folders'] as &$folder) {
-                $folder['mappings'] = $folder['mappings']['data'];
+                if (isset($folder['mappings'])) {
+                    $folder['mappings'] = $folder['mappings']['data'];
+                }
+                // Inclure les logiciels dans le résultat
+                $folder['software'] = $folder['software'];
             }
 
             // Fusionner les données de l'employé avec les données des dossiers mises à jour
@@ -59,7 +63,8 @@ class ApiAuthController extends Controller
                                     'mappings' => [
                                         'id' => $folder['mappings']['id'],
                                         'data' => $folder['mappings']['data'],
-                                    ]
+                                    ],
+                                    'software' => $folder['software'], 
                                 ];
                             }else {
                                 return [

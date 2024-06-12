@@ -12,7 +12,7 @@ class CompanyFolder extends Model
     public $timestamps = false;
 
     protected $table = 'company_folders';
-    protected $fillable = ["company_id", "folder_number","folder_name", "siret", "siren"];
+    protected $fillable = ["company_id", "folder_number", "folder_name", "siret", "siren", "interface_id"];
 
     protected $hidden = [
         'company_id',
@@ -20,15 +20,18 @@ class CompanyFolder extends Model
         'interface_id',
     ];
 
-    public function company(){
+    public function company()
+    {
         return $this->belongsTo(Company::class, 'company_id', 'id');
     }
 
-    public function software() {
-        return $this->hasOne(Software::class, 'id', 'interface_id');
+    public function software()
+    {
+        return $this->belongsTo(Software::class, 'interface_id');
     }
 
-    public function mappings(){
+    public function mappings()
+    {
         return $this->belongsTo(Mapping::class, 'id', 'company_folder_id');
     }
 }
