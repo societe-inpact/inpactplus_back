@@ -1,27 +1,23 @@
 <?php
 
-namespace App\Classes\Converters;
+namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Interfaces\ConverterInterface;
-use App\Models\Absence;
-use Illuminate\Http\Request;
+use App\Http\Controllers\RuntimeException;
+use App\Models\Mapping;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Config;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Date;
 use League\Csv\CharsetConverter;
 use League\Csv\Exception;
 use League\Csv\InvalidArgument;
 use League\Csv\Reader;
 use League\Csv\UnavailableStream;
 use League\Csv\Writer;
-use RuntimeException;
-use Illuminate\Support\Facades\Date;
-use function Laravel\Prompts\error;
-use function PHPUnit\Framework\matches;
 
-class MarathonConverter extends Controller implements ConverterInterface
+class ConvertController extends Controller
 {
-    private $correspondenceGlobalTable;
     const CORRESPONDENCES = [
         'absences' => [
             'J' => 0, // Correspond à une journée d'absence
@@ -30,11 +26,6 @@ class MarathonConverter extends Controller implements ConverterInterface
         ],
     ];
 
-    public function __construct(string $badgeuse = 'marathon')
-    {
-        // Chargement de la table de correspondance depuis la configuration
-        $this->correspondenceGlobalTable = Config::get("mapping.$badgeuse", []);
-    }
 
     /**
      * @throws InvalidArgument
@@ -55,6 +46,9 @@ class MarathonConverter extends Controller implements ConverterInterface
             $reader->setHeaderOffset(0);
 
             $header = $reader->getHeader();
+            if ($header !== ['CODE SALARIE', 'NOM', 'PRENOM', 'RUBRIQUE', 'MONTANT']){
+
+            }
             $records = $reader->getRecords();
             $data = [];
 
@@ -86,19 +80,6 @@ class MarathonConverter extends Controller implements ConverterInterface
         ]);
     }
 
-
-    /**
-     * Retourne le code Silae correspondant à une rubrique donnée.
-     *
-     * @param string $rubrique Rubrique à convertir
-     * @return string|null Code Silae correspondant
-     */
-    private function getSilaeCode(string $rubrique): ?string
-    {
-        // Suppression du préfixe (P, 1, 3) et recherche du code Silae correspondant
-        $rubriqueWithoutPrefix = preg_replace('/^([P13])/', '', $rubrique);
-        return $this->correspondenceGlobalTable[strtoupper($rubriqueWithoutPrefix)] ?? response()->json('no');
-    }
 
     /**
      * Écrit les collections dans un fichier CSV.
@@ -141,7 +122,7 @@ class MarathonConverter extends Controller implements ConverterInterface
     {
         $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15');
         $formatter = fn(array $row): array => array_map('strtoupper', $row);
-
+        $folderId = $request->get('company_folder_id');
         if ($request->hasFile('csv')) {
             $file = $request->file('csv');
             $reader = Reader::createFromPath($file->getPathname(), 'r');
@@ -149,16 +130,22 @@ class MarathonConverter extends Controller implements ConverterInterface
             $reader->setDelimiter(';');
             $reader->addFormatter($formatter);
             $reader->setHeaderOffset(0);
-            $data = $this->convert($reader);
-            $csvConverted = $this->writeToFile($data);
+            $data = $this->convert($reader, $folderId);
             $header = ['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin'];
+            if ($data){
+                $csvConverted = $this->writeToFile($data);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Votre fichier a été convertit',
+                    'status' => 200,
+                    'file' => $csvConverted,
+                    'header' => $header,
+                    'rows' => $data
+                ]);
+            }
             return response()->json([
-                'success' => true,
-                'message' => 'Votre fichier a été convertit',
-                'status' => 200,
-                'file' => $csvConverted,
-                'header' => $header,
-                'rows' => $data
+                'success' => false,
+                'message' => 'Certaines données ne sont pas mappées',
             ]);
             //$this->convertFile($reader);
         }
@@ -172,25 +159,61 @@ class MarathonConverter extends Controller implements ConverterInterface
 
 
     /**
+     * Retourne le code Silae correspondant à une rubrique donnée.
+     *
+     * @param string $rubrique Rubrique à convertir
+     * @return string|null Code Silae correspondant
+     */
+
+    private function getMappingsFolder($folderId){
+        return Mapping::where('company_folder_id', $folderId)->get();
+    }
+
+    private function getSilaeCode(string $rubrique, $folderId)
+    {
+        $mappings = $this->getMappingsFolder($folderId);
+        foreach ($mappings as $mapping){
+            foreach ($mapping->data as $mappedRow){
+                $output = $this->resolveOutputModel($mappedRow['output_type'], $mappedRow['output_rubrique_id']);
+                if ($mappedRow['input_rubrique'] === $rubrique){
+                    return $output;
+                }
+            }
+        }
+        return null;
+    }
+
+
+    protected function resolveOutputModel($outputType, $outputRubriqueId)
+    {
+        if (!class_exists($outputType)) {
+            return null;
+        }
+
+        $outputModelClass = App::make($outputType);
+        return $outputModelClass->find($outputRubriqueId);
+    }
+
+    /**
      * Convertit les données du fichier CSV et retourne les collections converties.
      *
      * @param Reader $file Objet Reader contenant les données du fichier CSV
      */
-    private function convert(Reader $file): array
+    private function convert(Reader $file, $folderId): array
     {
         $data = [];
-        $records = iterator_to_array($file, true);
-        // TODO : Voir si il y a une façon déjà établie de convertir sans header
-        foreach ($records as $record) {
-            $codeSilae = $this->getSilaeCode($record['RUBRIQUE']);
 
+        $records = iterator_to_array($file, true);
+        foreach ($records as $record) {
+            $codeSilae = $this->getSilaeCode($record['RUBRIQUE'], $folderId);
             // preg permettant le dégroupement de la date
             preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $record['MONTANT'], $matches);
-
-            if (str_starts_with($codeSilae, "AB-")) {
-                $data = $this->processAbsenceRecord($data, $record, $codeSilae, $matches);
-            } elseif (str_starts_with($codeSilae, "EV-") || str_starts_with($codeSilae, "HS-")) {
-                $data = $this->convertNegativeOrDotValue($data, $record, $codeSilae);
+            if ($codeSilae){
+                if (str_starts_with($codeSilae->code, "AB-")) {
+                    $data = $this->processAbsenceRecord($data, $record, $codeSilae, $matches);
+                } elseif (str_starts_with($codeSilae->code, "EV-") || str_starts_with($codeSilae->code, "HS-")) {
+                    $data = $this->convertNegativeOrDotValue($data, $record, $codeSilae);
+                }
             }
         }
 
@@ -201,7 +224,7 @@ class MarathonConverter extends Controller implements ConverterInterface
         return $data;
     }
 
-    private function processAbsenceRecord(array $data, array $record, string $codeSilae, array $matches): array
+    private function processAbsenceRecord(array $data, array $record, $codeSilae, array $matches): array
     {
         if (is_numeric($record['MONTANT'])) {
             return $data;
@@ -212,10 +235,10 @@ class MarathonConverter extends Controller implements ConverterInterface
         $end_date = $matches[9] . "/" . $matches[8] . "/" . $matches[7];
 
         if ($matches[5] === 'J' && $matches[10] === 'J') {
-            if (array_key_exists($codeSilae, self::BASE_CALCUL) && self::BASE_CALCUL[$codeSilae] === 'H') {
+            if ($codeSilae->base_calcul === 'H') {
                 $data[] = [
                     'Matricule' => $record['CODE SALARIE'],
-                    'Code' => $codeSilae,
+                    'Code' => $codeSilae->code,
                     'Valeur' => intval($matches[13]),
                     'Date debut' => '',
                     'Date fin' => ''
@@ -223,25 +246,25 @@ class MarathonConverter extends Controller implements ConverterInterface
             }else if ($start_date != $end_date) {
                 $data[] = [
                     'Matricule' => $record['CODE SALARIE'],
-                    'Code' => $codeSilae,
+                    'Code' => $codeSilae->code,
                     'Valeur' => str($value),
                     'Date debut' => $start_date,
                     'Date fin' => $end_date
                 ];
             } else {
-                $data = $this->addDateRangeToRecords($data, $record['CODE SALARIE'], $codeSilae, str($value), strtotime(str_replace('/', '-', $start_date)), strtotime(str_replace('/', '-', $end_date)));
+                $data = $this->addDateRangeToRecords($data, $record['CODE SALARIE'], $codeSilae->code, str($value), strtotime(str_replace('/', '-', $start_date)), strtotime(str_replace('/', '-', $end_date)));
             }
 
         } elseif (($matches[5] === 'A' && $matches[10] === 'A') || ($matches[5] === 'M' && $matches[10] === 'M')) {
             $value = self::CORRESPONDENCES['absences']['A'];
-            if (array_key_exists($codeSilae, self::BASE_CALCUL) && self::BASE_CALCUL[$codeSilae] === 'H') {
+            if ($codeSilae->base_calcul === 'H') {
                 $value = intval($matches[13]);
             }
 
             if (strtotime(str_replace('/', '-', $start_date)) === strtotime(str_replace('/', '-', $end_date))) {
                 $data[] = [
                     'Matricule' => $record['CODE SALARIE'],
-                    'Code' => $codeSilae,
+                    'Code' => $codeSilae->code,
                     'Valeur' => str($value),
                     'Date debut' => $start_date,
                     'Date fin' => $end_date
@@ -256,7 +279,7 @@ class MarathonConverter extends Controller implements ConverterInterface
                 $date_formatted = strtotime($date_str);
                 $data[] = [
                     'Matricule' => $record['CODE SALARIE'],
-                    'Code' => $codeSilae,
+                    'Code' => $codeSilae->code,
                     'Valeur' => str($value),
                     'Date debut' => date('d/m/Y', $date_formatted),
                     'Date fin' => date('d/m/Y', $date_formatted)
@@ -273,7 +296,7 @@ class MarathonConverter extends Controller implements ConverterInterface
                 if ($matches[4] < $matches[9] && $difference >= 2) {
                     $data[] = [
                         'Matricule' => $record['CODE SALARIE'],
-                        'Code' => $codeSilae,
+                        'Code' => $codeSilae->code,
                         'Valeur' => str($value),
                         'Date debut' => date('d/m/Y', $date_formatted - $difference),
                         'Date fin' => date('d/m/Y', $date_formatted)
@@ -281,7 +304,7 @@ class MarathonConverter extends Controller implements ConverterInterface
                 } else {
                     $data[] = [
                         'Matricule' => $record['CODE SALARIE'],
-                        'Code' => $codeSilae,
+                        'Code' => $codeSilae->code,
                         'Valeur' => str($value),
                         'Date debut' => date('d/m/Y', $date_formatted),
                         'Date fin' => date('d/m/Y', $date_formatted)
@@ -305,7 +328,7 @@ class MarathonConverter extends Controller implements ConverterInterface
 
         $data[] = [
             'Matricule' => $record['CODE SALARIE'],
-            'Code' => $codeSilae,
+            'Code' => $codeSilae->code,
             'Valeur' => (float)$value,
             'Date debut' => '',
             'Date fin' => ''
@@ -315,17 +338,16 @@ class MarathonConverter extends Controller implements ConverterInterface
     }
 
     // Fonction déterminant si la valeur doit être calculée sur une base heures (H) ou jours (J)
-    private function calculateAbsenceTypePeriod(string $codeSilae, array $matches): int
+    private function calculateAbsenceTypePeriod($codeSilae, array $matches): int
     {
-        if (array_key_exists($codeSilae, self::BASE_CALCUL) && self::BASE_CALCUL[$codeSilae] === 'H') {
+        if ($codeSilae->base_calcul === 'H') {
             return intval($matches[13]);
         }
-
         return self::CORRESPONDENCES['absences']['J'];
     }
 
     // Fonction permettant d'ajouter la date de début et de fin
-    private function addDateRangeToRecords(array $data, string $matricule, string $codeSilae, $value, int $start_date_formatted, int $end_date_formatted): array
+    private function addDateRangeToRecords(array $data, string $matricule, $codeSilae, $value, int $start_date_formatted, int $end_date_formatted): array
     {
         while ($start_date_formatted <= $end_date_formatted) {
             $data[] = [

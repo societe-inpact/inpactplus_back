@@ -9,14 +9,15 @@ class Mapping extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $table = "mapping";
     protected $fillable = [
-        "input_rubrique",
-        "name_rubrique",
-        "output_rubrique_id",
         "company_folder_id",
-        "output_type"
+        "data",
     ];
+
+    protected $casts = ['data' => 'array'];
 
     public function output()
     {
