@@ -16,6 +16,6 @@ class Software extends Model
     ];
 
     public function company_folder() {
-        return $this->hasMany(CompanyFolder::class, 'interface_id', 'id');
+        return $this->belongsToMany(CompanyFolder::class, 'id', 'interface_id');
     }
 }

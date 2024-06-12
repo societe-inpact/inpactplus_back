@@ -19,7 +19,7 @@ class ApiAuthController extends Controller
 {
     public function getUser()
     {
-        $user = Auth::user()->load(['employee.informations', 'employee.folders', 'employee.folders.company', 'employee.folders.mappings']);
+        $user = Auth::user()->load(['employee.informations', 'employee.folders', 'employee.folders.company', 'employee.folders.mappings', 'employee.folders.software']);
         $userArray = $user->toArray();
 
         if ($user->employee) {

@@ -25,7 +25,7 @@ class CompanyFolder extends Model
     }
 
     public function software() {
-        return $this->belongsTo(Software::class, 'interface_id', 'id');
+        return $this->hasOne(Software::class, 'id', 'interface_id');
     }
 
     public function mappings(){
