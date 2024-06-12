@@ -30,7 +30,6 @@ class ApiAuthController extends Controller
                 if (isset($folder['mappings'])) {
                     $folder['mappings'] = $folder['mappings']['data'];
                 }
-                // Inclure les logiciels dans le résultat
                 $folder['software'] = $folder['software'];
             }
 
