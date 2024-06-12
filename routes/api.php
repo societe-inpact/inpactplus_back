@@ -28,6 +28,7 @@ Route::get("/custom-hours", [App\Http\Controllers\API\HourController::class, 'ge
 Route::post("/custom-hours/create", [App\Http\Controllers\API\HourController::class, 'createCustomHour']);
 Route::get("/variables-elements", [App\Http\Controllers\API\VariablesElementsController::class, 'getVariablesElements']);
 Route::post("/variables-elements/create", [App\Http\Controllers\API\VariablesElementsController::class, 'createVariableElement']);
+Route::get("/interfaces", [App\Http\Controllers\API\SoftwareController::class, 'getSoftware']);
 
 Route::get("/companies", [App\Http\Controllers\API\CompanyController::class, 'getCompanies']);
 Route::post("/company/create", [App\Http\Controllers\API\CompanyController::class, 'createCompany']);
