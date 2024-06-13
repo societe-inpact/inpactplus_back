@@ -13,7 +13,7 @@ class CompanyFolderController extends Controller
     public function createCompanyFolder(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'folder_number' => 'required|string',
+            'folder_number' => 'required|integer',
             'folder_name' => 'required|string',
             'siret' => 'required|string',
             'siren' => 'required|string',
@@ -54,7 +54,7 @@ class CompanyFolderController extends Controller
     public function updateCompanyFolder(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'folder_number' => 'required|string',
+            'folder_number' => 'required|integer',
             'folder_name' => 'required|string',
             'siret' => 'required|string',
             'siren' => 'required|string',

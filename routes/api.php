@@ -33,7 +33,7 @@ Route::get("/interfaces", [App\Http\Controllers\API\SoftwareController::class, '
 Route::get("/companies", [App\Http\Controllers\API\CompanyController::class, 'getCompanies']);
 Route::post("/company/create", [App\Http\Controllers\API\CompanyController::class, 'createCompany']);
 Route::post("/company_folder/create", [App\Http\Controllers\API\CompanyFolderController::class, 'createCompanyFolder']);
-Route::post("/company_folder/{id}", [App\Http\Controllers\API\CompanyFolderController::class, 'updateCompanyFolder']);
+Route::put("/company_folder/{id}", [App\Http\Controllers\API\CompanyFolderController::class, 'updateCompanyFolder']);
 
 Route::group(['middleware' => 'cors'], function () {
     Route::post('/login', [App\Http\Controllers\API\ApiAuthController::class, 'login']);
