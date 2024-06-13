@@ -72,7 +72,8 @@ class ApiAuthController extends Controller
                                     'folder_name' => $folder['folder_name'],
                                     'siret' => $folder['siret'],
                                     'siren' => $folder['siren'],
-                                    'mappings' => []
+                                    'mappings' => [],
+                                    'software' => $folder['software'], 
                                 ];
                             }
                         }),
