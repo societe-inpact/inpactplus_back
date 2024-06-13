@@ -16,6 +16,7 @@ class MappingController extends Controller
         'App\Models\CustomAbsence' => 'Absence personnalisée',
         'App\Models\Hour' => 'Heure',
         'App\Models\CustomHour' => 'Heure personnalisée',
+        'App\Models\VariableElement' => 'Éléments variables',
     ];
 
     public function getMapping(Request $request)
@@ -53,19 +54,22 @@ class MappingController extends Controller
     {
         $processedRecords = collect();
         $unmatchedRubriques = [];
-        $rubriqueRegex = '/^\d{1,3}[A-Z]{0,2}$/';
+        $rubriqueRegex = '/^[A-Za-z0-9]{1,3}$/';
         $results = [];
 
         foreach ($records as $record) {
-            $inputRubrique = $this->findInputRubrique($record, $rubriqueRegex);
+            // Vérifie que l'index 3 existe dans le record avant de l'utiliser
+            if (!isset($record[3])) {
+                continue; // Si l'index 3 n'existe pas, passer à l'itération suivante
+            }
 
+            $inputRubrique = $this->findInputRubrique($record[3], $rubriqueRegex);
             if ($inputRubrique && !$processedRecords->contains($inputRubrique)) {
                 $processedRecords->push($inputRubrique);
                 $mappingResult = $this->findMapping($inputRubrique, $companyFolder);
-
                 if ($mappingResult) {
                     $results[] = $mappingResult;
-                } else {
+                }else {
                     $unmatchedRubriques[] = [
                         'input_rubrique' => $inputRubrique,
                         'type_rubrique' => null,
@@ -82,16 +86,17 @@ class MappingController extends Controller
         return array_merge($results, $unmatchedRubriques);
     }
 
-    protected function findInputRubrique($record, $regex)
-    {
-        foreach ($record as $value) {
-            if (preg_match($regex, $value)) {
-                return $value;
-            }
-        }
 
+// Supposons que findInputRubrique est une méthode dans ta classe qui accepte une rubrique et un regex
+    protected function findInputRubrique($rubrique, $regex)
+    {
+        // Vérifie si la rubrique correspond au regex
+        if (preg_match($regex, $rubrique)) {
+            return $rubrique;
+        }
         return null;
     }
+
 
     protected function findMapping($inputRubrique, $companyFolder)
     {

@@ -37,6 +37,11 @@ class ConvertController extends Controller
         $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15');
         $formatter = fn(array $row): array => array_map('strtoupper', $row);
 
+        $request->validate([
+            'csv' => 'required|file|mimes:csv,txt',
+        ]);
+
+
         if ($request->hasFile('csv')) {
             $file = $request->file('csv');
             $reader = Reader::createFromPath($file->getPathname(), 'r');
@@ -46,8 +51,10 @@ class ConvertController extends Controller
             $reader->setHeaderOffset(0);
 
             $header = $reader->getHeader();
-            if ($header !== ['CODE SALARIE', 'NOM', 'PRENOM', 'RUBRIQUE', 'MONTANT']){
-
+            foreach ($header as $column) {
+                if (!is_string($column)) {
+                    return back()->withErrors(['csv' => 'Toutes les colonnes du fichier CSV doivent être des chaînes de caractères.']);
+                }
             }
             $records = $reader->getRecords();
             $data = [];
@@ -132,20 +139,19 @@ class ConvertController extends Controller
             $reader->setHeaderOffset(0);
             $data = $this->convert($reader, $folderId);
             $header = ['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin'];
-            if ($data){
-                $csvConverted = $this->writeToFile($data);
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Votre fichier a été convertit',
-                    'status' => 200,
-                    'file' => $csvConverted,
-                    'header' => $header,
-                    'rows' => $data
-                ]);
-            }
+            $csvConverted = $this->writeToFile($data);
+            return response()->json([
+                'success' => true,
+                'message' => 'Votre fichier a été convertit',
+                'status' => 200,
+                'file' => $csvConverted,
+                'header' => $header,
+                'rows' => $data
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Certaines données ne sont pas mappées',
+                'status' => 400
             ]);
             //$this->convertFile($reader);
         }
@@ -227,12 +233,21 @@ class ConvertController extends Controller
     private function processAbsenceRecord(array $data, array $record, $codeSilae, array $matches): array
     {
         if (is_numeric($record['MONTANT'])) {
+            $data[] = [
+                'Matricule' => $record['CODE SALARIE'],
+                'Code' => $codeSilae->code,
+                'Valeur' => $record['MONTANT'],
+                'Date debut' => '',
+                'Date fin' => ''
+            ];
             return $data;
         }
 
         $value = $this->calculateAbsenceTypePeriod($codeSilae, $matches);
         $start_date = $matches[4] . "/" . $matches[3] . "/" . $matches[2];
         $end_date = $matches[9] . "/" . $matches[8] . "/" . $matches[7];
+
+
 
         if ($matches[5] === 'J' && $matches[10] === 'J') {
             if ($codeSilae->base_calcul === 'H') {
@@ -317,7 +332,7 @@ class ConvertController extends Controller
     }
 
     // Fonction permettant de convertir les valeurs negatives ou commençant par un point
-    private function convertNegativeOrDotValue(array $data, array $record, string $codeSilae): array
+    private function convertNegativeOrDotValue(array $data, array $record, $codeSilae): array
     {
         $value = $record['MONTANT'];
 
