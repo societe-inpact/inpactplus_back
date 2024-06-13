@@ -16,6 +16,7 @@ class MappingController extends Controller
         'App\Models\CustomAbsence' => 'Absence personnalisée',
         'App\Models\Hour' => 'Heure',
         'App\Models\CustomHour' => 'Heure personnalisée',
+        'App\Models\VariableElement' => 'Éléments variables',
     ];
 
     public function getMapping(Request $request)
