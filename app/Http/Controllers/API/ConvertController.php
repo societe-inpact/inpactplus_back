@@ -15,6 +15,8 @@ use League\Csv\InvalidArgument;
 use League\Csv\Reader;
 use League\Csv\UnavailableStream;
 use League\Csv\Writer;
+use function Laravel\Prompts\error;
+use function PHPUnit\Framework\isEmpty;
 
 class ConvertController extends Controller
 {
@@ -49,26 +51,39 @@ class ConvertController extends Controller
             $reader->setDelimiter(';');
             $reader->addFormatter($formatter);
             $reader->setHeaderOffset(0);
-
             $header = $reader->getHeader();
-            foreach ($header as $column) {
-                if (!is_string($column)) {
-                    return back()->withErrors(['csv' => 'Toutes les colonnes du fichier CSV doivent être des chaînes de caractères.']);
-                }
-            }
             $records = $reader->getRecords();
             $data = [];
 
-            foreach ($records as $record) {
-                $mappedRecord = [];
-                foreach ($header as $columnName) {
-                    if (array_key_exists($columnName, $record)) {
-                        $mappedRecord[$columnName] = $record[$columnName];
-                    } else {
-                        $mappedRecord[$columnName] = null;
+            foreach ($header as $column) {
+                // Vérifiez ensuite si la chaîne contient des chiffres
+                $containsDigit = false;
+                for ($i = 0; $i < strlen($column); $i++) {
+                    if (is_numeric($column[$i])) {
+                        $containsDigit = true;
+                        break;
                     }
                 }
-                $data[] = $mappedRecord;
+
+                if ($containsDigit) {
+                    // Dans le cas où le fichier ne contient pas de header
+                    foreach ($records as $record) {
+                        $mappedRecord = [];
+
+                        foreach (array_values($record) as $index => $value) {
+                            $mappedRecord[$index] = $value;
+                        }
+
+//                        foreach ($header as $columnName) {
+//                            if (array_key_exists($columnName, $record)) {
+//                                $mappedRecord[$columnName] = $record[$columnName];
+//                            } else {
+//                                $mappedRecord[$columnName] = null;
+//                            }
+//                        }
+                        $data[] = $mappedRecord;
+                    }
+                }
             }
 
             return response()->json([
@@ -137,23 +152,30 @@ class ConvertController extends Controller
             $reader->setDelimiter(';');
             $reader->addFormatter($formatter);
             $reader->setHeaderOffset(0);
-            $data = $this->convert($reader, $folderId);
+
+            $result = $this->convert($reader, $folderId);
+            $data = $result['data'];
+            $unmappedRubriques = $result['unmappedRubriques'];
             $header = ['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin'];
-            $csvConverted = $this->writeToFile($data);
-            return response()->json([
-                'success' => true,
-                'message' => 'Votre fichier a été convertit',
-                'status' => 200,
-                'file' => $csvConverted,
-                'header' => $header,
-                'rows' => $data
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Certaines données ne sont pas mappées',
-                'status' => 400
-            ]);
-            //$this->convertFile($reader);
+
+            if (!empty($data)) {
+                $csvConverted = $this->writeToFile($data);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Votre fichier a été converti',
+                    'status' => 200,
+                    'file' => $csvConverted,
+                    'header' => $header,
+                    'rows' => $data,
+                ]);
+            } else {
+                $unmappedRubriquesString = implode(', ', $unmappedRubriques);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Les rubriques suivantes ne sont pas mappées : ' . $unmappedRubriquesString,
+                    'status' => 400,
+                ]);
+            }
         }
 
         return response()->json([
@@ -162,6 +184,7 @@ class ConvertController extends Controller
             'status' => 400
         ]);
     }
+
 
 
     /**
@@ -208,18 +231,34 @@ class ConvertController extends Controller
     private function convert(Reader $file, $folderId): array
     {
         $data = [];
-
+        $unmappedRubriques = [];
         $records = iterator_to_array($file, true);
         foreach ($records as $record) {
-            $codeSilae = $this->getSilaeCode($record['RUBRIQUE'], $folderId);
-            // preg permettant le dégroupement de la date
-            preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $record['MONTANT'], $matches);
-            if ($codeSilae){
-                if (str_starts_with($codeSilae->code, "AB-")) {
-                    $data = $this->processAbsenceRecord($data, $record, $codeSilae, $matches);
-                } elseif (str_starts_with($codeSilae->code, "EV-") || str_starts_with($codeSilae->code, "HS-")) {
-                    $data = $this->convertNegativeOrDotValue($data, $record, $codeSilae);
+            $mappedRecord = [];
+            foreach (array_values($record) as $index => $value) {
+                // Colonne Montant
+                if (str_contains($value, '.') || preg_match('/^\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2}(\|\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2})?$/', $value)) {
+                    $mappedRecord['MONTANT'] = $value;
+                } else {
+                    $mappedRecord['RUBRIQUE'] = $value;
                 }
+                // Colonne Code salarie/Matricule
+                if ($index === 0 && is_numeric($value) && !str_contains($value, '.')) {
+                    $mappedRecord['CODE SALARIE'] = $value;
+                }
+            }
+            // Utiliser les nouveaux noms de colonnes pour accéder aux valeurs
+            $codeSilae = $this->getSilaeCode($mappedRecord['RUBRIQUE'], $folderId);
+            // preg permettant le dégroupement de la date
+            preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $mappedRecord['MONTANT'], $matches);
+            if ($codeSilae) {
+                if (str_starts_with($codeSilae->code, "AB-")) {
+                    $data = $this->processAbsenceRecord($data, $mappedRecord, $codeSilae, $matches);
+                } elseif (str_starts_with($codeSilae->code, "EV-") || str_starts_with($codeSilae->code, "HS-")) {
+                    $data = $this->convertNegativeOrDotValue($data, $mappedRecord, $codeSilae);
+                }
+            } else {
+                $unmappedRubriques[] = $mappedRecord['RUBRIQUE'];
             }
         }
 
@@ -227,21 +266,28 @@ class ConvertController extends Controller
         usort($data, function ($a, $b) {
             return $a['Matricule'] <=> $b['Matricule'] ?: $a['Code'] <=> $b['Code'];
         });
-        return $data;
+
+        return [
+            'data' => $data,
+            'unmappedRubriques' => array_unique($unmappedRubriques) // Pour éviter les doublons
+        ];
     }
+
+
 
     private function processAbsenceRecord(array $data, array $record, $codeSilae, array $matches): array
     {
-        if (is_numeric($record['MONTANT'])) {
-            $data[] = [
-                'Matricule' => $record['CODE SALARIE'],
-                'Code' => $codeSilae->code,
-                'Valeur' => $record['MONTANT'],
-                'Date debut' => '',
-                'Date fin' => ''
-            ];
-            return $data;
-        }
+//        if (is_numeric($record['MONTANT'])) {
+////            $data[] = [
+////                'Matricule' => $record['CODE SALARIE'],
+////                'Code' => $codeSilae->code,
+////                'Valeur' => $record['MONTANT'],
+////                'Date debut' => '',
+////                'Date fin' => ''
+////            ];
+//            return $data;
+//        }
+
 
         $value = $this->calculateAbsenceTypePeriod($codeSilae, $matches);
         $start_date = $matches[4] . "/" . $matches[3] . "/" . $matches[2];

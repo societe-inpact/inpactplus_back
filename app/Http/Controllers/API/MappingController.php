@@ -19,10 +19,10 @@ class MappingController extends Controller
         'App\Models\VariableElement' => 'Éléments variables',
     ];
 
+    // Fonction permettant de récupérer les mappings existants d'un dossier
     public function getMapping(Request $request)
     {
         $companyFolder = $request->get('company_folder_id');
-
         if (!$companyFolder) {
             return response()->json("L'id du dossier est requis", 400);
         }
@@ -34,12 +34,12 @@ class MappingController extends Controller
         $file = $request->file('csv');
         $reader = $this->prepareCsvReader($file->getPathname());
         $records = $reader->getRecords();
-
         $results = $this->processCsvRecords($records, $companyFolder);
 
         return response()->json($results);
     }
 
+    // Fonction permettant de configurer l'import du fichier
     protected function prepareCsvReader($path)
     {
         $reader = Reader::createFromPath($path, 'r');
@@ -50,6 +50,7 @@ class MappingController extends Controller
         return $reader;
     }
 
+    // Fonction permettant de récupérer les mappings existants d'un dossier
     protected function processCsvRecords($records, $companyFolder)
     {
         $processedRecords = collect();
@@ -58,18 +59,19 @@ class MappingController extends Controller
         $results = [];
 
         foreach ($records as $record) {
-            // Vérifie que l'index 3 existe dans le record avant de l'utiliser
+            // $record[3] représente la colonne RUBRIQUE
             if (!isset($record[3])) {
-                continue; // Si l'index 3 n'existe pas, passer à l'itération suivante
+                continue;
             }
 
             $inputRubrique = $this->findInputRubrique($record[3], $rubriqueRegex);
+
             if ($inputRubrique && !$processedRecords->contains($inputRubrique)) {
                 $processedRecords->push($inputRubrique);
                 $mappingResult = $this->findMapping($inputRubrique, $companyFolder);
                 if ($mappingResult) {
                     $results[] = $mappingResult;
-                }else {
+                } else {
                     $unmatchedRubriques[] = [
                         'input_rubrique' => $inputRubrique,
                         'type_rubrique' => null,
@@ -82,22 +84,20 @@ class MappingController extends Controller
                 }
             }
         }
-
         return array_merge($results, $unmatchedRubriques);
     }
 
-
-// Supposons que findInputRubrique est une méthode dans ta classe qui accepte une rubrique et un regex
+    // Fonction permettant de récupérer une rubrique d'entrée
     protected function findInputRubrique($rubrique, $regex)
     {
-        // Vérifie si la rubrique correspond au regex
+        // Vérification si la rubrique correspond au regex
         if (preg_match($regex, $rubrique)) {
             return $rubrique;
         }
         return null;
     }
 
-
+    // Fonction permettant de récupérer les mappings existants d'un dossier
     protected function findMapping($inputRubrique, $companyFolder)
     {
         $mappings = Mapping::with('folder')
@@ -126,6 +126,7 @@ class MappingController extends Controller
         return null;
     }
 
+    // Fonction permettant de récupérer le Model d'une rubrique
     protected function resolveOutputModel($outputType, $outputRubriqueId)
     {
         if (!class_exists($outputType)) {
@@ -136,6 +137,7 @@ class MappingController extends Controller
         return $outputModelClass->find($outputRubriqueId);
     }
 
+    // Fonction permettant de mettre à jour un mapping existant
     public function updateMapping(Request $request, $id)
     {
         $companyFolder = $request->get('company_folder_id');
@@ -159,10 +161,11 @@ class MappingController extends Controller
         return response()->json(['message' => 'Mapping mis à jour avec succès']);
     }
 
+    // Fonction permettant de valider les données d'enregistrement d'un mapping
     protected function validateMappingData(Request $request)
     {
         return $request->validate([
-            'input_rubrique' => 'required|string|regex:/^\d{1,3}[A-Z]{0,2}$/',
+            'input_rubrique' => 'required|string|regex:/^[A-Za-z0-9]{1,3}$/',
             'name_rubrique' => 'required|string|max:255',
             'output_rubrique_id' => 'required|integer',
             'company_folder_id' => 'required|integer',
@@ -170,6 +173,7 @@ class MappingController extends Controller
         ]);
     }
 
+    // Fonction permettant de mettre à jour un mappings existant
     protected function updateMappingData($mapping, $validatedData)
     {
         $data = $mapping->data;
@@ -183,45 +187,63 @@ class MappingController extends Controller
                 return $mapping->save();
             }
         }
-
         return false;
     }
 
+    // Fonction permettant d'enregistrer un nouveau mapping en BDD
     public function storeMapping(Request $request)
     {
-        $validatedData = $this->validateMappingData($request);
-        $companyFolder = $validatedData['company_folder_id'];
+        $validatedRequestData = $this->validateMappingData($request);
+        $companyFolder = $validatedRequestData['company_folder_id'];
+        $mappedRubriques = Mapping::where('company_folder_id', $companyFolder)->get();
 
-        $existingMappings = Mapping::where('company_folder_id', $companyFolder)->get();
-
-        foreach ($existingMappings as $mapping) {
-            $data = $mapping->data;
-
-            foreach ($data as $entry) {
-                if ($entry['input_rubrique'] === $validatedData['input_rubrique']) {
+        foreach ($mappedRubriques as $mappedRubrique) {
+            $allMappedRubriques = $mappedRubrique->data;
+            foreach ($allMappedRubriques as $inputRubrique) {
+                if ($inputRubrique['input_rubrique'] === $validatedRequestData['input_rubrique']) {
                     return response()->json([
-                        'error' => 'La rubrique d\'entrée ' . $validatedData['input_rubrique'] . ' est déjà associée.',
+                        'error' => 'La rubrique d\'entrée ' . $validatedRequestData['input_rubrique'] . ' est déjà associée à la rubrique ' . $inputRubrique['name_rubrique'] . ' ' . $this->getSilaeRubrique($validatedRequestData)->code,
                     ], 409);
-                }
-                if ($entry['output_rubrique_id'] === $validatedData['output_rubrique_id']) {
-                    return response()->json([
-                        'error' => 'La rubrique de sortie ' . $validatedData['output_rubrique_id'] . ' est déjà associée.',
-                    ], 409);
+                } else {
+                    switch ($inputRubrique['output_type']) {
+                        case 'App\Models\Absence' || 'App\Models\CustomAbsence' ;
+                            if ($inputRubrique['output_type'] !== $validatedRequestData['output_type']
+                                && $inputRubrique['output_rubrique_id'] === $validatedRequestData['output_rubrique_id']
+                                && $this->getSilaeRubrique($validatedRequestData)->base_calcul !== $this->getSilaeRubrique($inputRubrique)->base_calcul) {
+                                return response()->json([
+                                    'error' => 'La rubrique ' . $inputRubrique['name_rubrique'] . ' ' . $this->getSilaeRubrique($validatedRequestData)->code . ' est déjà associée à la rubrique d\'entrée ' . $inputRubrique['input_rubrique'],
+                                ], 409);
+                            }
+                            break;
+                        default : '';
+                    }
                 }
             }
         }
 
-        if (!$this->validateOutputClassAndRubrique($validatedData)) {
+        if (!$this->validateOutputClassAndRubrique($validatedRequestData)) {
             return response()->json([
                 'error' => 'La rubrique spécifiée n\'existe pas ou le type spécifié n\'existe pas.',
             ], 404);
         }
 
-        $this->saveMappingData($companyFolder, $validatedData);
+        $this->saveMappingData($companyFolder, $validatedRequestData);
 
         return response()->json(['success' => 'Mapping ajouté avec succès'], 201);
     }
 
+    // Fonction permettant de transformer la rubrique d'entrée mappée en rubrique de sortie SILAE
+    private function getSilaeRubrique($rubrique)
+    {
+        $typeRubrique = $rubrique['output_type'];
+        $outputRubrique = $rubrique['output_rubrique_id'];
+        if (class_exists($typeRubrique)) {
+            return $typeRubrique::find($outputRubrique);
+        }
+        return false;
+    }
+
+    // Fonction permettant de récupérer la rubrique via son Model
     protected function validateOutputClassAndRubrique($validatedData)
     {
         $outputClass = $validatedData['output_type'];
@@ -235,6 +257,7 @@ class MappingController extends Controller
         return $outputRubrique !== null;
     }
 
+    // Fonction permettant d'enregistrer un nouveau mapping en BDD
     protected function saveMappingData($companyFolder, $validatedData)
     {
         $newMapping = [
@@ -257,5 +280,11 @@ class MappingController extends Controller
                 'data' => [$newMapping],
             ]);
         }
+    }
+
+    // Fonction permettant de supprimer un mapping existant
+    protected function deleteMapping()
+    {
+        // TODO
     }
 }
