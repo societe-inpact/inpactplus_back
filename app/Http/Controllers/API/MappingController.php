@@ -206,9 +206,9 @@ class MappingController extends Controller
                     ], 409);
                 } else {
                     switch ($validatedRequestData['output_type']) {
-                        case 'App\Models\Absence' || 'App\Models\CustomAbsence' ;
-                            if ($inputRubrique['output_type'] === $validatedRequestData['output_type']
-                                && $inputRubrique['output_rubrique_id'] === $validatedRequestData['output_rubrique_id']
+                        case $inputRubrique['output_type'] === 'App\Models\Absence' || $inputRubrique['output_type'] === 'App\Models\CustomAbsence';
+                            if ($inputRubrique['output_type'] !== $validatedRequestData['output_type']
+                                && $this->getSilaeRubrique($inputRubrique)->code === $this->getSilaeRubrique($validatedRequestData)->code
                                 && $this->getSilaeRubrique($validatedRequestData)->base_calcul !== $this->getSilaeRubrique($inputRubrique)->base_calcul) {
                                 return response()->json([
                                     'error' => 'La rubrique ' . $inputRubrique['name_rubrique'] . ' ' . $this->getSilaeRubrique($validatedRequestData)->code . ' est déjà associée à la rubrique d\'entrée ' . $inputRubrique['input_rubrique'],
