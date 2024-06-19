@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Absence;
 use App\Models\Mapping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -196,26 +197,22 @@ class MappingController extends Controller
         $validatedRequestData = $this->validateMappingData($request);
         $companyFolder = $validatedRequestData['company_folder_id'];
         $mappedRubriques = Mapping::where('company_folder_id', $companyFolder)->get();
-
         foreach ($mappedRubriques as $mappedRubrique) {
             $allMappedRubriques = $mappedRubrique->data;
-            foreach ($allMappedRubriques as $inputRubrique) {
-                if ($inputRubrique['input_rubrique'] === $validatedRequestData['input_rubrique']) {
+            foreach ($allMappedRubriques as $inputMappedRubrique) {
+                if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData['input_rubrique']) {
                     return response()->json([
-                        'error' => 'La rubrique d\'entrée ' . $validatedRequestData['input_rubrique'] . ' est déjà associée à la rubrique ' . $inputRubrique['name_rubrique'] . ' ' . $this->getSilaeRubrique($validatedRequestData)->code,
+                        'error' => 'La rubrique d\'entrée ' . $validatedRequestData['input_rubrique'] . ' est déjà associée à la rubrique ' . $this->getSilaeRubrique($validatedRequestData)->code,
                     ], 409);
                 } else {
-                    switch ($validatedRequestData['output_type']) {
-                        case $inputRubrique['output_type'] === 'App\Models\Absence' || $inputRubrique['output_type'] === 'App\Models\CustomAbsence';
-                            if ($inputRubrique['output_type'] !== $validatedRequestData['output_type']
-                                && $this->getSilaeRubrique($inputRubrique)->code === $this->getSilaeRubrique($validatedRequestData)->code
-                                && $this->getSilaeRubrique($validatedRequestData)->base_calcul !== $this->getSilaeRubrique($inputRubrique)->base_calcul) {
-                                return response()->json([
-                                    'error' => 'La rubrique ' . $inputRubrique['name_rubrique'] . ' ' . $this->getSilaeRubrique($validatedRequestData)->code . ' est déjà associée à la rubrique d\'entrée ' . $inputRubrique['input_rubrique'],
-                                ], 409);
-                            }
-                        break;
-                        default : '';
+                    if ($validatedRequestData['output_type'] === 'App\Models\CustomAbsence' || $validatedRequestData['output_type'] === 'App\Models\Absence'){
+                        if ($this->getSilaeRubrique($validatedRequestData)->code === $this->getSilaeRubrique($inputMappedRubrique)->code){
+                            return response()->json([
+                                'error' => 'Impossible de mapper la rubrique ' . $validatedRequestData['input_rubrique'] . ' au code ' . $this->getSilaeRubrique($inputMappedRubrique)->code,
+                                'error_details' => $this->getSilaeRubrique($inputMappedRubrique)->code . ' ' . 'est déjà associée à la rubrique d\'entrée ' . $inputMappedRubrique['input_rubrique'],
+                                'rubrique' =>  $this->getSilaeRubrique($inputMappedRubrique)
+                            ], 409);
+                        }
                     }
                 }
             }

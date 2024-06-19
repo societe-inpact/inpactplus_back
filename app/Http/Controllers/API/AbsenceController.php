@@ -5,6 +5,9 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Absence;
 use App\Models\CustomAbsence;
+use App\Models\Mapping;
+use Illuminate\Http\Request;
+
 
 class AbsenceController extends Controller
 {
@@ -18,7 +21,7 @@ class AbsenceController extends Controller
         return response()->json($customAbsences, 200);
     }
 
-    public function createCustomAbsence(){
+    public function createCustomAbsence(Request $request){
         // Validation des données
         $validated = request()->validate([
             'label' => 'required',
@@ -31,8 +34,8 @@ class AbsenceController extends Controller
         }
 
         // verifie si la custom absence avec ce code et ce label existe déjà
-        $isCustomAbsenceExist = CustomAbsence::where('code', request('code'))->where('label', request('label'))->first();
-        if($isCustomAbsenceExist){
+        $isCustomAbsenceExists = CustomAbsence::all()->where('code', $request->get('code'));
+        if($isCustomAbsenceExists){
             return response()->json(['message' => 'Absence personnalisé déjà existante.'], 400);
         }
 
