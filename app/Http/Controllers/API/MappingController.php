@@ -205,16 +205,17 @@ class MappingController extends Controller
                         'error' => 'La rubrique d\'entrée ' . $validatedRequestData['input_rubrique'] . ' est déjà associée à la rubrique ' . $inputRubrique['name_rubrique'] . ' ' . $this->getSilaeRubrique($validatedRequestData)->code,
                     ], 409);
                 } else {
-                    switch ($inputRubrique['output_type']) {
+                    switch ($validatedRequestData['output_type']) {
                         case 'App\Models\Absence' || 'App\Models\CustomAbsence' ;
-                            if ($inputRubrique['output_type'] !== $validatedRequestData['output_type']
+                            if ($inputRubrique['output_type'] === $validatedRequestData['output_type']
                                 && $inputRubrique['output_rubrique_id'] === $validatedRequestData['output_rubrique_id']
                                 && $this->getSilaeRubrique($validatedRequestData)->base_calcul !== $this->getSilaeRubrique($inputRubrique)->base_calcul) {
+                                dd($inputRubrique, $validatedRequestData);
                                 return response()->json([
                                     'error' => 'La rubrique ' . $inputRubrique['name_rubrique'] . ' ' . $this->getSilaeRubrique($validatedRequestData)->code . ' est déjà associée à la rubrique d\'entrée ' . $inputRubrique['input_rubrique'],
                                 ], 409);
                             }
-                            break;
+                        break;
                         default : '';
                     }
                 }
