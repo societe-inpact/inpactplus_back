@@ -206,12 +206,14 @@ class MappingController extends Controller
                     ], 409);
                 } else {
                     if ($validatedRequestData['output_type'] === 'App\Models\CustomAbsence' || $validatedRequestData['output_type'] === 'App\Models\Absence'){
-                        if ($this->getSilaeRubrique($validatedRequestData)->code === $this->getSilaeRubrique($inputMappedRubrique)->code){
-                            return response()->json([
-                                'error' => 'Impossible de mapper la rubrique ' . $validatedRequestData['input_rubrique'] . ' au code ' . $this->getSilaeRubrique($inputMappedRubrique)->code,
-                                'error_details' => $this->getSilaeRubrique($inputMappedRubrique)->code . ' ' . 'est déjà associée à la rubrique d\'entrée ' . $inputMappedRubrique['input_rubrique'],
-                                'rubrique' =>  $this->getSilaeRubrique($inputMappedRubrique)
-                            ], 409);
+                        if ($this->getSilaeRubrique($inputMappedRubrique) !== null){
+                            if ($this->getSilaeRubrique($validatedRequestData)->code === $this->getSilaeRubrique($inputMappedRubrique)->code){
+                                return response()->json([
+                                    'error' => 'Impossible de mapper la rubrique ' . $validatedRequestData['input_rubrique'] . ' au code ' . $this->getSilaeRubrique($inputMappedRubrique)->code,
+                                    'error_details' => 'Le code ' . $this->getSilaeRubrique($inputMappedRubrique)->code . ' ' . 'de la table ' . $this->getSilaeRubrique($inputMappedRubrique)->getTable() . ' est déjà associée à la rubrique d\'entrée ' . $inputMappedRubrique['input_rubrique'],
+                                    'rubrique' =>  $this->getSilaeRubrique($inputMappedRubrique)
+                                ], 409);
+                            }
                         }
                     }
                 }

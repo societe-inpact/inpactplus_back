@@ -35,8 +35,10 @@ class AbsenceController extends Controller
 
         // verifie si la custom absence avec ce code et ce label existe déjà
         $isCustomAbsenceExists = CustomAbsence::all()->where('code', $request->get('code'));
-        if($isCustomAbsenceExists){
-            return response()->json(['message' => 'Absence personnalisé déjà existante.'], 400);
+        $isAbsenceExists = Absence::all()->where('code', $request->get('code'))->where('base_calcul', $request->get('base_calcul'));
+
+        if($isCustomAbsenceExists->isNotEmpty() || $isAbsenceExists->isNotEmpty()){
+            return response()->json(['message' => 'Absence déjà existante.'], 400);
         }
 
         $customAbsence = new CustomAbsence();
@@ -45,6 +47,6 @@ class AbsenceController extends Controller
         $customAbsence->base_calcul = request('base_calcul');
         $customAbsence->therapeutic_part_time = request('therapeutic_part_time');
         $customAbsence->save();
-        return response()->json($customAbsence, 200);
+        return response()->json($customAbsence, 201);
     }
 }
