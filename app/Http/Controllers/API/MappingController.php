@@ -210,7 +210,6 @@ class MappingController extends Controller
                             if ($inputRubrique['output_type'] === $validatedRequestData['output_type']
                                 && $inputRubrique['output_rubrique_id'] === $validatedRequestData['output_rubrique_id']
                                 && $this->getSilaeRubrique($validatedRequestData)->base_calcul !== $this->getSilaeRubrique($inputRubrique)->base_calcul) {
-                                dd($inputRubrique, $validatedRequestData);
                                 return response()->json([
                                     'error' => 'La rubrique ' . $inputRubrique['name_rubrique'] . ' ' . $this->getSilaeRubrique($validatedRequestData)->code . ' est déjà associée à la rubrique d\'entrée ' . $inputRubrique['input_rubrique'],
                                 ], 409);
