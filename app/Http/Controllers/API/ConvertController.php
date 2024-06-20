@@ -55,36 +55,44 @@ class ConvertController extends Controller
             $records = $reader->getRecords();
             $data = [];
 
+// Vérifiez si le header contient des chiffres
+            $containsDigit = false;
             foreach ($header as $column) {
-                // Vérifiez ensuite si la chaîne contient des chiffres
-                $containsDigit = false;
                 for ($i = 0; $i < strlen($column); $i++) {
                     if (is_numeric($column[$i])) {
                         $containsDigit = true;
-                        break;
-                    }
-                }
-
-                if ($containsDigit) {
-                    // Dans le cas où le fichier ne contient pas de header
-                    foreach ($records as $record) {
-                        $mappedRecord = [];
-
-                        foreach (array_values($record) as $index => $value) {
-                            $mappedRecord[$index] = $value;
-                        }
-
-//                        foreach ($header as $columnName) {
-//                            if (array_key_exists($columnName, $record)) {
-//                                $mappedRecord[$columnName] = $record[$columnName];
-//                            } else {
-//                                $mappedRecord[$columnName] = null;
-//                            }
-//                        }
-                        $data[] = $mappedRecord;
+                        break 2; // Utiliser break 2 pour sortir des deux boucles
                     }
                 }
             }
+
+// Traitez les records en fonction de la vérification du header
+            if ($containsDigit) {
+                $header = array_map(function($index) {
+                    return $index;
+                }, array_keys($header));
+                // Dans le cas où le fichier ne contient pas de header
+                foreach ($records as $record) {
+                    $mappedRecord = [];
+                    foreach (array_values($record) as $index => $value) {
+                        $mappedRecord[$index] = $value;
+                    }
+                    $data[] = $mappedRecord;
+                }
+            } else {
+                foreach ($records as $record) {
+                    $mappedRecord = [];
+                    foreach ($header as $columnName) {
+                        if (array_key_exists($columnName, $record)) {
+                            $mappedRecord[$columnName] = $record[$columnName];
+                        } else {
+                            $mappedRecord[$columnName] = null;
+                        }
+                    }
+                    $data[] = $mappedRecord;
+                }
+            }
+
 
             return response()->json([
                 'success' => true,
