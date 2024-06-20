@@ -285,17 +285,6 @@ class ConvertController extends Controller
 
     private function processAbsenceRecord(array $data, array $record, $codeSilae, array $matches): array
     {
-//        if (is_numeric($record['MONTANT'])) {
-////            $data[] = [
-////                'Matricule' => $record['CODE SALARIE'],
-////                'Code' => $codeSilae->code,
-////                'Valeur' => $record['MONTANT'],
-////                'Date debut' => '',
-////                'Date fin' => ''
-////            ];
-//            return $data;
-//        }
-
 
         $value = $this->calculateAbsenceTypePeriod($codeSilae, $matches);
         $start_date = $matches[4] . "/" . $matches[3] . "/" . $matches[2];

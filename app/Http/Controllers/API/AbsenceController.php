@@ -37,6 +37,7 @@ class AbsenceController extends Controller
         $isCustomAbsenceExists = CustomAbsence::all()->where('code', $request->get('code'));
         $isAbsenceExists = Absence::all()->where('code', $request->get('code'))->where('base_calcul', $request->get('base_calcul'));
 
+
         if($isCustomAbsenceExists->isNotEmpty() || $isAbsenceExists->isNotEmpty()){
             return response()->json(['message' => 'Absence déjà existante.'], 400);
         }
