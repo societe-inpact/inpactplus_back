@@ -34,4 +34,8 @@ class Company extends Model
     {
         return $this->hasMany(CompanyFolder::class, 'company_id' ,);
     }
+
+    public function employees(){
+        return $this->hasManyThrough(Employee::class, EmployeeFolder::class, 'id', 'employee_id');
+    }
 }

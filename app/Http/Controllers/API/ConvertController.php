@@ -55,7 +55,7 @@ class ConvertController extends Controller
             $records = $reader->getRecords();
             $data = [];
 
-// Vérifiez si le header contient des chiffres
+            // Vérifiez si le header contient des chiffres
             $containsDigit = false;
             foreach ($header as $column) {
                 for ($i = 0; $i < strlen($column); $i++) {
@@ -66,7 +66,7 @@ class ConvertController extends Controller
                 }
             }
 
-// Traitez les records en fonction de la vérification du header
+            // Traitez les records en fonction de la vérification du header
             if ($containsDigit) {
                 $header = array_map(function($index) {
                     return $index;
@@ -121,7 +121,7 @@ class ConvertController extends Controller
      */
     private function writeToFile($data)
     {
-        $filename = 'ME_' . Date::now()->format('dmY');
+        $filename = 'ME_' . Date::now()->format('dmY'); // TODO : Modifier le nom du fichier
         $directory = storage_path('csv');
         $csvPath = $directory . '/' . $filename . '.csv';
 

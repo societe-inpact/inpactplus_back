@@ -34,9 +34,8 @@ class AbsenceController extends Controller
         }
 
         // verifie si la custom absence avec ce code et ce label existe déjà
-        $isCustomAbsenceExists = CustomAbsence::all()->where('code', $request->get('code'));
+        $isCustomAbsenceExists = CustomAbsence::all()->where('code', $request->get('code'))->where('label', $request->get('label'))->where('base_calcul', $request->get('base_calcul'));
         $isAbsenceExists = Absence::all()->where('code', $request->get('code'))->where('base_calcul', $request->get('base_calcul'));
-
 
         if($isCustomAbsenceExists->isNotEmpty() || $isAbsenceExists->isNotEmpty()){
             return response()->json(['message' => 'Absence déjà existante.'], 400);
