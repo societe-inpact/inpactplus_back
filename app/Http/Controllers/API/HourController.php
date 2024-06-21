@@ -29,10 +29,10 @@ class HourController extends Controller
             return response()->json(['message' => 'Données invalides.'], 400);
         }
         // verifie si la custom absence avec ce code et ce label existe déjà
-        $isCustomAbsenceExists = CustomHour::all()->where('code', $request->get('code'));
+        $isCustomHourExists = CustomHour::all()->where('code', $request->get('code'))->where('label', $request->get('label'));
         $isHourExists = Hour::all()->where('code', $request->get('code'));
 
-        if($isCustomAbsenceExists->isNotEmpty() || $isHourExists->isNotEmpty()){
+        if($isCustomHourExists->isNotEmpty() || $isHourExists->isNotEmpty()){
             return response()->json(['message' => 'Heure déjà existante.'], 400);
         }
 
