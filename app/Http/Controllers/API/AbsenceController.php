@@ -27,6 +27,8 @@ class AbsenceController extends Controller
             'label' => 'required',
             'code' => 'required',
             'base_calcul' => 'required',
+            'company_folder_id' => 'required',
+            'therapeutic_part_time' => 'nullable'
         ]);
 
         if(!$validated){
@@ -34,7 +36,7 @@ class AbsenceController extends Controller
         }
 
         // verifie si la custom absence avec ce code et ce label existe déjà
-        $isCustomAbsenceExists = CustomAbsence::all()->where('code', $request->get('code'))->where('label', $request->get('label'))->where('base_calcul', $request->get('base_calcul'));
+        $isCustomAbsenceExists = CustomAbsence::all()->where('company_folder_id', request('company_folder_id'))->where('code', $request->get('code'))->where('label', $request->get('label'))->where('base_calcul', $request->get('base_calcul'));
         $isAbsenceExists = Absence::all()->where('code', $request->get('code'))->where('base_calcul', $request->get('base_calcul'));
 
         if($isCustomAbsenceExists->isNotEmpty() || $isAbsenceExists->isNotEmpty()){
@@ -45,6 +47,7 @@ class AbsenceController extends Controller
         $customAbsence->label = request('label');
         $customAbsence->code = request('code');
         $customAbsence->base_calcul = request('base_calcul');
+        $customAbsence->company_folder_id = request('company_folder_id');
         $customAbsence->therapeutic_part_time = request('therapeutic_part_time');
         $customAbsence->save();
         return response()->json($customAbsence, 201);

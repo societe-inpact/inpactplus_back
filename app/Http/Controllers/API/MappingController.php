@@ -201,7 +201,7 @@ class MappingController extends Controller
         foreach ($mappedRubriques as $mappedRubrique) {
             $allMappedRubriques = $mappedRubrique->data;
             foreach ($allMappedRubriques as $inputMappedRubrique) {
-                if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData['input_rubrique']) {
+                if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData['input_rubrique'] ) {
                     return response()->json([
                         'error' => 'La rubrique d\'entrée ' . $validatedRequestData['input_rubrique'] . ' est déjà associée à la rubrique ' . $this->getSilaeRubrique($validatedRequestData)->code,
                     ], 409);
