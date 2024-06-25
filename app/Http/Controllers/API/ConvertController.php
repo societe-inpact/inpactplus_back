@@ -43,7 +43,6 @@ class ConvertController extends Controller
             'csv' => 'required|file|mimes:csv,txt',
         ]);
 
-
         if ($request->hasFile('csv')) {
             $file = $request->file('csv');
             $reader = Reader::createFromPath($file->getPathname(), 'r');
@@ -52,30 +51,37 @@ class ConvertController extends Controller
             $reader->addFormatter($formatter);
             $reader->setHeaderOffset(0);
             $header = $reader->getHeader();
-            $records = $reader->getRecords();
+            $records = iterator_to_array($reader->getRecords(), true);
             $data = [];
 
-            // Vérifiez si le header contient des chiffres
+            // Vérifiez si l'en-tête contient des chiffres
             $containsDigit = false;
             foreach ($header as $column) {
-                for ($i = 0; $i < strlen($column); $i++) {
-                    if (is_numeric($column[$i])) {
-                        $containsDigit = true;
-                        break 2; // Utiliser break 2 pour sortir des deux boucles
-                    }
+                if (preg_match('/\d/', $column)) {
+                    $containsDigit = true;
+                    break;
                 }
             }
 
-            // Traitez les records en fonction de la vérification du header
+            // Traitez les enregistrements en fonction de la vérification de l'en-tête
             if ($containsDigit) {
-                $header = array_map(function($index) {
-                    return $index;
-                }, array_keys($header));
-                // Dans le cas où le fichier ne contient pas de header
+                // Réinitialisez le lecteur sans en-tête
+                $reader = Reader::createFromPath($file->getPathname(), 'r');
+                $reader->addFormatter($encoder);
+                $reader->setDelimiter(';');
+                $reader->addFormatter($formatter);
+                $records = iterator_to_array($reader->getRecords(), true);
+
+                // Ajoutez un en-tête personnalisé
+                $firstRecord = reset($records);
+                $header = array_map(function ($index) {
+                    return 'Colonne ' . ($index + 1);
+                }, array_keys($firstRecord));
+
                 foreach ($records as $record) {
                     $mappedRecord = [];
                     foreach (array_values($record) as $index => $value) {
-                        $mappedRecord[$index] = $value;
+                        $mappedRecord[$header[$index]] = $value;
                     }
                     $data[] = $mappedRecord;
                 }
@@ -93,7 +99,6 @@ class ConvertController extends Controller
                 }
             }
 
-
             return response()->json([
                 'success' => true,
                 'message' => 'Votre fichier a été importé',
@@ -109,6 +114,9 @@ class ConvertController extends Controller
             'status' => 400
         ]);
     }
+
+
+
 
 
     /**
@@ -160,12 +168,10 @@ class ConvertController extends Controller
             $reader->setDelimiter(';');
             $reader->addFormatter($formatter);
             $reader->setHeaderOffset(0);
-
             $result = $this->convert($reader, $folderId);
             $data = $result['data'];
             $unmappedRubriques = $result['unmappedRubriques'];
             $header = ['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin'];
-
             if (!empty($data)) {
                 $csvConverted = $this->writeToFile($data);
                 return response()->json([
@@ -241,32 +247,70 @@ class ConvertController extends Controller
         $data = [];
         $unmappedRubriques = [];
         $records = iterator_to_array($file, true);
-        foreach ($records as $record) {
-            $mappedRecord = [];
-            foreach (array_values($record) as $index => $value) {
-                // Colonne Montant
-                if (str_contains($value, '.') || preg_match('/^\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2}(\|\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2})?$/', $value)) {
-                    $mappedRecord['MONTANT'] = $value;
-                } else {
-                    $mappedRecord['RUBRIQUE'] = $value;
-                }
-                // Colonne Code salarie/Matricule
-                if ($index === 0 && is_numeric($value) && !str_contains($value, '.')) {
-                    $mappedRecord['CODE SALARIE'] = $value;
-                }
+        // Détecter si le fichier a un en-tête valide ou non
+        $header = $file->getHeader();
+        $containsDigit = false;
+        foreach ($header as $column) {
+            if (preg_match('/\d/', $column)) {
+                $containsDigit = true;
+                break;
             }
-            // Utiliser les nouveaux noms de colonnes pour accéder aux valeurs
-            $codeSilae = $this->getSilaeCode($mappedRecord['RUBRIQUE'], $folderId);
-            // preg permettant le dégroupement de la date
-            preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $mappedRecord['MONTANT'], $matches);
+        }
+
+        if ($containsDigit) {
+            // Si l'en-tête contient des chiffres, réinitialiser et traiter sans en-tête
+            $reader = Reader::createFromPath($file->getPathname(), 'r');
+            $reader->setDelimiter(';');
+            $records = iterator_to_array($reader->getRecords(), true);
+        }
+
+
+
+        $mappedRecord = [];
+        foreach ($records as $record) {
+            if ($containsDigit){
+                foreach ($header as $index => $columnName) {
+                    $mappedRecord[$columnName] = $record[$index];
+                }
+                foreach (array_values($mappedRecord) as $index => $value) {
+                    if (str_contains($value, '.') || preg_match('/^\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2}(\|\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2})?$/', $value)) {
+                        $mappedRecord['MONTANT'] = $value;
+                    } else {
+                        $mappedRecord['RUBRIQUE'] = $value;
+                    }
+                    unset($mappedRecord[$value]);
+                    if ($index === 0 && is_numeric($value) && !str_contains($value, '.')) {
+                        $mappedRecord['CODE SALARIE'] = $value;
+                        unset($mappedRecord[$value]); // Supprime la clé originale si elle est remplacée par 'MONTANT'
+                    }
+                }
+                preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $mappedRecord['MONTANT'], $matches);
+                $codeSilae = $this->getSilaeCode($mappedRecord['RUBRIQUE'], $folderId);
+
+            }else{
+                preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $record['MONTANT'], $matches);
+                $codeSilae = $this->getSilaeCode($record['RUBRIQUE'], $folderId);
+            }
             if ($codeSilae) {
                 if (str_starts_with($codeSilae->code, "AB-")) {
-                    $data = $this->processAbsenceRecord($data, $mappedRecord, $codeSilae, $matches);
+                    if (!$containsDigit){
+                        $data = $this->processAbsenceRecord($data, $record, $codeSilae, $matches);
+                    }else{
+                        $data = $this->processAbsenceRecord($data, $mappedRecord, $codeSilae, $matches);
+                    }
                 } elseif (str_starts_with($codeSilae->code, "EV-") || str_starts_with($codeSilae->code, "HS-")) {
-                    $data = $this->convertNegativeOrDotValue($data, $mappedRecord, $codeSilae);
+                    if (!$containsDigit) {
+                        $data = $this->convertNegativeOrDotValue($data, $record, $codeSilae);
+                    }else{
+                        $data = $this->convertNegativeOrDotValue($data, $mappedRecord, $codeSilae);
+                    }
                 }
             } else {
-                $unmappedRubriques[] = $mappedRecord['RUBRIQUE'];
+                if ($containsDigit){
+                    $unmappedRubriques[] = $mappedRecord['RUBRIQUE'];
+                }else{
+                    $unmappedRubriques[] = $record['RUBRIQUE'];
+                }
             }
         }
 
@@ -274,7 +318,6 @@ class ConvertController extends Controller
         usort($data, function ($a, $b) {
             return $a['Matricule'] <=> $b['Matricule'] ?: $a['Code'] <=> $b['Code'];
         });
-
         return [
             'data' => $data,
             'unmappedRubriques' => array_unique($unmappedRubriques) // Pour éviter les doublons
@@ -283,14 +326,22 @@ class ConvertController extends Controller
 
 
 
+
     private function processAbsenceRecord(array $data, array $record, $codeSilae, array $matches): array
     {
-
+        if (is_numeric($record['MONTANT'])) {
+            $data[] = [
+                'Matricule' => $record['CODE SALARIE'],
+                'Code' => $codeSilae->code,
+                'Valeur' => $record['MONTANT'],
+                'Date debut' => '',
+                'Date fin' => ''
+            ];
+            return $data;
+        }
         $value = $this->calculateAbsenceTypePeriod($codeSilae, $matches);
         $start_date = $matches[4] . "/" . $matches[3] . "/" . $matches[2];
         $end_date = $matches[9] . "/" . $matches[8] . "/" . $matches[7];
-
-
 
         if ($matches[5] === 'J' && $matches[10] === 'J') {
             if ($codeSilae->base_calcul === 'H') {
@@ -370,7 +421,6 @@ class ConvertController extends Controller
                 }
             }
         }
-
         return $data;
     }
 
@@ -396,7 +446,7 @@ class ConvertController extends Controller
     }
 
     // Fonction déterminant si la valeur doit être calculée sur une base heures (H) ou jours (J)
-    private function calculateAbsenceTypePeriod($codeSilae, array $matches): int
+    private function calculateAbsenceTypePeriod($codeSilae, array $matches)
     {
         if ($codeSilae->base_calcul === 'H') {
             return intval($matches[13]);
