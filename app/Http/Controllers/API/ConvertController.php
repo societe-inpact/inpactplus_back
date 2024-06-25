@@ -127,9 +127,9 @@ class ConvertController extends Controller
      * @throws Exception
      * @throws RuntimeException
      */
-    private function writeToFile($data)
+    private function writeToFile(array $data, $date)
     {
-        $filename = 'ME_' . Date::now()->format('dmY'); // TODO : Modifier le nom du fichier
+        $filename = 'ME_' . $date; // TODO : Modifier le nom du fichier
         $directory = storage_path('csv');
         $csvPath = $directory . '/' . $filename . '.csv';
 
@@ -163,6 +163,9 @@ class ConvertController extends Controller
         $folderId = $request->get('company_folder_id');
         if ($request->hasFile('csv')) {
             $file = $request->file('csv');
+            $month = $request->get('month');
+            $year = $request->get('year');
+            $date = $month . $year . '_' . $folderId;
             $reader = Reader::createFromPath($file->getPathname(), 'r');
             $reader->addFormatter($encoder);
             $reader->setDelimiter(';');
@@ -173,7 +176,7 @@ class ConvertController extends Controller
             $unmappedRubriques = $result['unmappedRubriques'];
             $header = ['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin'];
             if (!empty($data)) {
-                $csvConverted = $this->writeToFile($data);
+                $csvConverted = $this->writeToFile($data, $date);
                 return response()->json([
                     'success' => true,
                     'message' => 'Votre fichier a été converti',
