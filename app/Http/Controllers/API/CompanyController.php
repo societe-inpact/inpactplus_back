@@ -33,8 +33,8 @@ class CompanyController extends Controller
                 $data['referent_id'] = $request->referent_id;
             }
 
-            Company::create($data);
-            return response()->json(['message' => 'Entreprise créée avec succès', 'company_id' => $request->id], 200);
+            $company = Company::create($data);
+            return response()->json(['message' => 'Entreprise créée avec succès', 'company_id' => $company->id], 200);
 
         } catch (\Exception $e) {
             return response()->json(['error' => 'Une erreur est survenue lors de la création de l\'entreprise.'], 500);
