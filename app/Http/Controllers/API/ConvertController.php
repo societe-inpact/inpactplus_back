@@ -175,7 +175,7 @@ class ConvertController extends Controller
             $data = $result['data'];
             $unmappedRubriques = $result['unmappedRubriques'];
             $header = ['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin'];
-            if (!empty($data)) {
+            if (!empty($data) && !$unmappedRubriques) {
                 $csvConverted = $this->writeToFile($data, $date);
                 return response()->json([
                     'success' => true,
@@ -189,7 +189,7 @@ class ConvertController extends Controller
                 $unmappedRubriquesString = implode(', ', $unmappedRubriques);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Les rubriques suivantes ne sont pas mappées : ' . $unmappedRubriquesString,
+                    'message' => 'Conversion impossible, les rubriques suivantes ne sont pas mappées : ' . $unmappedRubriquesString,
                     'status' => 400,
                 ]);
             }

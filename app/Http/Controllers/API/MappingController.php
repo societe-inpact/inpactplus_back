@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use League\Csv\CharsetConverter;
 use League\Csv\Reader;
+use function Laravel\Prompts\error;
 
 class MappingController extends Controller
 {
@@ -156,12 +157,17 @@ class MappingController extends Controller
             return response()->json(['error' => 'Le dossier de l\'entreprise ne correspond pas.'], 403);
         }
 
-        if (!$this->updateMappingData($mapping, $validatedData)) {
-            return response()->json(['error' => 'La rubrique d\'entrée spécifiée n\'a pas été trouvée.'], 404);
+        $updateResult = $this->updateMappingData($mapping, $validatedData);
+        if ($updateResult === 'updated') {
+            return response()->json(['message' => 'Mapping mis à jour avec succès']);
+        } elseif ($updateResult === 'already_associated') {
+            return response()->json(['error' => 'La rubrique est déjà associée'], 409);
+        } else {
+            return response()->json(['error' => 'Rubrique introuvable'], 404);
         }
-
-        return response()->json(['message' => 'Mapping mis à jour avec succès']);
     }
+
+
 
     // Fonction permettant de valider les données d'enregistrement d'un mapping
     protected function validateMappingData(Request $request)
@@ -179,18 +185,43 @@ class MappingController extends Controller
     protected function updateMappingData($mapping, $validatedData)
     {
         $data = $mapping->data;
+        $inputRubriqueExists = false;
+        $outputRubriqueAssociated = false;
 
-        foreach ($data as &$entry) {
+        // Vérifier si le input_rubrique existe
+        foreach ($data as $entry) {
             if ($entry['input_rubrique'] === $validatedData['input_rubrique']) {
-                $entry['name_rubrique'] = $validatedData['name_rubrique'];
-                $entry['output_rubrique_id'] = $validatedData['output_rubrique_id'];
-                $entry['output_type'] = $validatedData['output_type'];
-                $mapping->data = $data;
-                return $mapping->save();
+                $inputRubriqueExists = true;
+            }
+            // Vérifier si le output_rubrique_id est déjà associé à un autre input_rubrique
+            if ($entry['output_rubrique_id'] === $validatedData['output_rubrique_id'] && $entry['input_rubrique'] !== $validatedData['input_rubrique']) {
+                $outputRubriqueAssociated = true;
+                break;
             }
         }
-        return false;
+
+        if ($outputRubriqueAssociated) {
+            return 'already_associated';
+        }
+
+        // Mettre à jour si l'entrée existe et n'est pas déjà associée
+        if ($inputRubriqueExists) {
+            foreach ($data as &$entry) {
+                if ($entry['input_rubrique'] === $validatedData['input_rubrique']) {
+                    $entry['name_rubrique'] = $validatedData['name_rubrique'];
+                    $entry['output_rubrique_id'] = $validatedData['output_rubrique_id'];
+                    $entry['output_type'] = $validatedData['output_type'];
+                    $mapping->data = $data;
+                    $mapping->save();
+                    return 'updated';
+                }
+            }
+        }
+
+        return 'not_found';
     }
+
+
 
     // Fonction permettant d'enregistrer un nouveau mapping en BDD
     public function storeMapping(Request $request)
@@ -201,9 +232,13 @@ class MappingController extends Controller
         foreach ($mappedRubriques as $mappedRubrique) {
             $allMappedRubriques = $mappedRubrique->data;
             foreach ($allMappedRubriques as $inputMappedRubrique) {
-                if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData['input_rubrique'] ) {
+                if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData['input_rubrique']) {
                     return response()->json([
                         'error' => 'La rubrique d\'entrée ' . $validatedRequestData['input_rubrique'] . ' est déjà associée à la rubrique ' . $this->getSilaeRubrique($validatedRequestData)->code,
+                    ], 409);
+                }elseif($inputMappedRubrique['output_rubrique_id'] === $validatedRequestData['output_rubrique_id']){
+                    return response()->json([
+                        'error' => 'La rubrique de sortie ' . $this->getSilaeRubrique($validatedRequestData)->code . ' est déjà associée à la rubrique ' . $inputMappedRubrique['input_rubrique'],
                     ], 409);
                 }
 //                } else {
