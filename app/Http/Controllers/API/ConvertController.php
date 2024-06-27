@@ -25,6 +25,53 @@ class ConvertController extends Controller
         ],
     ];
 
+    const FIRSTNAME_DICTIONARY = [
+        'Ana',
+        'Eva',
+        'Zoe',
+        'Max',
+        'Leo',
+        'Lia',
+        'Ali',
+        'Guy',
+        'Eli',
+        'Jas',
+        'Noe',
+        'Yan',
+        'Gil',
+        'Zak',
+        'Kim',
+        'Pam',
+        'Amy',
+        'Kia',
+        'Lea',
+        'Luz',
+        'Mia',
+        'Teo',
+        'Lil',
+        'Zea',
+        'Jon',
+        'Tom',
+        'Neo',
+        'Zia',
+        'Pia',
+        'Ugo',
+        'Fea',
+        'Zel',
+        'Ari',
+        'Joe',
+        'Yas',
+        'Ivy',
+        'Nat',
+        'Tim',
+        'Asa',
+        'Cyr',
+        'Ara',
+        'Ivo',
+        'Nia',
+        'Taj',
+        'Gus',
+    ];
 
     /**
      * @throws InvalidArgument
@@ -268,41 +315,50 @@ class ConvertController extends Controller
 
         $mappedRecord = [];
         foreach ($records as $record) {
-            if ($containsDigit){
+            // Si il n'y a pas de header
+            if ($containsDigit) {
                 foreach ($header as $index => $columnName) {
                     $mappedRecord[$columnName] = $record[$index];
                 }
-                foreach (array_values($mappedRecord) as $index => $value) {
-                    if (str_contains($value, '.') || preg_match('/^\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2}(\|\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2})?$/', $value)) {
+
+                // Utilisez foreach avec les clés pour pouvoir manipuler les clés correctement
+                foreach ($mappedRecord as $columnName => $value) {
+                    if (str_contains($value, '.') || preg_match('/^\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2}(\|\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2})*$/', $value)) {
                         $mappedRecord['MONTANT'] = $value;
-                    } elseif (preg_match('/^(?:[A-Z]?\d{1,2}[A-Z]?|[A-Z]{1,2}\d{1,2})$/', $value)) {
-                        $mappedRecord['RUBRIQUE'] = $value;
+                    } elseif (preg_match('/\b[A-Za-z0-9]{3}\b(?!\s+[A-Za-z0-9])/', $value)) {
+                        if (strlen($value) <= 3 && !in_array(strtolower($value), array_map('strtolower', self::FIRSTNAME_DICTIONARY))) {
+                            $mappedRecord['RUBRIQUE'] = $value;
+                        }
                     }
-                    unset($mappedRecord[$value]);
-                    if ($index === 0 && is_numeric($value) && !str_contains($value, '.')) {
-                        $mappedRecord['CODE SALARIE'] = $value;
-                        unset($mappedRecord[$value]); // Supprime la clé originale si elle est remplacée par 'MONTANT'
+
+                    // Utilisez unset avec la clé ($columnName) pour supprimer l'élément par clé
+                    unset($mappedRecord[$columnName]);
+                    if (is_numeric($value) && !str_contains($value, '.')) {
+                        $mappedRecord['CODE SALARIE'] = $value; // Assurez-vous de ne pas supprimer cette clé si elle est modifiée
                     }
+                }
+                if (!isset($mappedRecord['MONTANT'])) {
+                    var_dump($mappedRecord);
                 }
                 preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $mappedRecord['MONTANT'], $matches);
                 $codeSilae = $this->getSilaeCode($mappedRecord['RUBRIQUE'], $folderId);
-
+            // Si il y a un header
             }else{
                 preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $record['MONTANT'], $matches);
                 $codeSilae = $this->getSilaeCode($record['RUBRIQUE'], $folderId);
             }
             if ($codeSilae) {
                 if (str_starts_with($codeSilae->code, "AB-")) {
-                    if (!$containsDigit){
-                        $data = $this->processAbsenceRecord($data, $record, $codeSilae, $matches);
-                    }else{
+                    if ($containsDigit){
                         $data = $this->processAbsenceRecord($data, $mappedRecord, $codeSilae, $matches);
+                    }else{
+                        $data = $this->processAbsenceRecord($data, $record, $codeSilae, $matches);
                     }
                 } elseif (str_starts_with($codeSilae->code, "EV-") || str_starts_with($codeSilae->code, "HS-")) {
-                    if (!$containsDigit) {
-                        $data = $this->convertNegativeOrDotValue($data, $record, $codeSilae);
-                    }else{
+                    if ($containsDigit) {
                         $data = $this->convertNegativeOrDotValue($data, $mappedRecord, $codeSilae);
+                    }else{
+                        $data = $this->convertNegativeOrDotValue($data, $record, $codeSilae);
                     }
                 }
             } else {
@@ -329,16 +385,11 @@ class ConvertController extends Controller
 
     private function processAbsenceRecord(array $data, array $record, $codeSilae, array $matches): array
     {
+
         if (is_numeric($record['MONTANT'])) {
-            $data[] = [
-                'Matricule' => $record['CODE SALARIE'],
-                'Code' => $codeSilae->code,
-                'Valeur' => $record['MONTANT'],
-                'Date debut' => '',
-                'Date fin' => ''
-            ];
             return $data;
         }
+
         $value = $this->calculateAbsenceTypePeriod($codeSilae, $matches);
         $start_date = $matches[4] . "/" . $matches[3] . "/" . $matches[2];
         $end_date = $matches[9] . "/" . $matches[8] . "/" . $matches[7];
