@@ -232,11 +232,13 @@ class MappingController extends Controller
         foreach ($mappedRubriques as $mappedRubrique) {
             $allMappedRubriques = $mappedRubrique->data;
             foreach ($allMappedRubriques as $inputMappedRubrique) {
+
                 if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData['input_rubrique']) {
                     return response()->json([
                         'error' => 'La rubrique d\'entrée ' . $validatedRequestData['input_rubrique'] . ' est déjà associée à la rubrique ' . $this->getSilaeRubrique($validatedRequestData)->code,
                     ], 409);
-                }elseif($inputMappedRubrique['output_rubrique_id'] === $validatedRequestData['output_rubrique_id']){
+                }elseif($inputMappedRubrique['output_rubrique_id'] === $validatedRequestData['output_rubrique_id']
+                    && !str_starts_with($this->getSilaeRubrique($validatedRequestData)->code, 'EV') || $inputMappedRubrique['output_rubrique_id'] === $validatedRequestData['output_rubrique_id'] && !str_starts_with($this->getSilaeRubrique($validatedRequestData)->code, 'EV')) {
                     return response()->json([
                         'error' => 'La rubrique de sortie ' . $this->getSilaeRubrique($validatedRequestData)->code . ' est déjà associée à la rubrique ' . $inputMappedRubrique['input_rubrique'],
                     ], 409);
