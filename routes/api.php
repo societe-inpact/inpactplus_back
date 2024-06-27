@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 Route::group(['middleware' => 'cors'], function () {
     Route::post('/login', [App\Http\Controllers\API\ApiAuthController::class, 'login']);
     Route::post('/register', [App\Http\Controllers\API\ApiAuthController::class, 'register']);
+    Route::post('/reset-password', [App\Http\Controllers\API\ApiAuthController::class, 'resetPassword']);
 });
 
 // IMPORT AND CONVERT

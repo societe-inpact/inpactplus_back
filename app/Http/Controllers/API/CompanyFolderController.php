@@ -14,7 +14,7 @@ class CompanyFolderController extends Controller
     public function createCompanyFolder(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'folder_number' => 'required|integer',
+            'folder_number' => 'required|string',
             'folder_name' => 'required|string',
             'siret' => 'required|string',
             'siren' => 'required|string',
@@ -32,6 +32,7 @@ class CompanyFolderController extends Controller
                 'folder_name' => $request->folder_name,
                 'siret' => $request->siret,
                 'siren' => $request->siren,
+                'interface_id' => $request->interface_id,
                 'company_id' => $request->company_id,
             ];
             $existingFolder = CompanyFolder::all()->where('folder_number', '==', $request->get('folder_number'))->first();
@@ -53,7 +54,6 @@ class CompanyFolderController extends Controller
             return response()->json(['message' => 'Dossier créé avec succès'], 200);
 
         } catch (\Exception $e) {
-            dd($e);
             return response()->json(['error' => 'Une erreur est survenue lors de la création du dossier.'], 500);
         }
     }
