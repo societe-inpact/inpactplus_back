@@ -312,7 +312,6 @@ class ConvertController extends Controller
         }
 
 
-
         $mappedRecord = [];
         foreach ($records as $record) {
             // Si il n'y a pas de header
@@ -325,20 +324,16 @@ class ConvertController extends Controller
                 foreach ($mappedRecord as $columnName => $value) {
                     if (str_contains($value, '.') || preg_match('/^\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2}(\|\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2})*$/', $value)) {
                         $mappedRecord['MONTANT'] = $value;
-                    } elseif (preg_match('/\b[A-Za-z0-9]{3}\b(?!\s+[A-Za-z0-9])/', $value)) {
+                    } elseif (preg_match('/\b[A-Za-z0-9]{2,3}\b(?!\s+[A-Za-z0-9])/', $value)) {
                         if (strlen($value) <= 3 && !in_array(strtolower($value), array_map('strtolower', self::FIRSTNAME_DICTIONARY))) {
                             $mappedRecord['RUBRIQUE'] = $value;
                         }
                     }
-
                     // Utilisez unset avec la clé ($columnName) pour supprimer l'élément par clé
                     unset($mappedRecord[$columnName]);
                     if (is_numeric($value) && !str_contains($value, '.')) {
                         $mappedRecord['CODE SALARIE'] = $value; // Assurez-vous de ne pas supprimer cette clé si elle est modifiée
                     }
-                }
-                if (!isset($mappedRecord['MONTANT'])) {
-                    var_dump($mappedRecord);
                 }
                 preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $mappedRecord['MONTANT'], $matches);
                 $codeSilae = $this->getSilaeCode($mappedRecord['RUBRIQUE'], $folderId);
@@ -380,20 +375,46 @@ class ConvertController extends Controller
         ];
     }
 
+    private function processAbsenceRecord(array $data, array $record, $codeSilae, array $matches): array {
+        $montant = $record['MONTANT'];
 
+        // Vérifier si le montant contient des pipes (plusieurs dates)
+        if (str_contains($montant, '|')) {
+            // Séparer les valeurs par pipe
+            $montantValues = explode('|', $montant);
+            foreach ($montantValues as $value) {
+                // Appliquer la méthode pour chaque valeur individuelle
+                $data = $this->processSingleAbsenceRecord($data, $record, $codeSilae, $matches, $value);
+            }
+        } else {
+            // Si le montant ne contient pas de pipes, traiter comme une seule valeur
+            $data = $this->processSingleAbsenceRecord($data, $record, $codeSilae, $matches, $montant);
+        }
 
+        return $data;
+    }
 
-    private function processAbsenceRecord(array $data, array $record, $codeSilae, array $matches): array
-    {
-
+    private function processSingleAbsenceRecord(array $data, array $record, $codeSilae, array $matches, string $value): array {
         if (is_numeric($record['MONTANT'])) {
+            $data[] = [
+                'Matricule' => $record['CODE SALARIE'],
+                'Code' => $codeSilae->code,
+                'Valeur' => $record['MONTANT'],
+                'Date debut' => '',
+                'Date fin' => ''
+            ];
             return $data;
         }
 
-        $value = $this->calculateAbsenceTypePeriod($codeSilae, $matches);
-        $start_date = $matches[4] . "/" . $matches[3] . "/" . $matches[2];
-        $end_date = $matches[9] . "/" . $matches[8] . "/" . $matches[7];
+        // Calculer les dates à partir de $value
+        $dates = explode('-', $value);
+        $start_date = \DateTime::createFromFormat('Ymd', substr($dates[0], 0, 8))->format('d/m/Y');
+        $end_date = \DateTime::createFromFormat('Ymd', substr($dates[1], 0, 8))->format('d/m/Y');
 
+        // Calculer la valeur en fonction de $value
+        $value = $this->calculateAbsenceTypePeriod($codeSilae, $matches);
+
+        // Traiter selon les conditions existantes
         if ($matches[5] === 'J' && $matches[10] === 'J') {
             if ($codeSilae->base_calcul === 'H') {
                 $data[] = [
@@ -403,7 +424,7 @@ class ConvertController extends Controller
                     'Date debut' => '',
                     'Date fin' => ''
                 ];
-            }else if ($start_date != $end_date) {
+            } else if ($start_date != $end_date) {
                 $data[] = [
                     'Matricule' => $record['CODE SALARIE'],
                     'Code' => $codeSilae->code,
@@ -414,7 +435,6 @@ class ConvertController extends Controller
             } else {
                 $data = $this->addDateRangeToRecords($data, $record['CODE SALARIE'], $codeSilae->code, str($value), strtotime(str_replace('/', '-', $start_date)), strtotime(str_replace('/', '-', $end_date)));
             }
-
         } elseif (($matches[5] === 'A' && $matches[10] === 'A') || ($matches[5] === 'M' && $matches[10] === 'M')) {
             $value = self::CORRESPONDENCES['absences']['A'];
             if ($codeSilae->base_calcul === 'H') {
@@ -431,7 +451,6 @@ class ConvertController extends Controller
                 ];
             }
         } elseif ($matches[5] === 'A' && $matches[10] === 'J') {
-
             if (str_contains($matches[1], 'A')) {
                 $value = self::CORRESPONDENCES['absences']['A'];
                 $date = $matches[4] . "/" . $matches[3] . "/" . $matches[2];
@@ -445,7 +464,6 @@ class ConvertController extends Controller
                     'Date fin' => date('d/m/Y', $date_formatted)
                 ];
             }
-
 
             if (str_contains($matches[6], 'J')) {
                 $value = self::CORRESPONDENCES['absences']['J'];
@@ -472,8 +490,10 @@ class ConvertController extends Controller
                 }
             }
         }
+
         return $data;
     }
+
 
     // Fonction permettant de convertir les valeurs negatives ou commençant par un point
     private function convertNegativeOrDotValue(array $data, array $record, $codeSilae): array
