@@ -275,7 +275,7 @@ class ConvertController extends Controller
                 foreach (array_values($mappedRecord) as $index => $value) {
                     if (str_contains($value, '.') || preg_match('/^\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2}(\|\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2})?$/', $value)) {
                         $mappedRecord['MONTANT'] = $value;
-                    } else {
+                    } elseif (preg_match('/^(?:[A-Z]?\d{1,2}[A-Z]?|[A-Z]{1,2}\d{1,2})$/', $value)) {
                         $mappedRecord['RUBRIQUE'] = $value;
                     }
                     unset($mappedRecord[$value]);
