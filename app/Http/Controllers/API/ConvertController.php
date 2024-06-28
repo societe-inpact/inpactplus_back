@@ -316,6 +316,7 @@ class ConvertController extends Controller
         foreach ($records as $record) {
             // Si il n'y a pas de header
             if ($containsDigit) {
+                var_dump($record[0] = $record);
                 foreach ($header as $index => $columnName) {
                     $mappedRecord[$index] = $record[$index];
                 }
