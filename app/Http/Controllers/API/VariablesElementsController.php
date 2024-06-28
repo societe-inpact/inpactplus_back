@@ -13,7 +13,7 @@ class VariablesElementsController extends Controller
         return response()->json($variablesElements, 200);
     }
 
-    public function createVariableElement(){
+    public function createVariableElement(Request $request){
         $validated = request()->validate([
             'label' => 'required',
             'code' => 'required',
@@ -34,7 +34,12 @@ class VariablesElementsController extends Controller
         $variableElement->label = request('label');
         $variableElement->code = request('code');
         $variableElement->company_folder_id = request('company_folder_id');
-        $variableElement->save();
-        return response()->json($variableElement, 200);
+        if (str_starts_with($request->get('code'), 'EV-')){
+            $variableElement->save();
+            return response()->json($variableElement, 201);
+        }else{
+            return response()->json(['message' => 'Le code rubrique doit commencer par EV-'], 400);
+        }
+
     }
 }

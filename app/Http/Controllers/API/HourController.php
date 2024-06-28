@@ -41,7 +41,11 @@ class HourController extends Controller
         $customHour->label = request('label');
         $customHour->code = request('code');
         $customHour->company_folder_id = request('company_folder_id');
-        $customHour->save();
-        return response()->json($customHour, 200);
+        if (str_starts_with($request->get('code'), 'HS-')){
+            $customHour->save();
+            return response()->json($customHour, 201);
+        }else{
+            return response()->json(['message' => 'Le code rubrique doit commencer par HS-'], 400);
+        }
     }
 }

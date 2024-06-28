@@ -316,28 +316,32 @@ class ConvertController extends Controller
         foreach ($records as $record) {
             // Si il n'y a pas de header
             if ($containsDigit) {
-                var_dump($record[0] = $record);
                 foreach ($header as $index => $columnName) {
                     $mappedRecord[$index] = $record[$index];
                 }
+                $newRecord = ['CODE SALARIE' => $record[0]];
 
-                $keys = array_keys($mappedRecord);
+
 
                 // Utilisez foreach avec les clés pour pouvoir manipuler les clés correctement
                 foreach ($mappedRecord as $columnName => $value) {
                     if (is_numeric($value) && !str_contains($value, '.')) {
-                        $mappedRecord['CODE SALARIE'] = $value;
+                        $mappedRecord['CODE SALARIE'] = $record[0];
+                        unset($mappedRecord[$columnName]);
                     }
                     if (str_contains($value, '.') || preg_match('/^\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2}(\|\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2})*$/', $value)) {
                         $mappedRecord['MONTANT'] = $value;
+                        unset($mappedRecord[$columnName]);
                     } elseif (preg_match('/\b[A-Za-z0-9]{2,3}\b(?!\s+[A-Za-z0-9])/', $value)) {
                         if (strlen($value) <= 3 && !in_array(strtolower($value), array_map('strtolower', self::FIRSTNAME_DICTIONARY))) {
                             $mappedRecord['RUBRIQUE'] = $value;
+                            unset($mappedRecord[$columnName]);
                         }
                     }
                     // Utilisez unset avec la clé ($columnName) pour supprimer l'élément par clé
                     unset($mappedRecord[$columnName]);
                 }
+
                 preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $mappedRecord['MONTANT'], $matches);
                 $codeSilae = $this->getSilaeCode($mappedRecord['RUBRIQUE'], $folderId);
             // Si il y a un header

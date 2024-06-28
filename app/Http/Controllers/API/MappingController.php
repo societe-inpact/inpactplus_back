@@ -160,8 +160,6 @@ class MappingController extends Controller
         $updateResult = $this->updateMappingData($mapping, $validatedData);
         if ($updateResult === 'updated') {
             return response()->json(['message' => 'Mapping mis à jour avec succès']);
-        } elseif ($updateResult === 'already_associated') {
-            return response()->json(['error' => 'La rubrique est déjà associée'], 409);
         } else {
             return response()->json(['error' => 'Rubrique introuvable'], 404);
         }
@@ -185,40 +183,17 @@ class MappingController extends Controller
     protected function updateMappingData($mapping, $validatedData)
     {
         $data = $mapping->data;
-        $inputRubriqueExists = false;
-        $outputRubriqueAssociated = false;
 
-        // Vérifier si le input_rubrique existe
-        foreach ($data as $entry) {
+        foreach ($data as &$entry) {
             if ($entry['input_rubrique'] === $validatedData['input_rubrique']) {
-                $inputRubriqueExists = true;
-            }
-            // Vérifier si le output_rubrique_id est déjà associé à un autre input_rubrique
-            if ($entry['output_rubrique_id'] === $validatedData['output_rubrique_id'] && $entry['input_rubrique'] !== $validatedData['input_rubrique']) {
-                $outputRubriqueAssociated = true;
-                break;
-            }
-        }
-
-        if ($outputRubriqueAssociated) {
-            return 'already_associated';
-        }
-
-        // Mettre à jour si l'entrée existe et n'est pas déjà associée
-        if ($inputRubriqueExists) {
-            foreach ($data as &$entry) {
-                if ($entry['input_rubrique'] === $validatedData['input_rubrique']) {
-                    $entry['name_rubrique'] = $validatedData['name_rubrique'];
-                    $entry['output_rubrique_id'] = $validatedData['output_rubrique_id'];
-                    $entry['output_type'] = $validatedData['output_type'];
-                    $mapping->data = $data;
-                    $mapping->save();
-                    return 'updated';
-                }
+                $entry['name_rubrique'] = $validatedData['name_rubrique'];
+                $entry['output_rubrique_id'] = $validatedData['output_rubrique_id'];
+                $entry['output_type'] = $validatedData['output_type'];
+                $mapping->data = $data;
+                $mapping->save();
+                return 'updated';
             }
         }
-
-        return 'not_found';
     }
 
 
