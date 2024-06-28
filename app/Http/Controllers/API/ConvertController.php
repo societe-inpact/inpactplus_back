@@ -317,11 +317,16 @@ class ConvertController extends Controller
             // Si il n'y a pas de header
             if ($containsDigit) {
                 foreach ($header as $index => $columnName) {
-                    $mappedRecord[$columnName] = $record[$index];
+                    $mappedRecord[$index] = $record[$index];
                 }
+
+                $keys = array_keys($mappedRecord);
 
                 // Utilisez foreach avec les clés pour pouvoir manipuler les clés correctement
                 foreach ($mappedRecord as $columnName => $value) {
+                    if (is_numeric($value) && !str_contains($value, '.')) {
+                        $mappedRecord['CODE SALARIE'] = $value;
+                    }
                     if (str_contains($value, '.') || preg_match('/^\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2}(\|\d{8}[A-Z]-\d{8}[A-Z]-\d{3}-\d{2}:\d{2})*$/', $value)) {
                         $mappedRecord['MONTANT'] = $value;
                     } elseif (preg_match('/\b[A-Za-z0-9]{2,3}\b(?!\s+[A-Za-z0-9])/', $value)) {
@@ -331,9 +336,6 @@ class ConvertController extends Controller
                     }
                     // Utilisez unset avec la clé ($columnName) pour supprimer l'élément par clé
                     unset($mappedRecord[$columnName]);
-                    if (is_numeric($value) && !str_contains($value, '.')) {
-                        $mappedRecord['CODE SALARIE'] = $value; // Assurez-vous de ne pas supprimer cette clé si elle est modifiée
-                    }
                 }
                 preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $mappedRecord['MONTANT'], $matches);
                 $codeSilae = $this->getSilaeCode($mappedRecord['RUBRIQUE'], $folderId);

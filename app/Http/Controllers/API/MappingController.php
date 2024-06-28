@@ -237,11 +237,21 @@ class MappingController extends Controller
                     return response()->json([
                         'error' => 'La rubrique d\'entrée ' . $validatedRequestData['input_rubrique'] . ' est déjà associée à la rubrique ' . $this->getSilaeRubrique($validatedRequestData)->code,
                     ], 409);
-                }elseif($inputMappedRubrique['output_rubrique_id'] === $validatedRequestData['output_rubrique_id']
-                    && !str_starts_with($this->getSilaeRubrique($validatedRequestData)->code, 'EV') || $inputMappedRubrique['output_rubrique_id'] === $validatedRequestData['output_rubrique_id'] && !str_starts_with($this->getSilaeRubrique($validatedRequestData)->code, 'EV')) {
-                    return response()->json([
-                        'error' => 'La rubrique de sortie ' . $this->getSilaeRubrique($validatedRequestData)->code . ' est déjà associée à la rubrique ' . $inputMappedRubrique['input_rubrique'],
-                    ], 409);
+                }elseif ($validatedRequestData['output_type'] === 'App\Models\CustomAbsence' || $validatedRequestData['output_type'] === 'App\Models\CustomHour') {
+                        if ($this->getSilaeRubrique($inputMappedRubrique) !== null){
+                            if ($this->getSilaeRubrique($validatedRequestData)->code === $this->getSilaeRubrique($inputMappedRubrique)->code){
+                                return response()->json([
+                                    'error' => 'Impossible de mapper la rubrique ' . $validatedRequestData['input_rubrique'] . ' au code ' . $this->getSilaeRubrique($inputMappedRubrique)->code,
+                                    'error_details' => 'Le code ' . $this->getSilaeRubrique($inputMappedRubrique)->code . ' ' . 'de la table ' . $this->getSilaeRubrique($inputMappedRubrique)->getTable() . ' est déjà associée à la rubrique d\'entrée ' . $inputMappedRubrique['input_rubrique'],
+                                    'rubrique' =>  $this->getSilaeRubrique($inputMappedRubrique)
+                                ], 409);
+                            }
+                        }
+//                    } elseif($inputMappedRubrique['output_rubrique_id'] === $validatedRequestData['output_rubrique_id']
+//                    && !str_starts_with($this->getSilaeRubrique($validatedRequestData)->code, 'EV') || $inputMappedRubrique['output_rubrique_id'] === !str_starts_with($this->getSilaeRubrique($validatedRequestData)->code, 'EV')) {
+//                    return response()->json([
+//                        'error' => 'La rubrique de sortie ' . $this->getSilaeRubrique($validatedRequestData)->code . ' est déjà associée à la rubrique ' . $inputMappedRubrique['input_rubrique'],
+//                    ], 409);
                 }
 //                } else {
 //                    if ($validatedRequestData['output_type'] === 'App\Models\CustomAbsence' || $validatedRequestData['output_type'] === 'App\Models\Absence'){
