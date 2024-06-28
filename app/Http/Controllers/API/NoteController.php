@@ -27,7 +27,9 @@ class NoteController extends Controller
                 }
             }
             if ($companyFolder->notes === null){
-                return response()->json(['message' => 'Note du dossier créée']);
+                if ($companyFolder->update(['notes' => $validatedData['notes']])){
+                    return response()->json(['message' => 'Note du dossier créée']);
+                }
             }
         }
         return response()->json(['message' => 'Erreur lors de la création de la note']);
