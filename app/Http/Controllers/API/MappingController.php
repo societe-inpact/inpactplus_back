@@ -185,40 +185,27 @@ class MappingController extends Controller
     protected function updateMappingData($mapping, $validatedData)
     {
         $data = $mapping->data;
-        $inputRubriqueExists = false;
-        $outputRubriqueAssociated = false;
-
-        // Vérifier si le input_rubrique existe
-        foreach ($data as $entry) {
+        $updated = false;
+     
+        // Parcourir les données existantes pour trouver et mettre à jour l'input_rubrique si trouvé
+        foreach ($data as &$entry) {
             if ($entry['input_rubrique'] === $validatedData['input_rubrique']) {
-                $inputRubriqueExists = true;
-            }
-            // Vérifier si le output_rubrique_id est déjà associé à un autre input_rubrique
-            if ($entry['output_rubrique_id'] === $validatedData['output_rubrique_id'] && $entry['input_rubrique'] !== $validatedData['input_rubrique']) {
-                $outputRubriqueAssociated = true;
-                break;
-            }
-        }
-
-        if ($outputRubriqueAssociated) {
-            return 'already_associated';
-        }
-
-        // Mettre à jour si l'entrée existe et n'est pas déjà associée
-        if ($inputRubriqueExists) {
-            foreach ($data as &$entry) {
-                if ($entry['input_rubrique'] === $validatedData['input_rubrique']) {
-                    $entry['name_rubrique'] = $validatedData['name_rubrique'];
-                    $entry['output_rubrique_id'] = $validatedData['output_rubrique_id'];
-                    $entry['output_type'] = $validatedData['output_type'];
-                    $mapping->data = $data;
-                    $mapping->save();
-                    return 'updated';
-                }
+                $entry['name_rubrique'] = $validatedData['name_rubrique'];
+                $entry['output_rubrique_id'] = $validatedData['output_rubrique_id'];
+                $entry['output_type'] = $validatedData['output_type'];
+                $updated = true;
+                break; // Sortir de la boucle une fois la mise à jour effectuée
             }
         }
-
-        return 'not_found';
+     
+        // Si l'input_rubrique n'a pas été trouvé, $updated restera false et la mise à jour ne sera pas considérée comme effectuée
+        if ($updated) {
+            $mapping->data = $data;
+            $mapping->save();
+            return 'updated';
+        } else {
+            return 'not_found'; // Peut-être logguer une erreur ici si nécessaire
+        }
     }
 
 
