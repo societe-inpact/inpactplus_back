@@ -65,7 +65,6 @@ class MappingController extends Controller
             if (!isset($record[3])) {
                 continue;
             }
-
             $inputRubrique = $this->findInputRubrique($record[3], $rubriqueRegex);
 
             if ($inputRubrique && !$processedRecords->contains($inputRubrique)) {
@@ -81,6 +80,7 @@ class MappingController extends Controller
                         'base_calcul' => null,
                         'label' => null,
                         'is_mapped' => false,
+                        'is_used' => false,
                         'company_folder_id' => $companyFolder,
                     ];
                 }
@@ -117,6 +117,7 @@ class MappingController extends Controller
                             'output_rubrique' => $output->code,
                             'base_calcul' => $output->base_calcul,
                             'label' => $output->label,
+                            'is_used' => $data['is_used'],
                             'is_mapped' => true,
                             'company_folder_id' => $companyFolder,
                         ];
