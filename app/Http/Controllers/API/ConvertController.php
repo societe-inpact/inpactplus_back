@@ -263,10 +263,12 @@ class ConvertController extends Controller
     {
         $mappings = $this->getMappingsFolder($folderId);
         foreach ($mappings as $mapping){
-            foreach ($mapping->data as $mappedRow){
+            foreach ($mapping->data as $mappedRow){;
                 $output = $this->resolveOutputModel($mappedRow['output_type'], $mappedRow['output_rubrique_id']);
                 if ($mappedRow['input_rubrique'] === $rubrique){
                     return $output;
+                }elseif($mappedRow['is_used']){
+
                 }
             }
         }
@@ -362,7 +364,7 @@ class ConvertController extends Controller
                         $data = $this->convertNegativeOrDotValue($data, $record, $codeSilae);
                     }
                 }
-            } else {
+            } else {;
                 if ($containsDigit){
                     $unmappedRubriques[] = $mappedRecord['RUBRIQUE'];
                 }else{
