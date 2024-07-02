@@ -322,7 +322,6 @@ class ConvertController extends Controller
                 $newRecord = ['CODE SALARIE' => $record[0]];
 
 
-
                 // Utilisez foreach avec les clés pour pouvoir manipuler les clés correctement
                 foreach ($mappedRecord as $columnName => $value) {
                     if (is_numeric($value) && !str_contains($value, '.')) {
