@@ -175,7 +175,7 @@ class MappingController extends Controller
             'input_rubrique' => 'required|string|regex:/^[A-Za-z0-9]{1,3}$/',
             'name_rubrique' => 'nullable|string|max:255',
             'output_rubrique_id' => 'nullable|integer',
-            'company_folder_id' => 'required|integer',
+            'company_folder_id' => 'required',
             'output_type' => 'nullable|string',
             'is_used' => 'required|boolean',
         ]);
@@ -210,7 +210,6 @@ class MappingController extends Controller
         foreach ($mappedRubriques as $mappedRubrique) {
             $allMappedRubriques = $mappedRubrique->data;
             foreach ($allMappedRubriques as $inputMappedRubrique) {
-
                 $isUsed = filter_var($validatedRequestData['is_used'], FILTER_VALIDATE_BOOLEAN) || filter_var($inputMappedRubrique['is_used'], FILTER_VALIDATE_BOOLEAN);
                 if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData['input_rubrique']) {
 
@@ -224,16 +223,14 @@ class MappingController extends Controller
                         ], 409);
                     }
                 }
-                if (!$this->validateOutputClassAndRubrique($validatedRequestData) && $isUsed) {
-                    return response()->json([
-                        'error' => 'La rubrique ou le type de rubrique spécifié n\'existe pas.',
-                    ], 404);
-                }
+//                if (!$this->validateOutputClassAndRubrique($validatedRequestData) && $isUsed) {
+//                    return response()->json([
+//                        'error' => 'La rubrique ou le type de rubrique spécifié n\'existe pas.',
+//                    ], 404);
+//                }
             }
         }
-
         $this->saveMappingData($companyFolder, $validatedRequestData);
-
         return response()->json(['success' => 'Mapping ajouté avec succès'], 201);
     }
 
