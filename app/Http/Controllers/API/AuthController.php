@@ -208,7 +208,6 @@ class AuthController extends Controller
         }
     }
 
-
     protected function logout()
     {
         $cookie = Cookie::forget('jwt');

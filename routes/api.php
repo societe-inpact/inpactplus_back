@@ -17,8 +17,17 @@ use Illuminate\Support\Facades\Route;
 Route::group(['middleware' => 'cors'], function () {
     Route::post('/login', [App\Http\Controllers\API\AuthController::class, 'login']);
     Route::post('/register', [App\Http\Controllers\API\AuthController::class, 'register']);
-    Route::post('/reset-password', [App\Http\Controllers\API\AuthController::class, 'resetPassword']);
 });
+
+Route::middleware('throttle:10,1')->group(function () {
+    Route::post('/password/email', [App\Http\Controllers\API\PasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::post('/password/reset', [App\Http\Controllers\API\PasswordController::class, 'reset'])->name('password.update');
+});
+
+// Ajoutez cette route pour correspondre au nom `password.reset` requis par Laravel
+Route::get('/password/reset/{token}', function ($token) {
+    return view('auth.passwords.reset', ['token' => $token]);
+})->name('password.reset');
 
 // IMPORT AND CONVERT
 Route::post("/import", [App\Http\Controllers\API\ConvertController::class, 'importFile']);
