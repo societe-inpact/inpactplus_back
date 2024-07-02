@@ -80,7 +80,7 @@ class MappingController extends Controller
                         'base_calcul' => null,
                         'label' => null,
                         'is_mapped' => false,
-                        'is_used' => true,
+                        'is_used' => false,
                         'company_folder_id' => $companyFolder,
                     ];
                 }
