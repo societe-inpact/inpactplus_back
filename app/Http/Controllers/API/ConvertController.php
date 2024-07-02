@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\RuntimeException;
 use App\Models\Mapping;
+use App\Models\CompanyFolder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -126,7 +127,7 @@ class ConvertController extends Controller
      */
     private function writeToFile(array $data, $date)
     {
-        $filename = 'ME_' . $date; // TODO : Modifier le nom du fichier
+        $filename = 'EVY_' . $date; // TODO : Modifier le nom du fichier
         $directory = storage_path('csv');
         $csvPath = $directory . '/' . $filename . '.csv';
 
@@ -158,11 +159,12 @@ class ConvertController extends Controller
         $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15');
         $formatter = fn(array $row): array => array_map('strtoupper', $row);
         $folderId = $request->get('company_folder_id');
+        $folderNumber = CompanyFolder::findOrFail($folderId);
         if ($request->hasFile('csv')) {
             $file = $request->file('csv');
             $month = $request->get('month');
             $year = $request->get('year');
-            $date = $month . $year . '_' . $folderId;
+            $date = $folderNumber-> folder_number . '_' . $month . $year;
             $reader = Reader::createFromPath($file->getPathname(), 'r');
             $reader->addFormatter($encoder);
             $reader->setDelimiter(';');
@@ -198,8 +200,6 @@ class ConvertController extends Controller
             'status' => 400
         ]);
     }
-
-
 
     /**
      * Retourne le code Silae correspondant à une rubrique donnée.
