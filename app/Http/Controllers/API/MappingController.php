@@ -121,6 +121,17 @@ class MappingController extends Controller
                             'is_mapped' => true,
                             'company_folder_id' => $companyFolder,
                         ];
+                    }else{
+                        return [
+                            'input_rubrique' => $data['input_rubrique'],
+                            'type_rubrique' => $data['output_type'],
+                            'output_rubrique' => '',
+                            'base_calcul' => '',
+                            'label' => '',
+                            'is_used' => $data['is_used'],
+                            'is_mapped' => true,
+                            'company_folder_id' => $companyFolder,
+                        ];
                     }
                 }
             }
