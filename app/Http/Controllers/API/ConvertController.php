@@ -263,12 +263,13 @@ class ConvertController extends Controller
     {
         $mappings = $this->getMappingsFolder($folderId);
         foreach ($mappings as $mapping){
-            foreach ($mapping->data as $mappedRow){;
+            foreach ($mapping->data as $mappedRow){
+                if (!$mappedRow['is_used'] && $mappedRow['input_rubrique'] === $rubrique) {
+                    return false;
+                }
                 $output = $this->resolveOutputModel($mappedRow['output_type'], $mappedRow['output_rubrique_id']);
                 if ($mappedRow['input_rubrique'] === $rubrique){
                     return $output;
-                }elseif($mappedRow['is_used']){
-
                 }
             }
         }
@@ -313,7 +314,6 @@ class ConvertController extends Controller
             $records = iterator_to_array($reader->getRecords(), true);
         }
 
-
         $mappedRecord = [];
         foreach ($records as $record) {
             // Si il n'y a pas de header
@@ -321,8 +321,6 @@ class ConvertController extends Controller
                 foreach ($header as $index => $columnName) {
                     $mappedRecord[$index] = $record[$index];
                 }
-                $newRecord = ['CODE SALARIE' => $record[0]];
-
 
                 // Utilisez foreach avec les clés pour pouvoir manipuler les clés correctement
                 foreach ($mappedRecord as $columnName => $value) {
@@ -345,10 +343,16 @@ class ConvertController extends Controller
 
                 preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $mappedRecord['MONTANT'], $matches);
                 $codeSilae = $this->getSilaeCode($mappedRecord['RUBRIQUE'], $folderId);
+                if ($codeSilae === false) {
+                    continue; // Rubrique mappée mais à ne pas utiliser
+                }
             // Si il y a un header
             }else{
                 preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $record['MONTANT'], $matches);
                 $codeSilae = $this->getSilaeCode($record['RUBRIQUE'], $folderId);
+                if ($codeSilae === false) {
+                    continue; // Rubrique mappée mais à ne pas utiliser
+                }
             }
             if ($codeSilae) {
                 if (str_starts_with($codeSilae->code, "AB-")) {
@@ -364,7 +368,7 @@ class ConvertController extends Controller
                         $data = $this->convertNegativeOrDotValue($data, $record, $codeSilae);
                     }
                 }
-            } else {;
+            } else {
                 if ($containsDigit){
                     $unmappedRubriques[] = $mappedRecord['RUBRIQUE'];
                 }else{
