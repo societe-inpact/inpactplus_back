@@ -14,8 +14,10 @@ return new class extends Migration
         Schema::create('employees', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->boolean('is_folder_referent');
             $table->boolean('is_company_referent');
-            $table->boolean('is_external');
+            $table->foreignId('informations_id')->constrained('employee_info')->cascadeOnDelete();
+
         });
     }
 
