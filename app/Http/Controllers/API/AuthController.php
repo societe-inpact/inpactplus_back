@@ -31,7 +31,6 @@ class AuthController extends Controller
                 if (isset($folder['mappings'])) {
                     $folder['mappings'] = $folder['mappings']['data'];
                 }
-                $folder['software'] = $folder['software'];
             }
 
             // Fusionner les données de l'employé avec les données des dossiers mises à jour
