@@ -54,6 +54,7 @@ class ResetPasswordNotification extends Notification
     {
         return [
             //
+
         ];
     }
 }
