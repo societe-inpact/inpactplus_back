@@ -24,10 +24,11 @@ Route::middleware('throttle:10,1')->group(function () {
     Route::post('/password/reset', [App\Http\Controllers\API\PasswordController::class, 'reset'])->name('password.update');
 });
 
-// Ajoutez cette route pour correspondre au nom `password.reset` requis par Laravel
 Route::get('/password/reset/{token}', function ($token) {
     return view('auth.passwords.reset', ['token' => $token]);
 })->name('password.reset');
+
+Route::patch('/user/update/{id}/password', [App\Http\Controllers\API\PasswordController::class, 'changePassword']);
 
 // IMPORT AND CONVERT
 Route::post("/import", [App\Http\Controllers\API\ConvertController::class, 'importFile']);
