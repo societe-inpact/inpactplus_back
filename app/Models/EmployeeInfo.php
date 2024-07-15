@@ -14,7 +14,7 @@ class EmployeeInfo extends Model
     protected $table = 'employee_infos';
 
     protected $hidden = ['laravel_through_key'];
-    protected $fillable = ['employee_code', 'social_security_number', 'RIB', 'postal_address', 'postal_code'];
+    protected $fillable = ['employee_code', 'social_security_number', 'RIB', 'postal_address', 'postal_code', 'city'];
 
     public function employee(){
         return $this->belongsTo(Employee::class, 'informations_id');

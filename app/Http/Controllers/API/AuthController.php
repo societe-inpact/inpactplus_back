@@ -31,7 +31,6 @@ class AuthController extends Controller
                 if (isset($folder['mappings'])) {
                     $folder['mappings'] = $folder['mappings']['data'];
                 }
-                $folder['software'] = $folder['software'];
             }
 
             // Fusionner les données de l'employé avec les données des dossiers mises à jour
@@ -177,7 +176,6 @@ class AuthController extends Controller
 
         $validator = Validator::make($request->all(), [
             'email' => 'nullable|email|unique:users,email,' . $id,
-            'password' => 'nullable|min:8',
             'civility' => 'nullable',
             'lastname' => 'nullable',
             'firstname' => 'nullable',
@@ -195,10 +193,6 @@ class AuthController extends Controller
             if ($request->filled($field)) {
                 $updateData[$field] = $request->input($field);
             }
-        }
-
-        if ($request->filled('password')) {
-            $updateData['password'] = Hash::make($request->input('password'));
         }
 
         if ($user->update($updateData)){
