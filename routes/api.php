@@ -51,8 +51,16 @@ Route::post("/company/create", [App\Http\Controllers\API\CompanyController::clas
 Route::post("/company_folder/create", [App\Http\Controllers\API\CompanyFolderController::class, 'createCompanyFolder']);
 Route::put("/company_folder/update/{id}", [App\Http\Controllers\API\CompanyFolderController::class, 'updateCompanyFolder']);
 
-// INTERFACES
-Route::get("/interfaces", [App\Http\Controllers\API\SoftwareController::class, 'getSoftware']);
+// SOFTWARE
+Route::get("/software", [App\Http\Controllers\API\SoftwareController::class, 'getSoftware']);
+Route::put("/software/update", [App\Http\Controllers\API\SoftwareController::class, 'updateNameSoftware']);
+Route::delete("/software/delete", [App\Http\Controllers\API\SoftwareController::class, 'deleteNameSoftware']);
+
+// INTERFACES SOFTWARE
+Route::get("/interfaces/info", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'getInterfaceSoftware']);
+Route::post("/interfaces/create", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'createInterfaceSoftware']);
+Route::put("/interfaces/update", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'updateInterfaceSoftware']);
+Route::delete("/interfaces/delete", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'deleteInterfaceSoftware']);
 
 // NOTES FROM FOLDER OF COMPANIES
 Route::get('/company_folder/notes', [App\Http\Controllers\API\NoteController::class, 'getNotes']);

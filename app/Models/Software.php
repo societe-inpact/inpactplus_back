@@ -9,14 +9,21 @@ class Software extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $table = 'interfaces';
 
     protected $fillable = [
-        "name"
+        "name", "interface_software_id"
     ];
 
     public function companyFolders()
     {
         return $this->hasMany(CompanyFolder::class, 'interface_id');
+    }
+
+    public function software()
+    {
+        return $this->hasOne(InterfaceSoftware::class, 'id');
     }
 }
