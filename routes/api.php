@@ -57,10 +57,10 @@ Route::put("/software/update", [App\Http\Controllers\API\SoftwareController::cla
 Route::delete("/software/delete", [App\Http\Controllers\API\SoftwareController::class, 'deleteNameSoftware']);
 
 // INTERFACES SOFTWARE
-Route::get("/interfaces/info", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'getInterfaceSoftware']);
-Route::post("/interfaces/create", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'createInterfaceSoftware']);
-Route::put("/interfaces/update", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'updateInterfaceSoftware']);
-Route::delete("/interfaces/delete", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'deleteInterfaceSoftware']);
+Route::get("/interfacesoftware/info", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'getInterfaceSoftware']);
+Route::post("/interfacesoftware/create", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'createInterfaceSoftware']);
+Route::put("/interfacesoftware/update", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'updateInterfaceSoftware']);
+Route::delete("/interfacesoftware/delete", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'deleteInterfaceSoftware']);
 
 // NOTES FROM FOLDER OF COMPANIES
 Route::get('/company_folder/notes', [App\Http\Controllers\API\NoteController::class, 'getNotes']);
