@@ -3,23 +3,23 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
-class AddRole extends Command
+class CreatePermission extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'add:role {name}';
+    protected $signature = 'permission:create {name}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Ajoute un nouveau rôle à la base de données';
+    protected $description = 'Ajoute une nouvelle permission en base de données';
 
     /**
      * Execute the console command.
@@ -27,7 +27,7 @@ class AddRole extends Command
     public function handle()
     {
         $name = $this->argument('name');
-        Role::create(['name' => $name]);
-        $this->info("Le rôle '$name' a bien été créé.");
+        Permission::create(['name' => $name]);
+        $this->info("La permission '$name' a bien été créée.");
     }
 }

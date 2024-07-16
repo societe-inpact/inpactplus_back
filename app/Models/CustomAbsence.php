@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class CustomAbsence extends Model
 {
     use HasFactory;
-    
+
     public $timestamps = false;
 
     protected $table = 'custom_absences';
-    protected $fillable = ['code', 'label', 'base_calcul', 'therapeutic_part_time'];
+    protected $fillable = ['code', 'label', 'company_folder_id', 'base_calcul', 'therapeutic_part_time'];
 
     public function mappings()
     {

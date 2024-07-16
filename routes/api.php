@@ -70,7 +70,7 @@ Route::post('company_folder/notes/create', [App\Http\Controllers\API\NoteControl
 Route::put('company_folder/notes/update', [App\Http\Controllers\API\NoteController::class, 'updateNotes']);
 Route::delete('company_folder/notes/delete', [App\Http\Controllers\API\NoteController::class, 'deleteNotes']);
 
-// USER
+// TODO : Créer le middleware de route des permissions d'accès
 
 // PROTECTED ROUTES
 Route::patch('/user/update/{id}', [App\Http\Controllers\API\AuthController::class, 'updateUser']);

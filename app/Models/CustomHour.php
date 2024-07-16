@@ -13,10 +13,7 @@ class CustomHour extends Model
 
     protected $table = "custom_hours";
 
-    protected $fillable = [
-        "code",
-        "label",
-    ];
+    protected $fillable = ["code", "label", "company_folder_id"];
 
     public function mappings()
     {

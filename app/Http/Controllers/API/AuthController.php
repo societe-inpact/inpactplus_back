@@ -21,6 +21,9 @@ class AuthController extends Controller
     public function getUser()
     {
         $user = Auth::user()->load(['employee.informations', 'employee.folders', 'employee.folders.company', 'employee.folders.mappings', 'employee.folders.software']);
+        $role = Auth::user()->getRoleNames()->first();
+        $permissions = Auth::user()->getAllPermissions()->pluck('name');
+
         $userArray = $user->toArray();
 
         if ($user->employee) {
@@ -36,16 +39,22 @@ class AuthController extends Controller
             // Fusionner les données de l'employé avec les données des dossiers mises à jour
             $employee = array_merge($userArray, $employeeArray);
 
+            $employee['role'] = $role;
+            $employee['permissions'] = $permissions;
+
             return response()->json($employee);
         } else {
             // Récupérer les informations de l'utilisateur sans les données des dossiers
             $companies = Company::with(['folders.software', 'folders.mappings'])->get();
+
             $user = [
                 'civility' => $user->civility,
                 'email' => $user->email,
                 'firstname' => $user->firstname,
                 'id' => $user->id,
                 'lastname' => $user->lastname,
+                'role' => $role,
+                'permissions' => $permissions,
                 'companies' => $companies->map(function ($company) {
                     return [
                         'id' => $company['id'],
@@ -105,6 +114,7 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
+        // Valider les données d'entrée
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|unique:users',
             'password' => 'required|min:8',
@@ -126,7 +136,7 @@ class AuthController extends Controller
         }
 
         try {
-            // Créer un nouvel utilisateur
+            // Creation du nouvel utilisateur
             $user = User::create([
                 'email' => $request->email,
                 'password' => bcrypt($request->password),
@@ -135,10 +145,25 @@ class AuthController extends Controller
                 'firstname' => $request->firstname
             ]);
 
-
-            // Si l'utilisateur est un employé, créez une entrée correspondante dans la table employees
+            // Assignation du rôle et des permissions
             if ($request->is_employee) {
+                if ($request->is_company_referent) {
+                    $user->assignRole('referent');
+                    $user->givePermissionTo('create', 'edit', 'view');
+                } elseif ($request->is_folder_referent) {
+                    $user->assignRole('referent');
+                    $user->givePermissionTo('view', 'edit');
+                } else {
+                    $user->assignRole('basic');
+                    //$user->givePermissionTo('view');
+                }
+            } else {
+                $user->assignRole('admin');
+                $user->givePermissionTo(Permission::all());
+            }
 
+            // Si l'utilisateur est un employé, créer une entrée correspondante dans la table employees
+            if ($request->is_employee) {
                 $employeeInfo = EmployeeInfo::create([
                     'employee_code' => $request->employee_code,
                     'RIB' => $request->RIB,
@@ -158,7 +183,6 @@ class AuthController extends Controller
                     $user->employee()->save($employee);
                     return response()->json(['message' => 'Employé créé avec succès'], 200);
                 }
-
             } else {
                 return response()->json(['message' => 'Utilisateur créé avec succès'], 200);
             }
@@ -168,6 +192,7 @@ class AuthController extends Controller
             return response()->json(['error' => 'Une erreur est survenue lors de la création de l\'utilisateur.'], 500);
         }
     }
+
 
     protected function updateUser(Request $request, $id)
     {

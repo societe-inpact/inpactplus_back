@@ -4,42 +4,71 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\VariableElement;
+use App\Rules\CustomRubricRule;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class VariablesElementsController extends Controller
 {
+
+    /**
+     * Récupère tous les éléments variables dans la base de données.
+     *
+     * @return JsonResponse Réponse JSON indiquant le succès ou l'échec de la récupération.
+     */
     public function getVariablesElements(){
         $variablesElements = VariableElement::all();
         return response()->json($variablesElements, 200);
     }
 
+    /**
+     * Crée un nouvel élément variable dans la base de données.
+     *
+     * Cette fonction valide les données fournies, nettoie le champ 'code' en supprimant
+     * les espaces autour du tiret "-", vérifie l'existence de l'élément variable
+     * de l'absence générique avec le même code et le même label, puis crée l'absence personnalisée
+     * si aucune duplication n'est trouvée.
+     *
+     * @return JsonResponse Réponse JSON indiquant le succès ou l'échec de la création.
+     */
     public function createVariableElement(Request $request){
-        $validated = request()->validate([
-            'label' => 'required',
-            'code' => 'required',
-            'company_folder_id' => 'required',
+
+        // Validation des données
+        $validated = $request->validate([
+            'label' => 'required|string|max:255',
+            'code' => ['required', new CustomRubricRule],
+            'company_folder_id' => 'required|integer',
         ]);
 
-        if(!$validated){
-            return response()->json(['message' => 'Données invalides.'], 400);
+        // Nettoyage du champ 'code' avant l'enregistrement
+        $validated['code'] = preg_replace('/\s*-\s*/', '-', trim($validated['code']));
+
+        // Vérification si l'élément variable avec ce code et ce label existe déjà
+        $isVariableElementExist = VariableElement::where('company_folder_id', $validated['company_folder_id'])
+            ->where('code', $validated['code'])
+            ->where('label', $validated['label'])
+            ->exists();
+
+        if ($isVariableElementExist) {
+            return response()->json(['message' => 'Élément variable déjà existant.'], 400);
         }
 
-        $isVariableElementExist = VariableElement::all()->where('company_folder_id', request('company_folder_id'))->where('code', request('code'))->where('label', request('label'));
 
-        if($isVariableElementExist->isNotEmpty()){
-            return response()->json(['message' => 'Element variable déjà existant.'], 400);
-        }
-
-        $variableElement = new VariableElement();
-        $variableElement->label = request('label');
-        $variableElement->code = request('code');
-        $variableElement->company_folder_id = request('company_folder_id');
-        if (str_starts_with($request->get('code'), 'EV-')){
-            $variableElement->save();
-            return response()->json($variableElement, 201);
+        // Création de l'élément variable si le code rubrique commence par EV-
+        if (str_starts_with($validated['code'], 'EV-')){
+            $variableElement = VariableElement::create([
+                'label' => $validated['label'],
+                'code' => $validated['code'],
+                'company_folder_id' => $validated['company_folder_id'],
+            ]);
+            if ($variableElement) {
+                return response()->json(['message' => 'Élément variable créée'], 201);
+            }
         }else{
             return response()->json(['message' => 'Le code rubrique doit commencer par EV-'], 400);
         }
 
+        return response()->json(['message' => 'Impossible de créer la rubrique personnalisée'], 400);
     }
+
 }

@@ -16,5 +16,6 @@ class VariableElement extends Model
     protected $fillable = [
         "code",
         "label",
+        "company_folder_id"
     ];
 }

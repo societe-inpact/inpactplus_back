@@ -108,9 +108,7 @@ class ConvertController extends Controller
                 }
             }
 
-            // Traitez les enregistrements en fonction de la vérification de l'en-tête
             if ($containsDigit) {
-                // Réinitialisez le lecteur sans en-tête
                 $reader = Reader::createFromPath($file->getPathname(), 'r');
                 $reader->addFormatter($encoder);
                 $reader->setDelimiter(';');
@@ -316,6 +314,9 @@ class ConvertController extends Controller
 
         $mappedRecord = [];
         foreach ($records as $record) {
+            foreach ($header as $index => $columnName) {
+                dd($record[$columnName] = $record['CODE SALARIE']);
+            }
             // Si il n'y a pas de header
             if ($containsDigit) {
                 foreach ($header as $index => $columnName) {
