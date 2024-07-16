@@ -1,7 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Companies;
 
+use App\Models\Employees\Employee;
+use App\Models\Employees\EmployeeFolder;
+use App\Models\Modules\ModuleAccess;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -18,6 +21,9 @@ class Company extends Model
         "referent_id"
     ];
 
+    public function modules_access(){
+        return $this->hasOne(ModuleAccess::class, 'company_id');
+    }
 
     public function referent(){
         return $this->belongsTo(Employee::class, 'referent_id');
@@ -25,7 +31,7 @@ class Company extends Model
 
     public function folders()
     {
-        return $this->hasMany(CompanyFolder::class, 'company_id' ,);
+        return $this->hasMany(CompanyFolder::class, 'company_id');
     }
 
     public function employees(){

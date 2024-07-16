@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Absence;
-use App\Models\CustomAbsence;
-use App\Models\Mapping;
+use App\Models\Absences\Absence;
+use App\Models\Absences\CustomAbsence;
 use App\Rules\CustomRubricRule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

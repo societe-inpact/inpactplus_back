@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\CompanyFolder;
-use App\Models\InterfaceFolder;
-use App\Models\Mapping;
+use App\Models\Companies\CompanyFolder;
+use App\Models\Mapping\Mapping;
+use App\Models\Misc\InterfaceFolder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 

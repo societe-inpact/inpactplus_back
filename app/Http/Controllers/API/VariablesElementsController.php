@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\VariableElement;
+use App\Models\VariablesElements\VariableElement;
 use App\Rules\CustomRubricRule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

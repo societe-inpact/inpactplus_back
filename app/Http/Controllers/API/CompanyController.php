@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Company;
+use App\Models\Companies\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class CompanyController extends Controller
 {
     public function getCompanies(){
-        $companies = Company::with('folders')->get();
+        $companies = Company::with('folders', 'modules_access')->get();
         return response()->json($companies);
     }
 

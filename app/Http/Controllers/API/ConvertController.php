@@ -4,8 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\RuntimeException;
-use App\Models\Mapping;
-use App\Models\CompanyFolder;
+use App\Models\Companies\CompanyFolder;
+use App\Models\Mapping\Mapping;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;

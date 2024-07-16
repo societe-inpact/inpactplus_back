@@ -3,22 +3,20 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Absence;
-use App\Models\Mapping;
+use App\Models\Mapping\Mapping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use League\Csv\CharsetConverter;
 use League\Csv\Reader;
-use function Laravel\Prompts\error;
 
 class MappingController extends Controller
 {
     protected $tableNames = [
-        'App\Models\Absence' => 'Absence',
-        'App\Models\CustomAbsence' => 'Absence personnalisée',
-        'App\Models\Hour' => 'Heure',
-        'App\Models\CustomHour' => 'Heure personnalisée',
-        'App\Models\VariableElement' => 'Éléments variables',
+        'App\Models\Absences\Absence' => 'Absence',
+        'App\Models\Absences\CustomAbsence' => 'Absence personnalisée',
+        'App\Models\Hours\Hour' => 'Heure',
+        'App\Models\Hours\CustomHour' => 'Heure personnalisée',
+        'App\Models\VariableElement\VariableElement' => 'Éléments variables',
     ];
 
     // Fonction permettant de récupérer les mappings existants d'un dossier

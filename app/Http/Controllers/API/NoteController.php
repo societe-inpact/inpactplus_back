@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\CompanyFolder;
+use App\Models\Companies\CompanyFolder;
 use Illuminate\Http\Request;
 
 class NoteController extends Controller

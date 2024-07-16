@@ -1,11 +1,20 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Employees;
 
+use App\Models\Companies\Company;
+use App\Models\Companies\CompanyFolder;
+use App\Models\Misc\Role;
+use App\Models\Misc\User;
+use App\Models\Modules\AdminPanel;
+use App\Models\Modules\Convert;
+use App\Models\Modules\EmployeeManagement;
+use App\Models\Modules\History;
+use App\Models\Modules\Mapping;
+use App\Models\Modules\ModuleAccess;
+use App\Models\Modules\Statistic;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth;
-use function Symfony\Component\Translation\t;
 
 class Employee extends Model
 {
@@ -22,6 +31,30 @@ class Employee extends Model
     public function user()
     {
         return $this->hasOne(User::class);
+    }
+
+    public function module_convert(){
+        return $this->hasOne(Convert::class, 'employee_id', 'user_id');
+    }
+
+    public function module_mapping(){
+        return $this->hasOne(Mapping::class, 'employee_id', 'user_id');
+    }
+
+    public function module_statistics(){
+        return $this->hasOne(Statistic::class, 'employee_id', 'user_id');
+    }
+
+    public function module_employees_management(){
+        return $this->hasOne(EmployeeManagement::class, 'employee_id', 'user_id');
+    }
+
+    public function module_history(){
+        return $this->hasOne(History::class, 'employee_id', 'user_id');
+    }
+
+    public function module_admin_panel(){
+        return $this->hasOne(AdminPanel::class, 'employee_id', 'user_id');
     }
 
     public function informations()
@@ -47,7 +80,6 @@ class Employee extends Model
     public function revokeAccessToFolder($folderId)
     {
         return $this->accessibleFolders()->updateExistingPivot($folderId, ['has_access' => false]);
-
     }
 
     public function grantAccessToFolders(array $folderIds)

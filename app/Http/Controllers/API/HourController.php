@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\CustomHour;
-use App\Models\Hour;
+use App\Models\Hours\CustomHour;
+use App\Models\Hours\Hour;
 use App\Rules\CustomRubricRule;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class HourController extends Controller
 {

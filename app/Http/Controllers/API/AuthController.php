@@ -3,27 +3,37 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Company;
-use App\Models\CompanyFolder;
-use App\Models\Employee;
-use App\Models\EmployeeInfo;
-use App\Models\User;
+use App\Models\Companies\Company;
+use App\Models\Employees\Employee;
+use App\Models\Employees\EmployeeInfo;
+use App\Models\Misc\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use phpDocumentor\Reflection\Types\Collection;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
 class AuthController extends Controller
 {
     public function getUser()
     {
-        $user = Auth::user()->load(['employee.informations', 'employee.folders', 'employee.folders.company', 'employee.folders.mappings', 'employee.folders.software']);
+        $user = Auth::user()->load([
+            'employee.informations',
+            'employee.module_convert',
+            'employee.module_convert.permissions' ,
+            'employee.module_statistics',
+            'employee.module_statistics.permissions' ,
+            'employee.module_mapping',
+            'employee.module_mapping.permissions' ,
+            'employee.module_history' ,
+            'employee.module_history.permissions' ,
+            'employee.folders',
+            'employee.folders.company',
+            'employee.folders.mappings',
+            'employee.folders.software']);
+
         $role = Auth::user()->getRoleNames()->first();
         $permissions = Auth::user()->getAllPermissions()->pluck('name');
-
         $userArray = $user->toArray();
 
         if ($user->employee) {
