@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('description', 120);
-            $table->foreignId('referent_id')->nullable()->constrained('employees', 'user_id')->cascadeOnDelete();
+            $table->foreignId('referent_id')->nullable()->constrained('users')->cascadeOnDelete();
         });
     }
 

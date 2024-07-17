@@ -14,7 +14,7 @@ class CompanyFolder extends Model
     public $timestamps = false;
 
     protected $table = 'company_folders';
-    protected $fillable = ["company_id", "folder_number", "folder_name", "notes", "siret", "siren", "interface_id"];
+    protected $fillable = ["company_id", "referent_id", "folder_number", "folder_name", "notes", "siret", "siren", "interface_id"];
 
     protected $hidden = [
         'company_id',

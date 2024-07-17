@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('convert')->constrained('roles')->cascadeOnDelete();
             $table->foreignId('mapping')->constrained('roles')->cascadeOnDelete();
             $table->foreignId('company_folder_id')->constrained('company_folders')->cascadeOnDelete();
-            $table->foreignId('employee_id')->nullable()->constrained('employees', 'user_id')->cascadeOnDelete();
+            $table->foreignId('employee_id')->nullable()->constrained('users')->cascadeOnDelete();
         });
     }
 

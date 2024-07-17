@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Validator;
+use Spatie\Permission\Models\Permission;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
 class AuthController extends Controller
@@ -18,19 +19,19 @@ class AuthController extends Controller
     public function getUser()
     {
         $user = Auth::user()->load([
-            'employee.informations',
-            'employee.module_convert',
-            'employee.module_convert.permissions' ,
-            'employee.module_statistics',
-            'employee.module_statistics.permissions' ,
-            'employee.module_mapping',
-            'employee.module_mapping.permissions' ,
-            'employee.module_history' ,
-            'employee.module_history.permissions' ,
-            'employee.folders',
-            'employee.folders.company',
-            'employee.folders.mappings',
-            'employee.folders.software']);
+            'informations',
+            'module_convert',
+            'module_convert.permissions' ,
+            'module_statistics',
+            'module_statistics.permissions' ,
+            'module_mapping',
+            'module_mapping.permissions' ,
+            'module_history' ,
+            'module_history.permissions' ,
+            'folders',
+            'folders.company',
+            'folders.mappings',
+            'folders.software']);
 
         $role = Auth::user()->getRoleNames()->first();
         $permissions = Auth::user()->getAllPermissions()->pluck('name');
@@ -131,14 +132,7 @@ class AuthController extends Controller
             'civility' => 'required',
             'lastname' => 'required',
             'firstname' => 'required',
-            'is_employee' => 'required|boolean',
-            'is_company_referent' => 'nullable|boolean',
-            'is_folder_referent' => 'nullable|boolean',
-            'employee_code' => 'required_if:is_employee,true|max:120',
-            'RIB' => 'required_if:is_employee,true',
-            'postal_code' => 'required_if:is_employee,true|min:5|max:5',
-            'postal_address' => 'required_if:is_employee,true|max:120',
-            'social_security_number' => 'required_if:is_employee,true| max:255',
+            'telephone' => 'nullable|string|min:10|max:10',
         ]);
 
         if ($validator->fails()) {
@@ -152,7 +146,8 @@ class AuthController extends Controller
                 'password' => bcrypt($request->password),
                 'civility' => $request->civility,
                 'lastname' => $request->lastname,
-                'firstname' => $request->firstname
+                'firstname' => $request->firstname,
+                'telephone' => $request->telephone
             ]);
 
             // Assignation du rôle et des permissions
@@ -214,13 +209,14 @@ class AuthController extends Controller
             'civility' => 'nullable',
             'lastname' => 'nullable',
             'firstname' => 'nullable',
+            'telephone' => 'nullable',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $fields = ['email', 'civility', 'lastname', 'firstname'];
+        $fields = ['email', 'civility', 'lastname', 'firstname', 'telephone'];
 
         $updateData = [];
 

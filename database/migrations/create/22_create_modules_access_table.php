@@ -19,7 +19,7 @@ return new class extends Migration
             $table->boolean('module_statistics');
             $table->boolean('module_admin_panel');
             $table->foreignId('company_id')->constrained('companies')->cascadeOnDelete();
-            $table->foreignId('referent_id')->nullable()->constrained('employees', 'user_id')->cascadeOnDelete();
+            $table->foreignId('referent_id')->nullable()->constrained('users')->cascadeOnDelete();
         });
     }
 
