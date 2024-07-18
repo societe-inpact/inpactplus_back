@@ -12,7 +12,7 @@ class EmployeeFolder extends Model
     use HasFactory;
 
     protected $table = 'employee_folder';
-    protected $fillable = ['employee_id', 'company_folder_id', 'employee_informations_id', 'has_access'];
+    protected $fillable = ['user_id', 'company_folder_id', 'has_access'];
 
 
     public function company(){

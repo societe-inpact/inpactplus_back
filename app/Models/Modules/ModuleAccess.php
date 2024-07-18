@@ -2,6 +2,7 @@
 
 namespace App\Models\Modules;
 
+use App\Models\Companies\Company;
 use App\Models\Misc\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +23,6 @@ class ModuleAccess extends Model
     // RELATIONS
     public function user()
     {
-        return $this->hasOne(User::class);
+        return $this->belongsTo(Company::class);
     }
 }

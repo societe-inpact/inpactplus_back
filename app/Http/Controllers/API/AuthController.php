@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Companies\Company;
 use App\Models\Employees\Employee;
 use App\Models\Employees\EmployeeInfo;
+use App\Models\Misc\Role;
 use App\Models\Misc\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,54 +19,62 @@ class AuthController extends Controller
 {
     public function getUser()
     {
-        $user = Auth::user()->load([
-            'informations',
-            'module_convert',
-            'module_convert.permissions' ,
-            'module_statistics',
-            'module_statistics.permissions' ,
-            'module_mapping',
-            'module_mapping.permissions' ,
-            'module_history' ,
-            'module_history.permissions' ,
+        $user = Auth::user();
+        $user->load([
+            'modules' => function ($query) use ($user) {
+                $query->whereHas('companyModuleAccess', function ($query) use ($user) {
+                    $query->where('has_access', true)
+                        ->whereIn('company_id', $user->companies->pluck('id')->toArray());
+                })->with('permissions');
+            },
+            'companies',
             'folders',
             'folders.company',
             'folders.mappings',
             'folders.software']);
 
-        $role = Auth::user()->getRoleNames()->first();
-        $permissions = Auth::user()->getAllPermissions()->pluck('name');
-        $userArray = $user->toArray();
+        $roles = Auth::user()->getRoleNames();
 
-        if ($user->employee) {
-            $employeeArray = $user->employee->toArray();
-
-            // Parcourir chaque dossier pour extraire uniquement les données 'data' de la relation 'mappings'
-            foreach ($employeeArray['folders'] as &$folder) {
+        // Si l'utilisateur est un client Inpact
+        if ($roles->contains('client')) {
+            $folders = $user->folders;
+            foreach ($folders as &$folder) {
                 if (isset($folder['mappings'])) {
                     $folder['mappings'] = $folder['mappings']['data'];
                 }
             }
 
-            // Fusionner les données de l'employé avec les données des dossiers mises à jour
-            $employee = array_merge($userArray, $employeeArray);
-
-            $employee['role'] = $role;
-            $employee['permissions'] = $permissions;
-
-            return response()->json($employee);
+            $user = [
+                'id' => $user->id,
+                'email' => $user->email,
+                'civility' => $user->civility,
+                'lastname' => $user->lastname,
+                'firstname' => $user->firstname,
+                'telephone' => $user->telephone,
+                'modules' => $user->modules->map(function ($module) {
+                    return [
+                        'id' => $module->id,
+                        'name' => $module->name,
+                        'permissions' => $module->permissions->map(function ($permission) {
+                            return [
+                                'name' => $permission->permission->name,
+                            ];
+                        }),
+                    ];
+                }),
+                'folders' => $user->folders,
+                'roles' => $roles
+            ];
         } else {
-            // Récupérer les informations de l'utilisateur sans les données des dossiers
             $companies = Company::with(['folders.software', 'folders.mappings'])->get();
-
             $user = [
                 'civility' => $user->civility,
                 'email' => $user->email,
                 'firstname' => $user->firstname,
                 'id' => $user->id,
                 'lastname' => $user->lastname,
-                'role' => $role,
-                'permissions' => $permissions,
+                'telephone' => $user->telephone,
+                'roles' => $roles,
                 'companies' => $companies->map(function ($company) {
                     return [
                         'id' => $company['id'],
@@ -103,8 +112,8 @@ class AuthController extends Controller
                 }),
             ];
 
-            return response()->json($user);
         }
+        return response()->json($user);
     }
 
     public function login(Request $request)
@@ -152,45 +161,11 @@ class AuthController extends Controller
 
             // Assignation du rôle et des permissions
             if ($request->is_employee) {
-                if ($request->is_company_referent) {
-                    $user->assignRole('referent');
-                    $user->givePermissionTo('create', 'edit', 'view');
-                } elseif ($request->is_folder_referent) {
-                    $user->assignRole('referent');
-                    $user->givePermissionTo('view', 'edit');
-                } else {
-                    $user->assignRole('basic');
-                    //$user->givePermissionTo('view');
-                }
+                $user->assignRole('client');
             } else {
-                $user->assignRole('admin');
-                $user->givePermissionTo(Permission::all());
+                $user->assignRole('inpact');
             }
-
-            // Si l'utilisateur est un employé, créer une entrée correspondante dans la table employees
-            if ($request->is_employee) {
-                $employeeInfo = EmployeeInfo::create([
-                    'employee_code' => $request->employee_code,
-                    'RIB' => $request->RIB,
-                    'postal_code' => $request->postal_code,
-                    'postal_address' => $request->postal_address,
-                    'social_security_number' => $request->social_security_number
-                ]);
-
-                if ($employeeInfo->save()) {
-                    $employee = Employee::create([
-                        'user_id' => $user->id,
-                        'is_company_referent' => $request->is_company_referent ?? false,
-                        'is_folder_referent' => $request->is_folder_referent ?? false,
-                        'informations_id' => $employeeInfo->id,
-                    ]);
-
-                    $user->employee()->save($employee);
-                    return response()->json(['message' => 'Employé créé avec succès'], 200);
-                }
-            } else {
-                return response()->json(['message' => 'Utilisateur créé avec succès'], 200);
-            }
+            return response()->json(['message' => 'Utilisateur créé avec succès'], 200);
 
         } catch (\Exception $e) {
             // Gestion des erreurs

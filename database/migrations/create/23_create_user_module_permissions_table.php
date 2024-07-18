@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('mapping', function (Blueprint $table) {
+        Schema::create('user_module_permissions', function (Blueprint $table) {
             $table->id();
-            $table->string('input_rubrique');
-            $table->string('name_rubrique');
-            $table->unsignedBigInteger('output_rubrique_id');
-            $table->string('output_type');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('module_id')->constrained('modules')->onDelete('cascade');
+            $table->foreignId('permission_id')->constrained('permissions')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -26,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('mapping');
+        Schema::dropIfExists('user_module_permissions');
     }
 };

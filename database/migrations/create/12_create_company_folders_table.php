@@ -20,7 +20,7 @@ return new class extends Migration
 
             $table->foreignId('company_id')->constrained('companies')->cascadeOnDelete();
             $table->foreignId('interface_id')->constrained('interfaces')->cascadeOnDelete();
-            $table->foreignId('referent_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('referent_id')->nullable()->constrained('users')->cascadeOnDelete();
 
         });
     }

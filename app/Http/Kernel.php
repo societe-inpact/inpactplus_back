@@ -71,5 +71,6 @@ class Kernel extends HttpKernel
 
     protected $routeMiddleware = [
         'cors' => \App\Http\Middleware\Cors::class,
+        'company.module.access' => \App\Http\Middleware\VerifyCompanyModuleAccess::class,
     ];
 }

@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('companies', function (Blueprint $table) {
+        Schema::create('company_module_access', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('description', 120);
-            $table->foreignId('referent_id')->nullable()->constrained('users')->cascadeOnDelete();
+            $table->foreignId('company_id')->constrained('companies')->onDelete('cascade');
+            $table->foreignId('module_id')->constrained('modules')->onDelete('cascade');
+            $table->boolean('has_access');
         });
     }
 
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('companies');
+        Schema::dropIfExists('company_module_access');
     }
 };

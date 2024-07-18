@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('module_convert', function (Blueprint $table) {
+        Schema::create('mapping', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('convert')->constrained('roles')->cascadeOnDelete();
-            $table->foreignId('mapping')->constrained('roles')->cascadeOnDelete();
             $table->foreignId('company_folder_id')->constrained('company_folders')->cascadeOnDelete();
-            $table->foreignId('employee_id')->nullable()->constrained('users')->cascadeOnDelete();
+            $table->json('data');
+            $table->timestamps();
         });
     }
 
@@ -25,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('module_convert');
+        Schema::dropIfExists('mapping');
     }
 };

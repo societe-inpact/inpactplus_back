@@ -3,8 +3,10 @@
 namespace App\Models\Modules;
 
 use App\Models\Misc\Role;
+use App\Models\Misc\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Models\Permission;
 
 class Convert extends Model
 {
@@ -21,6 +23,11 @@ class Convert extends Model
 
     public function permissions()
     {
-        return $this->hasOne(Role::class, 'id');
+        return $this->hasMany(Permission::class, 'id', 'convert');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'employee_id');
     }
 }
