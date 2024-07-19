@@ -23,7 +23,6 @@ class VerifyCompanyModuleAccess
     public function handle(Request $request, Closure $next, string $moduleName): Response
     {
         $user = Auth::user()->load('roles', 'companies');
-
         if (!$user) {
             return response()->json(['error' => 'Vous n\'êtes pas connecté'], 401);
         }

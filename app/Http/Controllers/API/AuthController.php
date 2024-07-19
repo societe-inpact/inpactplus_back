@@ -52,7 +52,41 @@ class AuthController extends Controller
                 'lastname' => $user->lastname,
                 'firstname' => $user->firstname,
                 'telephone' => $user->telephone,
-                'companies' => $user->companies,
+                'companies' => $user->companies->map(function ($company) {
+                    return [
+                        'id' => $company['id'],
+                        'name' => $company['name'],
+                        'description' => $company['description'],
+                        'folders' => $company['folders']->map(function ($folder) {
+                            if (isset($folder['mappings'])) {
+                                return [
+                                    'id' => $folder['id'],
+                                    'folder_number' => $folder['folder_number'],
+                                    'folder_name' => $folder['folder_name'],
+                                    'siret' => $folder['siret'],
+                                    'siren' => $folder['siren'],
+                                    'mappings' => [
+                                        'id' => $folder['mappings']['id'],
+                                        'data' => $folder['mappings']['data'],
+                                    ],
+                                    'notes' => $folder['notes'],
+                                    'software' => $folder['software'],
+                                ];
+                            } else {
+                                return [
+                                    'id' => $folder['id'],
+                                    'folder_number' => $folder['folder_number'],
+                                    'folder_name' => $folder['folder_name'],
+                                    'siret' => $folder['siret'],
+                                    'siren' => $folder['siren'],
+                                    'mappings' => [],
+                                    'notes' => $folder['notes'],
+                                    'software' => $folder['software'],
+                                ];
+                            }
+                        }),
+                    ];
+                }),
                 'modules' => $user->modules->map(function ($module) {
                     return [
                         'id' => $module->id,
@@ -64,7 +98,6 @@ class AuthController extends Controller
                         }),
                     ];
                 }),
-                'folders' => $user->folders,
                 'roles' => $roles
             ];
         } else {
