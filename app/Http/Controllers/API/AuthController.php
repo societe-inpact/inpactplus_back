@@ -35,7 +35,6 @@ class AuthController extends Controller
             'folders.software']);
 
         $roles = Auth::user()->getRoleNames();
-
         // Si l'utilisateur est un client Inpact
         if ($roles->contains('client')) {
             $folders = $user->folders;
@@ -52,7 +51,13 @@ class AuthController extends Controller
                 'lastname' => $user->lastname,
                 'firstname' => $user->firstname,
                 'telephone' => $user->telephone,
-                'companies' => $user->companies,
+                'companies' => $user->folders->map(function($folders){
+                    return [
+                        'id' => $folders->company->id,
+                        'name' => $folders->company->name,
+                        'folders' => $folders
+                    ];
+                }),
                 'modules' => $user->modules->map(function ($module) {
                     return [
                         'id' => $module->id,
@@ -64,7 +69,6 @@ class AuthController extends Controller
                         }),
                     ];
                 }),
-                'folders' => $user->folders,
                 'roles' => $roles
             ];
         } else {
