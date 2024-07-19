@@ -22,16 +22,21 @@ class VerifyCompanyModuleAccess
      */
     public function handle(Request $request, Closure $next, string $moduleName): Response
     {
-        $user = Auth::user()->load('companies');
+        $user = Auth::user()->load('roles', 'companies');
 
         if (!$user) {
             return response()->json(['error' => 'Vous n\'êtes pas connecté'], 401);
+        }
+
+        if ($user->hasRole('inpact')){
+            return $next($request);
         }
 
         $hasAccess = Module::whereHas('companyModuleAccess', function ($query) use ($user) {
             $query->whereIn('company_id', $user->companies->pluck('id')->toArray())
                 ->where('has_access', true);
         })->where('name', $moduleName)->exists();
+
 
         if (!$hasAccess) {
             return response()->json(['error' => 'Votre entreprise n\'a pas accès à ce module'], 401);

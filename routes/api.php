@@ -30,7 +30,7 @@ Route::get('/password/reset/{token}', function ($token) {
 
 // PROTECTED ROUTES
 
-Route::group(['middleware' => 'auth:sanctum'], function () {
+Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // ---------------------- ACCES AUX MODULES --------------------- //
 

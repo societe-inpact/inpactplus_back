@@ -8,6 +8,7 @@ use App\Models\Employees\Employee;
 use App\Models\Employees\EmployeeInfo;
 use App\Models\Misc\Role;
 use App\Models\Misc\User;
+use App\Models\Modules\Module;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
@@ -68,6 +69,7 @@ class AuthController extends Controller
             ];
         } else {
             $companies = Company::with(['folders.software', 'folders.mappings'])->get();
+            $modules = Module::all();
             $user = [
                 'civility' => $user->civility,
                 'email' => $user->email,
@@ -76,6 +78,7 @@ class AuthController extends Controller
                 'lastname' => $user->lastname,
                 'telephone' => $user->telephone,
                 'roles' => $roles,
+                'modules' => $modules,
                 'companies' => $companies->map(function ($company) {
                     return [
                         'id' => $company['id'],
