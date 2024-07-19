@@ -18,7 +18,7 @@ class CompanyController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string',
             'description' => 'nullable|string',
-            'referent_id' => 'nullable|exists:users,id',
+            'referent_id' => 'exists:users,id',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
