@@ -59,11 +59,13 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
     // ABSENCES
     Route::get("/absences", [App\Http\Controllers\API\AbsenceController::class, 'getAbsences']);
+    // TODO : Route::get("/absences/create", [App\Http\Controllers\API\AbsenceController::class, 'createAbsence']);
     Route::get("/custom-absences", [App\Http\Controllers\API\AbsenceController::class, 'getCustomAbsences']);
     Route::post("/custom-absences/create", [App\Http\Controllers\API\AbsenceController::class, 'createCustomAbsence']);
 
     // HOURS
     Route::get("/hours", [App\Http\Controllers\API\HourController::class, 'getHours']);
+    // TODO : Route::get("/hours/create", [App\Http\Controllers\API\HourController::class, 'createHour']);
     Route::get("/custom-hours", [App\Http\Controllers\API\HourController::class, 'getCustomHours']);
     Route::post("/custom-hours/create", [App\Http\Controllers\API\HourController::class, 'createCustomHour']);
 

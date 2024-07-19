@@ -51,6 +51,7 @@ class AuthController extends Controller
                 'lastname' => $user->lastname,
                 'firstname' => $user->firstname,
                 'telephone' => $user->telephone,
+                'companies' => $user->companies,
                 'modules' => $user->modules->map(function ($module) {
                     return [
                         'id' => $module->id,
@@ -176,7 +177,6 @@ class AuthController extends Controller
 
     protected function updateUser(Request $request, $id)
     {
-
         $user = User::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
