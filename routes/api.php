@@ -34,7 +34,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // ---------------------- ACCES AUX MODULES --------------------- //
 
-    Route::middleware(['company.module.access:convert', 'company.module.access:mapping'])->group(function () {
+    Route::middleware(['company.module.access:convert'])->group(function () {
         Route::post("/import", [App\Http\Controllers\API\ConvertController::class, 'importFile']);
         Route::post("/convert", [App\Http\Controllers\API\ConvertController::class, 'convertFile']);
 

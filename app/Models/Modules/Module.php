@@ -3,6 +3,7 @@
 namespace App\Models\Modules;
 
 use App\Models\Companies\Company;
+use App\Models\Companies\CompanyFolder;
 use App\Models\Misc\User;
 use App\Models\Misc\UserModulePermission;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -31,6 +32,12 @@ class Module extends Model
     public function companyModuleAccess()
     {
         return $this->belongsToMany(Company::class, 'company_module_access', 'module_id', 'company_id')
+            ->withPivot('has_access');
+    }
+
+    public function companyFolderModuleAccess()
+    {
+        return $this->belongsToMany(CompanyFolder::class, 'company_folder_module_access', 'module_id', 'company_folder_id')
             ->withPivot('has_access');
     }
 }

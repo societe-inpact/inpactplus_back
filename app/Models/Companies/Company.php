@@ -4,7 +4,7 @@ namespace App\Models\Companies;
 
 use App\Models\Employees\Employee;
 use App\Models\Employees\EmployeeFolder;
-use App\Models\Modules\ModuleAccess;
+use App\Models\Modules\CompanyModuleAccess;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -21,8 +21,10 @@ class Company extends Model
         "referent_id"
     ];
 
-    public function modules_access(){
-        return $this->hasOne(ModuleAccess::class, 'company_id');
+    public function modules()
+    {
+        return $this->belongsToMany(Module::class, 'company_module_access', 'company_id', 'module_id')
+            ->withPivot('has_access');
     }
 
     public function referent(){

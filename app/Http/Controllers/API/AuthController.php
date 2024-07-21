@@ -8,6 +8,7 @@ use App\Models\Employees\Employee;
 use App\Models\Employees\EmployeeInfo;
 use App\Models\Misc\Role;
 use App\Models\Misc\User;
+use App\Models\Misc\UserModulePermission;
 use App\Models\Modules\Module;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,28 +23,30 @@ class AuthController extends Controller
     {
         $user = Auth::user();
         $user->load([
-            'modules' => function ($query) use ($user) {
+            'folders.modules' => function ($query) use ($user) {
                 $query->whereHas('companyModuleAccess', function ($query) use ($user) {
                     $query->where('has_access', true)
                         ->whereIn('company_id', $user->companies->pluck('id')->toArray());
+                })->orWhereHas('companyFolderModuleAccess', function ($query) use ($user) {
+                    $query->where('has_access', true)
+                        ->whereIn('company_folder_id', $user->folders->pluck('id')->toArray());
                 })->with('permissions');
             },
             'companies',
+            'modules',
             'folders',
-            'folders.company',
             'folders.mappings',
             'folders.software']);
-
         $roles = Auth::user()->getRoleNames();
         // Si l'utilisateur est un client Inpact
         if ($roles->contains('client')) {
             $folders = $user->folders;
+
             foreach ($folders as &$folder) {
                 if (isset($folder['mappings'])) {
                     $folder['mappings'] = $folder['mappings']['data'];
                 }
             }
-
             $user = [
                 'id' => $user->id,
                 'email' => $user->email,
@@ -55,20 +58,11 @@ class AuthController extends Controller
                     return [
                         'id' => $folders->company->id,
                         'name' => $folders->company->name,
-                        'folders' => $folders
+                        'referent_id' => $folders->company->referent_id,
+                        'folders' => $folders,
                     ];
                 }),
-                'modules' => $user->modules->map(function ($module) {
-                    return [
-                        'id' => $module->id,
-                        'name' => $module->name,
-                        'permissions' => $module->permissions->map(function ($permission) {
-                            return [
-                                'name' => $permission->permission->name,
-                            ];
-                        }),
-                    ];
-                }),
+                'modules' => $user->modules,
                 'roles' => $roles
             ];
         } else {

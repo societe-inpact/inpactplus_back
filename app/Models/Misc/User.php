@@ -47,7 +47,7 @@ class User extends Authenticatable
 
     public function modules()
     {
-        return $this->belongsToMany(Module::class, 'user_module_permissions', 'user_id', 'module_id');
+        return $this->belongsToMany(Module::class, 'user_module_permissions', 'user_id', 'company_folder_id');
     }
 
     public function folders()
@@ -66,33 +66,9 @@ class User extends Authenticatable
         return $this->belongsToMany(Company::class, 'employee_folder', 'user_id', 'company_folder_id');
     }
 
-    public function hasPermission(string $permissionName, int $moduleId): bool
-    {
-        // Check if the company has access to the module
-        $hasCompanyAccess = CompanyModuleAccess::where('company_id', $this->company_id)
-            ->where('module_id', $moduleId)
-            ->where('has_access', true)
-            ->exists();
-
-        // If company has access, check if the user has the permission for the module
-        if ($hasCompanyAccess) {
-            return $this->modulePermissions()
-                ->where('permission_id', function ($query) use ($permissionName) {
-                    $query->select('id')
-                        ->from('permissions')
-                        ->where('name', $permissionName)
-                        ->limit(1);
-                })
-                ->where('module_id', $moduleId)
-                ->exists();
-        }
-
-        return false; // Company doesn't have access, so user doesn't have permission
-    }
-
     public function modulePermissions()
     {
-        return $this->hasMany(UserModulePermission::class);
+        return $this->hasMany(UserModulePermission::class, 'user_id');
     }
 
     public function grantAccessToFolder($folderId)

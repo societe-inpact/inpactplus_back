@@ -11,7 +11,7 @@ use App\Models\Modules\Convert;
 use App\Models\Modules\EmployeeManagement;
 use App\Models\Modules\History;
 use App\Models\Modules\Mapping;
-use App\Models\Modules\ModuleAccess;
+use App\Models\Modules\CompanyModuleAccess;
 use App\Models\Modules\Statistic;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

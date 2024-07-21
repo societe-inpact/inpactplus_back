@@ -7,17 +7,17 @@ use App\Models\Misc\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ModuleAccess extends Model
+class CompanyModuleAccess extends Model
 {
     use HasFactory;
 
     public $timestamps = false;
 
-    protected $table = 'modules_access';
+    protected $table = 'company_module_access';
 
-    protected $hidden = ["id", 'company_id', 'referent_id'];
+    protected $hidden = ["id", 'company_id', 'module_id', 'has_access'];
 
-    protected $fillable = ['module_convert', 'module_employees_management', 'module_history', 'module_statistics', 'module_admin_panel', 'company_id', 'referent_id'];
+    protected $fillable = ['company_id', 'module_id', 'has_access'];
 
 
     // RELATIONS

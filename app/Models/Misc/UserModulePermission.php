@@ -2,6 +2,7 @@
 
 namespace App\Models\Misc;
 
+use App\Models\Companies\CompanyFolder;
 use App\Models\Modules\Module;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,8 +12,10 @@ class UserModulePermission extends Model
 {
     use HasFactory;
 
+    protected $table = 'user_module_permissions';
+
     protected $fillable = [
-        'user_id', 'module_id', 'permission_id',
+        'user_id', 'module_id', 'permission_id', 'company_folder_id',
     ];
 
     public function user()
@@ -28,5 +31,9 @@ class UserModulePermission extends Model
     public function permission()
     {
         return $this->belongsTo(Permission::class);
+    }
+
+    public function folder(){
+        return $this->belongsTo(CompanyFolder::class);
     }
 }

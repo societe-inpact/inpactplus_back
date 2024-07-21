@@ -4,6 +4,9 @@ namespace App\Models\Companies;
 
 use App\Models\Mapping\Mapping;
 use App\Models\Misc\Software;
+use App\Models\Misc\UserModulePermission;
+use App\Models\Modules\Module;
+use App\Models\Modules\CompanyModuleAccess;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -18,6 +21,7 @@ class CompanyFolder extends Model
 
     protected $hidden = [
         'company_id',
+        'company',
         'laravel_through_key',
         'interface_id',
     ];
@@ -35,5 +39,11 @@ class CompanyFolder extends Model
     public function mappings()
     {
         return $this->belongsTo(Mapping::class, 'id', 'company_folder_id');
+    }
+
+    public function modules()
+    {
+        return $this->belongsToMany(Module::class, 'company_folder_module_access', 'company_folder_id', 'module_id')
+            ->withPivot('has_access');
     }
 }

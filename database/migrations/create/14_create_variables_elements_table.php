@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('code', 50);
             $table->string('label', 255)->nullable();
+            $table->foreignId('company_folder_id')->constrained('company_folders')->cascadeOnDelete();
         });
     }
 
