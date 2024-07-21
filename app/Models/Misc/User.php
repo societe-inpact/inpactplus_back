@@ -43,6 +43,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'employee',
+        'laravel_through_key'
     ];
 
     public function modules()

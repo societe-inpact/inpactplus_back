@@ -15,8 +15,7 @@ class Module extends Model
     use HasFactory;
 
     protected $table = 'modules';
-
-
+    protected $hidden = ['laravel_through_key'];
     protected $fillable = [
         'name'
     ];
@@ -29,7 +28,9 @@ class Module extends Model
 
     public function permissions()
     {
-        return $this->hasMany(UserModulePermission::class, 'module_id');
+        return $this->hasMany(UserModulePermission::class, 'module_id')
+            ->join('permissions', 'permissions.id', '=', 'user_module_permissions.permission_id')
+            ->select('user_module_permissions.*', 'permissions.name', 'permissions.label');
     }
 
     public function companyModuleAccess()

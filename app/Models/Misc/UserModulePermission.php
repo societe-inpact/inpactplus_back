@@ -13,7 +13,7 @@ class UserModulePermission extends Model
     use HasFactory;
 
     protected $table = 'user_module_permissions';
-
+    protected $hidden = ['laravel_through_key'];
     protected $fillable = [
         'user_id', 'module_id', 'permission_id', 'company_folder_id',
     ];

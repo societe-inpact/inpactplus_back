@@ -23,26 +23,24 @@ class AuthController extends Controller
     {
         $user = Auth::user();
         $user->load([
-            'folders.modules',
+            'folders.modules.module',
             'companies',
-            'folders',
-            'modules',
             'folders.mappings',
-            'folders.software']);
+            'folders.software',
+        ]);
 
-        $roles = Auth::user()->getRoleNames();
-        // Si l'utilisateur est un client Inpact
+        $folders = $user->folders;
+        $roles = $user->getRoleNames();
+
         if ($roles->contains('client')) {
-            $folders = $user->folders;
+            // Ajoute has_access dans l'objet module
+            $folders->each(function ($folder) {
+                $folder->modules->each(function ($folderModule) {
+                    $folderModule->module->has_access = $folderModule->has_access;
+                });
+            });
 
-            foreach ($folders as &$folder) {
-                if (isset($folder['mappings'])) {
-                    $folder['mappings'] = $folder['mappings']['data'];
-                }
-            }
             $folderIds = $folders->pluck('id')->toArray();
-
-            // Récupérez les IDs des entreprises de l'utilisateur
             $companyIds = $user->companies->pluck('id')->toArray();
 
             $modules = Module::whereIn('id', function ($query) use ($user, $folderIds, $companyIds) {
@@ -61,96 +59,119 @@ class AuthController extends Controller
                             ->whereIn('company_id', $companyIds)
                             ->where('has_access', true);
                     });
-            })->with(['permissions' => function ($query) {
-                $query->select('user_module_permissions.*', 'permissions.name')
-                    ->leftJoin('permissions', 'permissions.id', '=', 'user_module_permissions.permission_id');
-            }])->get();
-            // Formatage des modules pour inclure les permissions avec le nom
+            })->with('permissions')->get();
+
             $modules = $modules->map(function ($module) {
                 return [
                     'id' => $module->id,
                     'name' => $module->name,
                     'permissions' => $module->permissions->map(function ($permission) {
-                        // Assurez-vous que `permission` n'est pas nul avant d'accéder à ses propriétés
                         return [
                             'id' => $permission->permission_id,
-                            'name' => $permission->permission ? $permission->permission->name : 'Unknown',
+                            'name' => $permission->name,
+                            'label' => $permission->label,
                         ];
                     }),
                 ];
             });
 
-
-            $user = [
+            $userResponse = [
                 'id' => $user->id,
                 'email' => $user->email,
                 'civility' => $user->civility,
                 'lastname' => $user->lastname,
                 'firstname' => $user->firstname,
                 'telephone' => $user->telephone,
-                'companies' => $user->folders->map(function($folders){
+                'companies' => $user->companies->map(function ($company) use ($folders) {
                     return [
-                        'id' => $folders->company->id,
-                        'name' => $folders->company->name,
-                        'referent_id' => $folders->company->referent_id,
-                        'folders' => $folders,
+                        'id' => $company->id,
+                        'name' => $company->name,
+                        'referent_id' => $company->referent_id,
+                        'folders' => $folders->filter(function ($folder) use ($company) {
+                            return $folder->company_id === $company->id;
+                        })->map(function ($folder) {
+                            return [
+                                'id' => $folder->id,
+                                'folder_number' => $folder->folder_number,
+                                'folder_name' => $folder->folder_name,
+                                'siret' => $folder->siret,
+                                'siren' => $folder->siren,
+                                'modules' => $folder->modules->map(function ($folderModule) {
+                                    return [
+                                        'id' => $folderModule->module->id,
+                                        'name' => $folderModule->module->name,
+                                        'has_access' => $folderModule->has_access,
+                                    ];
+                                }),
+                                'mappings' => $folder->mappings,
+                                'software' => $folder->software,
+                            ];
+                        }),
                     ];
                 }),
                 'modules' => $modules,
-                'roles' => $roles
+                'roles' => $roles,
             ];
+
         } else {
-            $companies = Company::with(['folders.software', 'folders.mappings'])->get();
-            $modules = Module::all();
-            $user = [
-                'civility' => $user->civility,
-                'email' => $user->email,
-                'firstname' => $user->firstname,
+            $companies = Company::with(['folders.software', 'folders.mappings', 'folders.users', 'folders.users.modules.permissions'])->get();
+
+            $userResponse = [
                 'id' => $user->id,
+                'email' => $user->email,
+                'civility' => $user->civility,
                 'lastname' => $user->lastname,
+                'firstname' => $user->firstname,
                 'telephone' => $user->telephone,
                 'roles' => $roles,
-                'modules' => $modules,
                 'companies' => $companies->map(function ($company) {
                     return [
-                        'id' => $company['id'],
-                        'name' => $company['name'],
-                        'description' => $company['description'],
-                        'folders' => $company['folders']->map(function ($folder) {
-                            if (isset($folder['mappings'])) {
-                                return [
-                                    'id' => $folder['id'],
-                                    'folder_number' => $folder['folder_number'],
-                                    'folder_name' => $folder['folder_name'],
-                                    'siret' => $folder['siret'],
-                                    'siren' => $folder['siren'],
-                                    'mappings' => [
-                                        'id' => $folder['mappings']['id'],
-                                        'data' => $folder['mappings']['data'],
-                                    ],
-                                    'notes' => $folder['notes'],
-                                    'software' => $folder['software'],
-                                ];
-                            } else {
-                                return [
-                                    'id' => $folder['id'],
-                                    'folder_number' => $folder['folder_number'],
-                                    'folder_name' => $folder['folder_name'],
-                                    'siret' => $folder['siret'],
-                                    'siren' => $folder['siren'],
-                                    'mappings' => [],
-                                    'notes' => $folder['notes'],
-                                    'software' => $folder['software'],
-                                ];
-                            }
+                        'id' => $company->id,
+                        'name' => $company->name,
+                        'description' => $company->description,
+                        'folders' => $company->folders->map(function ($folder) {
+                            return [
+                                'id' => $folder->id,
+                                'folder_number' => $folder->folder_number,
+                                'folder_name' => $folder->folder_name,
+                                'siret' => $folder->siret,
+                                'siren' => $folder->siren,
+                                'mappings' => $folder->mappings,
+                                'notes' => $folder->notes,
+                                'employees' => $folder->users->map(function ($user) {
+                                    return [
+                                        "email" => $user->email,
+                                        "civility" => $user->civility,
+                                        "lastname" => $user->lastname,
+                                        "firstname" => $user->firstname,
+                                        "telephone" => $user->telephone,
+                                        'modules' => $user->modules->map(function ($module) {
+                                            return [
+                                                'id' => $module->id,
+                                                'name' => $module->name,
+                                                'permissions' => $module->permissions->map(function ($permission) {
+                                                    return [
+                                                        'id' => $permission->permission_id,
+                                                        'name' => $permission->name,
+                                                        'label' => $permission->label,
+                                                    ];
+                                                }),
+                                            ];
+                                        }),
+                                    ];
+                                }),
+                                'software' => $folder->software,
+                            ];
                         }),
                     ];
                 }),
             ];
 
         }
-        return response()->json($user);
+        return response()->json($userResponse);
     }
+
+
 
     public function login(Request $request)
     {

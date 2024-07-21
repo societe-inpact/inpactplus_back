@@ -12,7 +12,7 @@ class CreatePermission extends Command
      *
      * @var string
      */
-    protected $signature = 'permission:create {name}';
+    protected $signature = 'permission:create {name} {label}';
 
     /**
      * The console command description.
@@ -27,7 +27,8 @@ class CreatePermission extends Command
     public function handle()
     {
         $name = $this->argument('name');
-        Permission::create(['name' => $name]);
-        $this->info("La permission '$name' a bien été créée.");
+        $label = $this->argument('label');
+        Permission::create(['name' => $name, 'label' => $label]);
+        $this->info("La permission '$label' a bien été créée.");
     }
 }

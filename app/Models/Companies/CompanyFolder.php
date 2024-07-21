@@ -2,8 +2,10 @@
 
 namespace App\Models\Companies;
 
+use App\Models\Employees\EmployeeFolder;
 use App\Models\Mapping\Mapping;
 use App\Models\Misc\Software;
+use App\Models\Misc\User;
 use App\Models\Modules\Module;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -40,10 +42,15 @@ class CompanyFolder extends Model
         return $this->belongsTo(Mapping::class, 'id', 'company_folder_id');
     }
 
+    public function users()
+    {
+        return $this->hasManyThrough(User::class, EmployeeFolder::class, 'company_folder_id', 'id', 'id', 'user_id')->with('modules');
+    }
+
     public function modules()
     {
         return $this->hasMany(CompanyFolderModuleAccess::class, 'company_folder_id', 'id')
-            ->with('module') // Assurez-vous que 'module' est défini dans CompanyFolderModuleAccess
+            ->with('module')
             ->select('company_folder_id', 'module_id', 'has_access');
     }
 }
