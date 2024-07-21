@@ -46,6 +46,10 @@ class AuthController extends Controller
                 if (isset($folder['mappings'])) {
                     $folder['mappings'] = $folder['mappings']['data'];
                 }
+                foreach ($folder->modules as &$module) {
+                    $module->has_access = $module->pivot->has_access;
+                    unset($module->pivot);
+                }
             }
             $user = [
                 'id' => $user->id,

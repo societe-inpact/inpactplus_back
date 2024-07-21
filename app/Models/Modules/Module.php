@@ -15,6 +15,8 @@ class Module extends Model
 
     protected $table = 'modules';
 
+    protected $hidden = ['pivot','permissions'];
+
     protected $fillable = [
         'name'
     ];
