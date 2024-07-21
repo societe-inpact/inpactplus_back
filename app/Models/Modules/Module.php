@@ -8,6 +8,7 @@ use App\Models\Misc\User;
 use App\Models\Misc\UserModulePermission;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Models\Permission;
 
 class Module extends Model
 {
@@ -15,7 +16,6 @@ class Module extends Model
 
     protected $table = 'modules';
 
-    protected $hidden = ['pivot','permissions'];
 
     protected $fillable = [
         'name'
@@ -25,6 +25,7 @@ class Module extends Model
     {
         return $this->belongsToMany(User::class, 'user_module_permissions', 'module_id', 'user_id');
     }
+
 
     public function permissions()
     {

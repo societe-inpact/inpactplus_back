@@ -23,8 +23,7 @@ class Company extends Model
 
     public function modules()
     {
-        return $this->belongsToMany(Module::class, 'company_module_access', 'company_id', 'module_id')
-            ->withPivot('has_access');
+        return $this->belongsToMany(Module::class, 'company_module_access', 'company_id', 'module_id');
     }
 
     public function referent(){

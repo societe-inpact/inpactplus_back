@@ -47,7 +47,7 @@ class User extends Authenticatable
 
     public function modules()
     {
-        return $this->belongsToMany(Module::class, 'user_module_permissions', 'user_id', 'company_folder_id');
+        return $this->hasManyThrough(Module::class, UserModulePermission::class, 'module_id', 'id', 'id', 'user_id');
     }
 
     public function folders()
@@ -66,7 +66,7 @@ class User extends Authenticatable
         return $this->belongsToMany(Company::class, 'employee_folder', 'user_id', 'company_folder_id');
     }
 
-    public function modulePermissions()
+    public function permissions(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->hasMany(UserModulePermission::class, 'user_id');
     }

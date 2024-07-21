@@ -4,9 +4,8 @@ namespace App\Models\Companies;
 
 use App\Models\Mapping\Mapping;
 use App\Models\Misc\Software;
-use App\Models\Misc\UserModulePermission;
 use App\Models\Modules\Module;
-use App\Models\Modules\CompanyModuleAccess;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -43,7 +42,8 @@ class CompanyFolder extends Model
 
     public function modules()
     {
-        return $this->belongsToMany(Module::class, 'company_folder_module_access', 'company_folder_id', 'module_id')
-            ->withPivot('has_access');
+        return $this->hasMany(CompanyFolderModuleAccess::class, 'company_folder_id', 'id')
+            ->with('module') // Assurez-vous que 'module' est défini dans CompanyFolderModuleAccess
+            ->select('company_folder_id', 'module_id', 'has_access');
     }
 }

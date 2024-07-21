@@ -23,20 +23,13 @@ class AuthController extends Controller
     {
         $user = Auth::user();
         $user->load([
-            'folders.modules' => function ($query) use ($user) {
-                $query->whereHas('companyModuleAccess', function ($query) use ($user) {
-                    $query->where('has_access', true)
-                        ->whereIn('company_id', $user->companies->pluck('id')->toArray());
-                })->orWhereHas('companyFolderModuleAccess', function ($query) use ($user) {
-                    $query->where('has_access', true)
-                        ->whereIn('company_folder_id', $user->folders->pluck('id')->toArray());
-                })->with('permissions');
-            },
+            'folders.modules',
             'companies',
-            'modules',
             'folders',
+            'modules',
             'folders.mappings',
             'folders.software']);
+
         $roles = Auth::user()->getRoleNames();
         // Si l'utilisateur est un client Inpact
         if ($roles->contains('client')) {
@@ -46,11 +39,48 @@ class AuthController extends Controller
                 if (isset($folder['mappings'])) {
                     $folder['mappings'] = $folder['mappings']['data'];
                 }
-                foreach ($folder->modules as &$module) {
-                    $module->has_access = $module->pivot->has_access;
-                    unset($module->pivot);
-                }
             }
+            $folderIds = $folders->pluck('id')->toArray();
+
+            // Récupérez les IDs des entreprises de l'utilisateur
+            $companyIds = $user->companies->pluck('id')->toArray();
+
+            $modules = Module::whereIn('id', function ($query) use ($user, $folderIds, $companyIds) {
+                $query->select('module_id')
+                    ->from('user_module_permissions')
+                    ->where('user_id', $user->id)
+                    ->whereIn('module_id', function ($subQuery) use ($folderIds) {
+                        $subQuery->select('module_id')
+                            ->from('company_folder_module_access')
+                            ->whereIn('company_folder_id', $folderIds)
+                            ->where('has_access', true);
+                    })
+                    ->whereIn('module_id', function ($subQuery) use ($companyIds) {
+                        $subQuery->select('module_id')
+                            ->from('company_module_access')
+                            ->whereIn('company_id', $companyIds)
+                            ->where('has_access', true);
+                    });
+            })->with(['permissions' => function ($query) {
+                $query->select('user_module_permissions.*', 'permissions.name')
+                    ->leftJoin('permissions', 'permissions.id', '=', 'user_module_permissions.permission_id');
+            }])->get();
+            // Formatage des modules pour inclure les permissions avec le nom
+            $modules = $modules->map(function ($module) {
+                return [
+                    'id' => $module->id,
+                    'name' => $module->name,
+                    'permissions' => $module->permissions->map(function ($permission) {
+                        // Assurez-vous que `permission` n'est pas nul avant d'accéder à ses propriétés
+                        return [
+                            'id' => $permission->permission_id,
+                            'name' => $permission->permission ? $permission->permission->name : 'Unknown',
+                        ];
+                    }),
+                ];
+            });
+
+
             $user = [
                 'id' => $user->id,
                 'email' => $user->email,
@@ -66,7 +96,7 @@ class AuthController extends Controller
                         'folders' => $folders,
                     ];
                 }),
-                'modules' => $user->modules,
+                'modules' => $modules,
                 'roles' => $roles
             ];
         } else {
