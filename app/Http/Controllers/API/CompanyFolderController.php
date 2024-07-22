@@ -54,6 +54,7 @@ class CompanyFolderController extends Controller
             return response()->json(['message' => 'Dossier créé avec succès'], 200);
 
         } catch (\Exception $e) {
+            dd($e);
             return response()->json(['error' => 'Une erreur est survenue lors de la création du dossier.'], 500);
         }
     }

@@ -10,7 +10,7 @@ class Hour extends Model
     use HasFactory;
 
     protected $table = "hours";
-
+    public $timestamps = false;
     protected $fillable = [
         "code",
         "label",

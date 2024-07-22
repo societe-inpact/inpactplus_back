@@ -59,29 +59,46 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::patch('/user/update/{id}', [App\Http\Controllers\API\AuthController::class, 'updateUser']);
     Route::patch('/user/update/{id}/password', [App\Http\Controllers\API\PasswordController::class, 'changePassword']);
 
-    // ABSENCES
-    Route::get("/absences", [App\Http\Controllers\API\AbsenceController::class, 'getAbsences']);
-    // TODO : Route::get("/absences/create", [App\Http\Controllers\API\AbsenceController::class, 'createAbsence']);
+    // CUSTOM ABSENCES
     Route::get("/custom-absences", [App\Http\Controllers\API\AbsenceController::class, 'getCustomAbsences']);
     Route::post("/custom-absences/create", [App\Http\Controllers\API\AbsenceController::class, 'createCustomAbsence']);
+    Route::patch("/custom-absences/update/{id}", [App\Http\Controllers\API\AbsenceController::class, 'updateCustomAbsence']);
+    Route::delete("/custom-absences/delete", [App\Http\Controllers\API\AbsenceController::class, 'deleteCustomAbsence']);
+
+    // ABSENCES
+    Route::get("/absences", [App\Http\Controllers\API\AbsenceController::class, 'getAbsences']);
+    Route::post("/absences/create", [App\Http\Controllers\API\AbsenceController::class, 'createAbsence']);
+    Route::patch("/absences/update/{id}", [App\Http\Controllers\API\AbsenceController::class, 'updateAbsence']);
+    Route::delete("/absences/delete", [App\Http\Controllers\API\AbsenceController::class, 'deleteAbsence']);
 
     // HOURS
     Route::get("/hours", [App\Http\Controllers\API\HourController::class, 'getHours']);
-    // TODO : Route::get("/hours/create", [App\Http\Controllers\API\HourController::class, 'createHour']);
+    Route::post("/hours/create", [App\Http\Controllers\API\HourController::class, 'createHour']);
+    Route::patch("/hours/update/{id}", [App\Http\Controllers\API\HourController::class, 'updateHour']);
+    Route::delete("/hours/delete", [App\Http\Controllers\API\HourController::class, 'deleteHour']);
+
+    // CUSTOM HOURS
     Route::get("/custom-hours", [App\Http\Controllers\API\HourController::class, 'getCustomHours']);
     Route::post("/custom-hours/create", [App\Http\Controllers\API\HourController::class, 'createCustomHour']);
+    Route::patch("/custom-hours/update/{id}", [App\Http\Controllers\API\HourController::class, 'updateCustomHour']);
+    Route::delete("/custom-hours/delete", [App\Http\Controllers\API\HourController::class, 'deleteCustomHour']);
 
     // VARIABLES ELEMENTS
     Route::get("/variables-elements", [App\Http\Controllers\API\VariablesElementsController::class, 'getVariablesElements']);
     Route::post("/variables-elements/create", [App\Http\Controllers\API\VariablesElementsController::class, 'createVariableElement']);
+    Route::patch("/variables-elements/update/{id}", [App\Http\Controllers\API\VariablesElementsController::class, 'updateVariableElement']);
+    Route::delete("/variables-elements/delete", [App\Http\Controllers\API\VariablesElementsController::class, 'deleteVariableElement']);
 
     // COMPANIES
     Route::get("/companies", [App\Http\Controllers\API\CompanyController::class, 'getCompanies']);
     Route::post("/company/create", [App\Http\Controllers\API\CompanyController::class, 'createCompany']);
+    Route::post("/company/update/{id}", [App\Http\Controllers\API\CompanyController::class, 'updateCompany']);
+    Route::delete("/company/delete", [App\Http\Controllers\API\CompanyController::class, 'deleteCompany']);
 
     // FOLDER OF COMPANIES
     Route::post("/company_folder/create", [App\Http\Controllers\API\CompanyFolderController::class, 'createCompanyFolder']);
     Route::patch("/company_folder/update/{id}", [App\Http\Controllers\API\CompanyFolderController::class, 'updateCompanyFolder']);
+    Route::delete("/company_folder/delete", [App\Http\Controllers\API\CompanyFolderController::class, 'deleteCompanyFolder']);
 
     // INTERFACES
     Route::get("/interfaces", [App\Http\Controllers\API\SoftwareController::class, 'getSoftware']);

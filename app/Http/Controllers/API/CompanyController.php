@@ -27,11 +27,8 @@ class CompanyController extends Controller
             $data = [
                 'name' => $request->name,
                 'description' => $request->description,
+                'referent_id' => $request->referent_id,
             ];
-
-            if ($request->has('referent_id')) {
-                $data['referent_id'] = $request->referent_id;
-            }
 
             $company = Company::create($data);
             return response()->json(['message' => 'Entreprise créée avec succès', 'company' => ['id' => $company->id]], 200);

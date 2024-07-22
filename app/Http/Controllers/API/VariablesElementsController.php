@@ -71,4 +71,14 @@ class VariablesElementsController extends Controller
         return response()->json(['message' => 'Impossible de créer la rubrique personnalisée'], 400);
     }
 
+    public function updateVariableElement()
+    {
+        // TODO : Update un élément variable
+    }
+
+    public function deleteVariableElement()
+    {
+        // TODO : Delete un élément variable
+    }
+
 }

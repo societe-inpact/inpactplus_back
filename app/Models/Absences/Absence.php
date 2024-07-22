@@ -11,6 +11,7 @@ class Absence extends Model
     use HasFactory;
 
     protected $table = "absences";
+    public $timestamps = false;
     protected $fillable = [
         "code",
         "label",

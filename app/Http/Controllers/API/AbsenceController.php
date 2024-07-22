@@ -12,17 +12,7 @@ use Illuminate\Http\Request;
 
 class AbsenceController extends Controller
 {
-
-    /**
-     * Récupère toutes les absences génériques dans la base de données.
-     *
-     * @return JsonResponse Réponse JSON indiquant le succès ou l'échec de la récupération.
-     */
-    public function getAbsences(){
-        $absences = Absence::all();
-        return response()->json($absences, 200);
-    }
-
+    // PARTIE CUSTOM ABSENCES
 
     /**
      * Récupère toutes les absences personnalisées dans la base de données.
@@ -36,11 +26,6 @@ class AbsenceController extends Controller
 
     /**
      * Crée une nouvelle absence personnalisée dans la base de données.
-     *
-     * Cette fonction valide les données fournies, nettoie le champ 'code' en supprimant
-     * les espaces autour du tiret "-", vérifie l'existence de l'absence personnalisée ou
-     * de l'absence générique avec le même code et le même label, puis crée l'absence personnalisée
-     * si aucune duplication n'est trouvée.
      *
      * @return JsonResponse Réponse JSON indiquant le succès ou l'échec de la création.
      */
@@ -91,5 +76,74 @@ class AbsenceController extends Controller
         }
 
         return response()->json(['message' => 'Impossible de créer la rubrique personnalisée'], 400);
+    }
+
+    public function updateCustomAbsence()
+    {
+        // TODO : Update une custom absence
+    }
+
+    public function deleteCustomAbsence()
+    {
+        // TODO : Delete une custom absence
+    }
+
+    // PARTIE ABSENCES
+
+    /**
+     * Récupère toutes les absences génériques dans la base de données.
+     *
+     * @return JsonResponse Réponse JSON indiquant le succès ou l'échec de la récupération.
+     */
+    public function getAbsences(){
+        $absences = Absence::all();
+        return response()->json($absences, 200);
+    }
+
+    public function createAbsence(Request $request)
+    {
+        // Validation des données
+        $validated = $request->validate([
+            'label' => 'required|string|max:255',
+            'code' => ['required', new CustomRubricRule],
+            'base_calcul' => 'required|string|max:255',
+            'therapeutic_part_time' => 'nullable|boolean',
+        ]);
+
+        // Nettoyage du champ 'code' avant l'enregistrement
+        $validated['code'] = preg_replace('/\s*-\s*/', '-', trim($validated['code']));
+
+        $isAbsenceExists = Absence::where('code', $validated['code'])->exists();
+
+        if ($isAbsenceExists) {
+            return response()->json(['message' => 'Absence déjà existante.'], 400);
+        }
+
+        if (str_starts_with($validated['code'], 'AB-')) {
+            // Création de l'absence personnalisée
+            $absence = Absence::create([
+                'label' => $validated['label'],
+                'code' => $validated['code'],
+                'base_calcul' => $validated['base_calcul'],
+                'therapeutic_part_time' => $request->input('therapeutic_part_time', null),
+            ]);
+            if ($absence) {
+                return response()->json(['message' => 'Absence générique créée'], 201);
+            }
+        }else{
+            return response()->json(['message' => 'Le code rubrique doit commencer par AB-'], 400);
+        }
+
+        return response()->json(['message' => 'Impossible de créer la rubrique'], 400);
+    }
+
+    public function updateAbsence()
+    {
+        // TODO : Update une absence générique
+    }
+
+    public function deleteAbsence()
+    {
+        // TODO : Delete une absence générique
     }
 }

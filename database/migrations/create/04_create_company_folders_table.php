@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('folder_name');
             $table->string('siret', 14);
             $table->string('siren', 9);
-            $table->string('notes', 9);
+            $table->string('notes', 255);
 
             $table->foreignId('company_id')->constrained('companies')->cascadeOnDelete();
             $table->foreignId('interface_id')->constrained('interfaces')->cascadeOnDelete();
