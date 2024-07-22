@@ -3,33 +3,35 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\API\ConvertController2;
 use App\Models\InterfaceSoftware;
 use Illuminate\Http\Request;
 use App\Models\Software;
 use Illuminate\Support\Facades\Validator;
 
-class InterfaceSoftwareController extends Controller
+class InterfaceSoftwareController extends ConvertController
 {
-    public function getInterfaceSoftware(Request $request){
+    public function getInterfaceSoftware($request){
 
-        $validator = Validator::make($request->all(), [
-            'nomInterface' => 'required|string',
-        ]);
+        // $validator = Validator::make($request->all(), [
+        //     'nomInterface' => 'required|string',
+        // ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }  
+        // if ($validator->fails()) {
+        //     return response()->json(['errors' => $validator->errors()], 422);
+        // }  
 
-        $softwareName = $request->nomInterface;
+        $softwareName = $request['nomInterface'];
         $softwaresNames = Software::all()->where('name',$softwareName)->first();
 
         if ($softwaresNames !== null){
             $idSoftware = $softwaresNames->interface_software_id;
             $interfaceSoftwares = InterfaceSoftware::all()->where('id',$idSoftware)->first();
-            return response()->json($interfaceSoftwares, 200);           
+            // return response()->json($interfaceSoftwares, 200);
+            return $interfaceSoftwares;       
         }
         else{
-            return response()->json(['message'=>'il n\'y pas d\'interface'], 400);
+            return response()->json(['message'=>'il n\'y pas d\'interface', $softwaresNames], 400);
         }
     }
 

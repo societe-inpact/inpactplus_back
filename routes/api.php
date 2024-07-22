@@ -24,6 +24,8 @@ Route::group(['middleware' => 'cors'], function () {
 Route::post("/import", [App\Http\Controllers\API\ConvertController::class, 'importFile']);
 Route::post("/convert", [App\Http\Controllers\API\ConvertController::class, 'convertFile']);
 
+
+
 // MAPPING
 Route::post("/mapping", [App\Http\Controllers\API\MappingController::class, 'getMapping']);
 Route::post("/mapping/store", [App\Http\Controllers\API\MappingController::class, 'storeMapping']);
@@ -62,6 +64,12 @@ Route::post("/interfacesoftware/create", [App\Http\Controllers\API\InterfaceSoft
 Route::put("/interfacesoftware/update", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'updateInterfaceSoftware']);
 Route::delete("/interfacesoftware/delete", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'deleteInterfaceSoftware']);
 
+// TEST
+
+// Route::get("/test", [App\Http\Controllers\API\ConvertController::class, 'indexColumn']);
+Route::get("/test/indexcolonne", [App\Http\Controllers\API\ConvertInterfaceController::class, 'indexColumn']);
+Route::post("/test/convert", [App\Http\Controllers\API\ConvertInterfaceController::class, 'convertinterface']);
+
 // NOTES FROM FOLDER OF COMPANIES
 Route::get('/company_folder/notes', [App\Http\Controllers\API\NoteController::class, 'getNotes']);
 Route::post('company_folder/notes/create', [App\Http\Controllers\API\NoteController::class, 'createNotes']);
@@ -69,7 +77,8 @@ Route::put('company_folder/notes/update', [App\Http\Controllers\API\NoteControll
 Route::delete('company_folder/notes/delete', [App\Http\Controllers\API\NoteController::class, 'deleteNotes']);
 
 // PROTECTED ROUTES
-Route::group(['middleware' => 'auth:sanctum'], function () {
+    Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post("/logout", [App\Http\Controllers\API\ApiAuthController::class, 'logout']);
     Route::get("/user", [App\Http\Controllers\API\ApiAuthController::class, 'getUser']);
+
 });
