@@ -20,6 +20,7 @@ class CompanyFolderController extends Controller
             'siren' => 'required|string',
             'interface_id' => 'required|exists:interfaces,id',
             'company_id' => 'exists:companies,id',
+            'notes' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -34,6 +35,7 @@ class CompanyFolderController extends Controller
                 'siren' => $request->siren,
                 'interface_id' => $request->interface_id,
                 'company_id' => $request->company_id,
+                'notes' => $request->notes,
             ];
             $existingFolder = CompanyFolder::all()->where('folder_number', '==', $request->get('folder_number'))->first();
             if ($existingFolder){
@@ -54,7 +56,6 @@ class CompanyFolderController extends Controller
             return response()->json(['message' => 'Dossier créé avec succès'], 200);
 
         } catch (\Exception $e) {
-            dd($e);
             return response()->json(['error' => 'Une erreur est survenue lors de la création du dossier.'], 500);
         }
     }
