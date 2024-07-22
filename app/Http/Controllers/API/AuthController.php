@@ -218,8 +218,14 @@ class AuthController extends Controller
 
             // Assignation du rôle et des permissions
             if ($request->is_employee) {
+                if (!Role::where('name', 'client')->exists()) {
+                    Role::create(['name' => 'client', 'guard_name' => 'web']);
+                }
                 $user->assignRole('client');
             } else {
+                if (!Role::where('name', 'inpact')->exists()) {
+                    Role::create(['name' => 'inpact', 'guard_name' => 'web']);
+                }
                 $user->assignRole('inpact');
             }
             return response()->json(['message' => 'Utilisateur créé avec succès'], 200);

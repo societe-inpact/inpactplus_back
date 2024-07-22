@@ -51,7 +51,11 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         // TODO : Routes et fonctions associées au module
     });
 
-        // USERS
+    // ACCESS AND PERMISSIONS
+    Route::post('/company_folder/add-user', [App\Http\Controllers\API\AccessController::class, 'addUserToCompanyFolder']);
+    Route::post('/company_folder/delete-user', [App\Http\Controllers\API\AccessController::class, 'deleteUserFromCompanyFolder']);
+
+    // USERS
     Route::patch('/user/update/{id}', [App\Http\Controllers\API\AuthController::class, 'updateUser']);
     Route::patch('/user/update/{id}/password', [App\Http\Controllers\API\PasswordController::class, 'changePassword']);
 
