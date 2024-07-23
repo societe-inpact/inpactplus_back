@@ -60,7 +60,6 @@ class AuthController extends Controller
                             ->where('has_access', true);
                     });
             })->with('permissions')->get();
-
             $modules = $modules->map(function ($module) {
                 return [
                     'id' => $module->id,
@@ -70,6 +69,7 @@ class AuthController extends Controller
                             'id' => $permission->permission_id,
                             'name' => $permission->name,
                             'label' => $permission->label,
+                            'company_folder_id' => $permission->company_folder_id
                         ];
                     }),
                 ];

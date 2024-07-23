@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Validator;
 class CompanyController extends Controller
 {
     public function getCompanies(){
-        $companies = Company::with('folders', 'modules_access')->get();
+        $companies = Company::with('folders', 'modules')->get();
         return response()->json($companies);
     }
 

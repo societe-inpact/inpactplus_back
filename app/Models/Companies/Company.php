@@ -5,6 +5,7 @@ namespace App\Models\Companies;
 use App\Models\Employees\Employee;
 use App\Models\Employees\EmployeeFolder;
 use App\Models\Modules\CompanyModuleAccess;
+use App\Models\Modules\Module;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 

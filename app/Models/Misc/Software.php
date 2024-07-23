@@ -11,7 +11,7 @@ class Software extends Model
     use HasFactory;
 
     protected $table = 'interfaces';
-
+    public $timestamps = false;
     protected $fillable = [
         "name"
     ];

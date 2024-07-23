@@ -19,7 +19,8 @@ class AbsenceController extends Controller
      *
      * @return JsonResponse Réponse JSON indiquant le succès ou l'échec de la récupération.
      */
-    public function getCustomAbsences(){
+    public function getCustomAbsences()
+    {
         $customAbsences = CustomAbsence::all();
         return response()->json($customAbsences, 200);
     }
@@ -29,7 +30,8 @@ class AbsenceController extends Controller
      *
      * @return JsonResponse Réponse JSON indiquant le succès ou l'échec de la création.
      */
-    public function createCustomAbsence(Request $request){
+    public function createCustomAbsence(Request $request)
+    {
 
         // Validation des données
         $validated = $request->validate([
@@ -71,7 +73,7 @@ class AbsenceController extends Controller
             if ($customAbsence) {
                 return response()->json(['message' => 'Absence personnalisée créée'], 201);
             }
-        }else{
+        } else {
             return response()->json(['message' => 'Le code rubrique doit commencer par AB-'], 400);
         }
 
@@ -95,7 +97,8 @@ class AbsenceController extends Controller
      *
      * @return JsonResponse Réponse JSON indiquant le succès ou l'échec de la récupération.
      */
-    public function getAbsences(){
+    public function getAbsences()
+    {
         $absences = Absence::all();
         return response()->json($absences, 200);
     }
@@ -130,16 +133,43 @@ class AbsenceController extends Controller
             if ($absence) {
                 return response()->json(['message' => 'Absence générique créée'], 201);
             }
-        }else{
+        } else {
             return response()->json(['message' => 'Le code rubrique doit commencer par AB-'], 400);
         }
 
         return response()->json(['message' => 'Impossible de créer la rubrique'], 400);
     }
 
-    public function updateAbsence()
+    public function updateAbsence(Request $request, $id)
     {
-        // TODO : Update une absence générique
+        $absence = Absence::findOrFail($id);
+
+        // Validation des données
+        $validated = $request->validate([
+            'label' => 'required|string|max:255',
+            'code' => ['required', new CustomRubricRule()],
+            'base_calcul' => 'required|string|max:255',
+            'therapeutic_part_time' => 'nullable|boolean',
+        ]);
+
+        // Nettoyage du champ 'code' avant l'enregistrement
+        $validated['code'] = preg_replace('/\s*-\s*/', '-', trim($validated['code']));
+
+        // Vérifier si le code existe déjà pour une autre absence
+        $isAbsenceExists = Absence::where('code', $validated['code'])
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($isAbsenceExists) {
+            return response()->json(['message' => 'Absence déjà existante.'], 400);
+        }
+
+        // Mettre à jour l'absence
+        if ($absence->update($validated)) {
+            return response()->json(['message' => 'Absence mise à jour avec succès']);
+        } else {
+            return response()->json(['message' => 'Erreur lors de la mise à jour de l\'absence'], 500);
+        }
     }
 
     public function deleteAbsence()

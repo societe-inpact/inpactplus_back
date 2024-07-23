@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('module_id')->constrained('modules')->onDelete('cascade');
             $table->foreignId('permission_id')->constrained('permissions')->onDelete('cascade');
+            $table->foreignId('company_folder_id')->constrained('company_folders')->onDelete('cascade');
             $table->timestamps();
         });
     }

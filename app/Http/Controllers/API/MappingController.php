@@ -308,4 +308,8 @@ class MappingController extends Controller
         }
         return response()->json(['message' => 'Erreur lors de la suppression de l\'utilisateur']);
     }
+
+    protected function deleteAllMapping(){
+        
+    }
 }
