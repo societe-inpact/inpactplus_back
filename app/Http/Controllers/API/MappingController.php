@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Absence;
-use App\Models\Mapping;
+use App\Models\Mapping\Mapping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use League\Csv\CharsetConverter;
