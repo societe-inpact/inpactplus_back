@@ -3,20 +3,22 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Mapping\Mapping;
+use App\Models\Absence;
+use App\Models\Mapping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use League\Csv\CharsetConverter;
 use League\Csv\Reader;
+use function Laravel\Prompts\error;
 
 class MappingController extends Controller
 {
     protected $tableNames = [
-        'App\Models\Absences\Absence' => 'Absence',
-        'App\Models\Absences\CustomAbsence' => 'Absence personnalisée',
-        'App\Models\Hours\Hour' => 'Heure',
-        'App\Models\Hours\CustomHour' => 'Heure personnalisée',
-        'App\Models\VariableElement\VariableElement' => 'Éléments variables',
+        'App\Models\Absence' => 'Absence',
+        'App\Models\CustomAbsence' => 'Absence personnalisée',
+        'App\Models\Hour' => 'Heure',
+        'App\Models\CustomHour' => 'Heure personnalisée',
+        'App\Models\VariableElement' => 'Éléments variables',
     ];
 
     // Fonction permettant de récupérer les mappings existants d'un dossier
@@ -295,8 +297,15 @@ class MappingController extends Controller
     }
 
     // Fonction permettant de supprimer un mapping existant
-    protected function deleteMapping()
+    protected function deleteMapping(Request $request)
     {
-        // TODO
+        $request->validate([
+            'user_id' => 'required|integer',
+        ]);
+        $userToDelete = Mapping::where('user_id', intval($request->user_id))->delete();
+        if ($userToDelete){
+            return response()->json(['message' => 'Utilisateur supprimé du dossier avec succès']);
+        }
+        return response()->json(['message' => 'Erreur lors de la suppression de l\'utilisateur']);
     }
 }
