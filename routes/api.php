@@ -69,6 +69,7 @@ Route::delete("/interfacesoftware/delete", [App\Http\Controllers\API\InterfaceSo
 // Route::get("/test", [App\Http\Controllers\API\ConvertController::class, 'indexColumn']);
 Route::get("/test/indexcolonne", [App\Http\Controllers\API\ConvertInterfaceController::class, 'indexColumn']);
 Route::post("/test/convert", [App\Http\Controllers\API\ConvertInterfaceController::class, 'convertinterface']);
+Route::post("/test/maraton", [App\Http\Controllers\API\ConvertMEController::class, 'marathonConvert']);
 
 // NOTES FROM FOLDER OF COMPANIES
 Route::get('/company_folder/notes', [App\Http\Controllers\API\NoteController::class, 'getNotes']);

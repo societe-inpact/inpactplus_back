@@ -6,17 +6,15 @@ use App\Http\Controllers\Controller;
 use Illuminate\Routing\Controller as BaseController;
 use App\Http\Controllers\RuntimeException;
 use App\Http\Controllers\API\ConvertInterfaceController;
-use App\Models\Mapping;
 use App\Models\CompanyFolder;
 use App\Models\Software;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
 use League\Csv\CharsetConverter;
 use League\Csv\Exception;
-use League\Csv\InvalidArgument;
+
 use League\Csv\Reader;
-use League\Csv\UnavailableStream;
+
 use League\Csv\Writer;
 
 class ConvertController extends BaseController
@@ -35,14 +33,30 @@ class ConvertController extends BaseController
         $nominterface = ['nomInterface' => $interface,];
 
         $softwaresNames = Software::all()->where('name',$interface)->first();
-        $idSoftware = $softwaresNames->interface_software_id;
+        if ($softwaresNames !== null){
+            $idSoftware = $softwaresNames->interface_software_id;
+        }else{
+            return response()->json(['message' => 'L\'interface n\'existe pas','status' => 400]);
+        }
+
         if ($idSoftware !== null){
             $columnindex = $this->indexColumn($nominterface);
-            // $columnindex = $this->getInterfaceSoftware($nominterface);
             $type_separateur = $columnindex->type_separateur;
             $format = $columnindex->format; 
         }else{
-            // mettre en palce la recherche des interfaces spécifique
+            $softwaresName = strtolower($softwaresNames["name"]);
+            switch ($softwaresName){
+                case "marathon":
+                    $controller = new ConvertMEController();
+                    $columnindex = $controller->formatFilesMarathon();
+                    $type_separateur = $columnindex["separateur"];
+                    $format = $columnindex ["format"];
+                    break; 
+
+                default:
+                    return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]);
+                 
+            }
         }
 
         // extraction en fonction du format => voir pour le sortir dans une autre fonction
@@ -114,12 +128,6 @@ class ConvertController extends BaseController
         return str_replace('\\', '/', 'http://localhost/evypaie_back/storage/csv/' . $filename . '.csv');
     }
 
-    public function convertinterface2($request)
-    {
-        $controller = new ConvertInterfaceController();
-        return $controller->convertinterface($request);
-    }
-
 
     /**
      * Convertit un fichier CSV.
@@ -133,7 +141,9 @@ class ConvertController extends BaseController
     {
         $folderId = $request->get('company_folder_id');
         $folderNumber = CompanyFolder::findOrFail($folderId);
-        $date = $folderNumber-> folder_number ; //. '_' . $month . $year
+        $month = $request->get('month');
+        $year = $request->get('year');
+        $date = $folderNumber-> folder_number . '_' . $month . $year;
 
         // executer le convert adéquat à l'interface
 
@@ -141,17 +151,34 @@ class ConvertController extends BaseController
         $interface = $request->get('nom_interface');
         $nominterface = ['nomInterface' => $interface,];
 
-        $softwaresNames = Software::all()->where('name',$interface)->first();
-        $idSoftware = $softwaresNames->interface_software_id;
 
-        if ($idSoftware !== null){
-            $data = $this->convertinterface2($request);
-            // $colonne_periode = $columnindex->colonne_periode -1;
+        $softwaresNames = Software::all()->where('name',$interface)->first();
+        if ($softwaresNames !== null){
+            $idSoftware = $softwaresNames->interface_software_id;
         }else{
-            // mettre en palce la recherche des interfaces spécifique
+            return response()->json(['message' => 'L\'interface n\'existe pas','status' => 400]);
         }
 
-        
+
+        if ($idSoftware !== null){
+            $controller = new ConvertInterfaceController();
+            $data =  $controller->convertinterface($request);
+            
+        }else{
+
+            // interfaces spécifique
+            $softwaresName = strtolower($softwaresNames["name"]);
+            switch ($softwaresName){
+                case "marathon":
+                    $controller = new ConvertMEController();
+                    $data = $controller->marathonConvert($request);
+                    break; 
+
+                default:
+                    return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]);    return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]);
+                 
+            }
+        }
 
         if (!empty($data)) {
             $csvConverted = $this->writeToFile($data, $date);

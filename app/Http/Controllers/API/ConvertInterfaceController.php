@@ -163,10 +163,11 @@ class ConvertInterfaceController extends ConvertController
         $nominterface = ['nomInterface' => $interface,];
         $columnindex = $this->indexColumn($nominterface);
         $type_separateur = $columnindex->type_separateur;
-        $format = $columnindex->format; 
+        $format = strtolower($columnindex->format); 
 
 
         // extraction en fonction du format => voir pour le sortir dans une autre fonction
+
         switch ($format){
             case "csv":
                 $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15');
@@ -190,6 +191,8 @@ class ConvertInterfaceController extends ConvertController
         
                     return $result;
                 }
+            default :
+                return response()->json(['message' => 'Conversion impossible, format non pris en compte ','status' => 400,]);
         }
     }
 }
