@@ -113,13 +113,13 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // SOFTWARE
     Route::get("/software", [App\Http\Controllers\API\SoftwareController::class, 'getSoftware']);
     Route::put("/software/update", [App\Http\Controllers\API\SoftwareController::class, 'updateNameSoftware']);
-    Route::delete("/software/delete", [App\Http\Controllers\API\SoftwareController::class, 'deleteNameSoftware']);
+    Route::delete("/software/delete", [App\Http\Controllers\API\SoftwareController::class, 'deleteNameSoftware']); // Supprime tout le software
 
     // INTERFACES SOFTWARE
     Route::get("/interfacesoftware/info", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'getInterfaceSoftware']);
     Route::post("/interfacesoftware/create", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'createInterfaceSoftware']);
     Route::put("/interfacesoftware/update", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'updateInterfaceSoftware']);
-    Route::delete("/interfacesoftware/delete", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'deleteInterfaceSoftware']);
+    Route::delete("/interfacesoftware/delete", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'deleteInterfaceSoftware']); // Supprime le mapping du software
 
     // TEST
 
