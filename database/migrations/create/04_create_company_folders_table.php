@@ -33,9 +33,8 @@ return new class extends Migration
                 'folder_name' => 'Nom du dossier',
                 'siret' => '78234',
                 'siren' => '782348754',
+                'notes' => '',
                 'telephone' => '0123456789',
-                'created_at' => now(),
-                'updated_at' => now(),
 
                 'company_id' => 1,
                 'interface_id' => 1,
@@ -47,9 +46,8 @@ return new class extends Migration
                 'folder_name' => 'Nom du dossier',
                 'siret' => '17869',
                 'siren' => '178698689',
+                'notes' => '',
                 'telephone' => '0123456789',
-                'created_at' => now(),
-                'updated_at' => now(),
 
                 'company_id' => 1,
                 'interface_id' => 1,

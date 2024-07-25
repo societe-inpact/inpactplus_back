@@ -5,7 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\API\ConvertController2;
 use Illuminate\Http\Request;
-use App\Models\Mapping;
+use App\Models\Mapping\Mapping;
 use Illuminate\Support\Facades\App;
 use League\Csv\CharsetConverter;
 use League\Csv\Exception;
@@ -145,7 +145,7 @@ class ConvertInterfaceController extends ConvertController
             }
         } 
         // dd($unmapped);
-        return $data;
+        return [$data, $unmapped];
     }
 
         /**

@@ -30,8 +30,6 @@ return new class extends Migration
                 'lastname' => 'Admin',
                 'firstname' => 'Inpact',
                 'telephone' => '0123456789',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'id' => 2,
@@ -41,8 +39,6 @@ return new class extends Migration
                 'lastname' => 'Client',
                 'firstname' => 'Inpact',
                 'telephone' => '0987654321',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
         ]);
     }

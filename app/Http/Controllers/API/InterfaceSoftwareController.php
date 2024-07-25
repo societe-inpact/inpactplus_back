@@ -4,9 +4,9 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\API\ConvertController2;
-use App\Models\InterfaceSoftware;
+use App\Models\Misc\InterfaceSoftware;
+use App\Models\Misc\Software;
 use Illuminate\Http\Request;
-use App\Models\Software;
 use Illuminate\Support\Facades\Validator;
 
 class InterfaceSoftwareController extends ConvertController

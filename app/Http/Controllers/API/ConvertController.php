@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Routing\Controller as BaseController;
 use App\Http\Controllers\RuntimeException;
 use App\Http\Controllers\API\ConvertInterfaceController;
-use App\Models\CompanyFolder;
-use App\Models\Software;
+use App\Models\Companies\CompanyFolder;
+use App\Models\Misc\Software;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Csv\CharsetConverter;
@@ -180,24 +180,25 @@ class ConvertController extends BaseController
                     break; 
 
                 default:
-                    return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]);    return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]);
+                    return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]); 
                  
             }
         }
 
-        if (!empty($data)) {
+        if (!empty($data[0])) {
             $csvConverted = $this->writeToFile($data, $date);
             return response()->json([
                 'success' => true,
                 'message' => 'Votre fichier a été converti',
                 'status' => 200,
                 'file' => $csvConverted,
-                'rows' => $data,
+                'rows' => $data[0],
             ]);
         } else {
             return response()->json([
                 'success' => false,
                 'message' => 'Conversion impossible, les rubriques suivantes ne sont pas mappées : ',
+                'unmapped' => $data[1],
                 'status' => 400,
             ]);
         }

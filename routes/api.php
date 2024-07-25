@@ -30,6 +30,7 @@ Route::get('/password/reset/{token}', function ($token) {
 
 // PROTECTED ROUTES
 
+
 Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // ---------------------- ACCES AUX MODULES --------------------- //
@@ -109,23 +110,23 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::patch("/company_folder/update/{id}", [App\Http\Controllers\API\CompanyFolderController::class, 'updateCompanyFolder']);
     Route::delete("/company_folder/delete", [App\Http\Controllers\API\CompanyFolderController::class, 'deleteCompanyFolder']);
 
-// SOFTWARE
-Route::get("/software", [App\Http\Controllers\API\SoftwareController::class, 'getSoftware']);
-Route::put("/software/update", [App\Http\Controllers\API\SoftwareController::class, 'updateNameSoftware']);
-Route::delete("/software/delete", [App\Http\Controllers\API\SoftwareController::class, 'deleteNameSoftware']);
+    // SOFTWARE
+    Route::get("/software", [App\Http\Controllers\API\SoftwareController::class, 'getSoftware']);
+    Route::put("/software/update", [App\Http\Controllers\API\SoftwareController::class, 'updateNameSoftware']);
+    Route::delete("/software/delete", [App\Http\Controllers\API\SoftwareController::class, 'deleteNameSoftware']);
 
-// INTERFACES SOFTWARE
-Route::get("/interfacesoftware/info", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'getInterfaceSoftware']);
-Route::post("/interfacesoftware/create", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'createInterfaceSoftware']);
-Route::put("/interfacesoftware/update", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'updateInterfaceSoftware']);
-Route::delete("/interfacesoftware/delete", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'deleteInterfaceSoftware']);
+    // INTERFACES SOFTWARE
+    Route::get("/interfacesoftware/info", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'getInterfaceSoftware']);
+    Route::post("/interfacesoftware/create", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'createInterfaceSoftware']);
+    Route::put("/interfacesoftware/update", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'updateInterfaceSoftware']);
+    Route::delete("/interfacesoftware/delete", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'deleteInterfaceSoftware']);
 
-// TEST
+    // TEST
 
-// Route::get("/test", [App\Http\Controllers\API\ConvertController::class, 'indexColumn']);
-Route::get("/test/indexcolonne", [App\Http\Controllers\API\ConvertInterfaceController::class, 'indexColumn']);
-Route::post("/test/convert", [App\Http\Controllers\API\ConvertInterfaceController::class, 'convertinterface']);
-Route::post("/test/maraton", [App\Http\Controllers\API\ConvertMEController::class, 'marathonConvert']);
+    // Route::get("/test", [App\Http\Controllers\API\ConvertController::class, 'indexColumn']);
+    Route::get("/test/indexcolonne", [App\Http\Controllers\API\ConvertInterfaceController::class, 'indexColumn']);
+    Route::post("/test/convert", [App\Http\Controllers\API\ConvertInterfaceController::class, 'convertinterface']);
+    Route::post("/test/maraton", [App\Http\Controllers\API\ConvertMEController::class, 'marathonConvert']);
 
     // NOTES FROM FOLDER OF COMPANIES
     Route::get('/company_folder/notes', [App\Http\Controllers\API\NoteController::class, 'getNotes']);
