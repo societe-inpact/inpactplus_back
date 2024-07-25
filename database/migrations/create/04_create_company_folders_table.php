@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('siret', 14);
             $table->string('siren', 9);
             $table->string('notes', 255);
+            $table->string('telephone', 10)->nullable();
 
             $table->foreignId('company_id')->constrained('companies')->cascadeOnDelete();
             $table->foreignId('interface_id')->constrained('interfaces')->cascadeOnDelete();
@@ -28,25 +29,31 @@ return new class extends Migration
         DB::table('company_folders')->insert([
             [
                 'id' => 1,
-                'email' => 'admin@inpact.fr',
-                'password' => bcrypt('admin@inpact.fr'), // Utilisez bcrypt pour hacher le mot de passe
-                'civility' => 'Monsieur',
-                'lastname' => 'Admin',
-                'firstname' => 'Inpact',
+                'folder_number' => '2376284',
+                'folder_name' => 'Nom du dossier',
+                'siret' => '78234',
+                'siren' => '782348754',
                 'telephone' => '0123456789',
                 'created_at' => now(),
                 'updated_at' => now(),
+
+                'company_id' => 1,
+                'interface_id' => 1,
+                'referent_id' => 1,
             ],
             [
                 'id' => 2,
-                'email' => 'client@inpact.fr',
-                'password' => bcrypt('client@inpact.fr'), // Utilisez bcrypt pour hacher le mot de passe
-                'civility' => 'Madame',
-                'lastname' => 'Client',
-                'firstname' => 'Inpact',
-                'telephone' => '0987654321',
+                'folder_number' => '854306',
+                'folder_name' => 'Nom du dossier',
+                'siret' => '17869',
+                'siren' => '178698689',
+                'telephone' => '0123456789',
                 'created_at' => now(),
                 'updated_at' => now(),
+
+                'company_id' => 1,
+                'interface_id' => 1,
+                'referent_id' => 1,
             ],
         ]);
     }
