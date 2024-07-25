@@ -91,7 +91,11 @@ class ConvertController extends BaseController
                         'message' => 'Veuillez importer un fichier',
                         'status' => 400
                     ]);
-                }       
+                } 
+                break;
+
+            default :
+                return response()->json(['message' => 'il manque le format suivant', 'format' => $format ,'status' => 400]);      
         }
     }
 
