@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -34,6 +35,41 @@ return new class extends Migration
             $table->unique(['name', 'guard_name']);
         });
 
+        DB::table('permissions')->insert([
+            [
+                'id' => 1,
+                'name' => 'read',
+                'label' => 'Lecture seule',
+                'guard_name' => 'web',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 2,
+                'name' => 'read_create',
+                'label' => 'Lecture/Création',
+                'guard_name' => 'web',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 3,
+                'name' => 'read_create_update',
+                'label' => 'Lecture/Création/Modification',
+                'guard_name' => 'web',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 4,
+                'name' => 'crud',
+                'label' => 'Accès complet',
+                'guard_name' => 'web',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
         Schema::create($tableNames['roles'], function (Blueprint $table) use ($teams, $columnNames) {
             $table->bigIncrements('id'); // role id
             if ($teams || config('permission.testing')) { // permission.testing is a fix for sqlite testing
@@ -49,6 +85,23 @@ return new class extends Migration
                 $table->unique(['name', 'guard_name']);
             }
         });
+
+        DB::table('roles')->insert([
+            [
+                'id' => 1,
+                'name' => 'inpact',
+                'guard_name' => 'web',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 2,
+                'name' => 'client',
+                'guard_name' => 'web',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
 
         Schema::create($tableNames['model_has_permissions'], function (Blueprint $table) use ($tableNames, $columnNames, $pivotPermission, $teams) {
             $table->unsignedBigInteger($pivotPermission);
@@ -113,6 +166,17 @@ return new class extends Migration
 
             $table->primary([$pivotPermission, $pivotRole], 'role_has_permissions_permission_id_role_id_primary');
         });
+
+        DB::table('role_has_permissions')->insert([
+            [
+                'permission_id' => 4,
+                'role_id' => 1,
+            ],
+            [
+                'permission_id' => 1,
+                'role_id' => 2,
+            ],
+        ]);
 
         app('cache')
             ->store(config('permission.cache.store') != 'default' ? config('permission.cache.store') : null)

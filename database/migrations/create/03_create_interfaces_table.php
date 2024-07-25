@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('name', 255);
             $table->foreignId('interface_software_id')->nullable()->constrained('interface_software')->cascadeOnDelete();
         });
+        
         DB::table('interfaces')->insert([
             [
                 'id' => 1,

@@ -21,23 +21,51 @@ return new class extends Migration
             $table->string('firstname');
             $table->string('telephone', 10)->nullable();
         });
+        
         DB::table('users')->insert([
             [
                 'id' => 1,
-                'email' => 'admin@inpact.fr',
-                'password' => bcrypt('admin@inpact.fr'), // Utilisez bcrypt pour hacher le mot de passe
+                'email' => 'j.podvin@inpact.fr',
+                'password' => bcrypt('j.podvin@inpact.fr'), // Utilisez bcrypt pour hacher le mot de passe
                 'civility' => 'Monsieur',
-                'lastname' => 'Admin',
-                'firstname' => 'Inpact',
+                'lastname' => 'Podvin',
+                'firstname' => 'Jonathan',
                 'telephone' => '0123456789',
             ],
             [
                 'id' => 2,
-                'email' => 'client@inpact.fr',
-                'password' => bcrypt('client@inpact.fr'), // Utilisez bcrypt pour hacher le mot de passe
+                'email' => 'a.carteret@inpact.fr',
+                'password' => bcrypt('a.carteret@inpact.fr'), // Utilisez bcrypt pour hacher le mot de passe
+                'civility' => 'Monsieur',
+                'lastname' => 'Carteret',
+                'firstname' => 'Aurélien',
+                'telephone' => '0123456789',
+            ],
+            [
+                'id' => 3,
+                'email' => 'a.detournay@inpact.fr',
+                'password' => bcrypt('a.detournay@inpact.fr'), // Utilisez bcrypt pour hacher le mot de passe
+                'civility' => 'Monsieur',
+                'lastname' => 'Detournay',
+                'firstname' => 'Adrien',
+                'telephone' => '0123456789',
+            ],
+            [
+                'id' => 4,
+                'email' => 'john.doe@vapiano.fr',
+                'password' => bcrypt('john.doe@vapiano.fr'), // Utilisez bcrypt pour hacher le mot de passe
+                'civility' => 'Monsieur',
+                'lastname' => 'John',
+                'firstname' => 'Doe',
+                'telephone' => '0987654321',
+            ],
+            [
+                'id' => 5,
+                'email' => 'jane.doe@vapiano.fr',
+                'password' => bcrypt('jane.doe@vapiano.fr'), // Utilisez bcrypt pour hacher le mot de passe
                 'civility' => 'Madame',
-                'lastname' => 'Client',
-                'firstname' => 'Inpact',
+                'lastname' => 'Jane',
+                'firstname' => 'Doe',
                 'telephone' => '0987654321',
             ],
         ]);

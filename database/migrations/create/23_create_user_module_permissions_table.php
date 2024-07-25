@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -19,6 +20,101 @@ return new class extends Migration
             $table->foreignId('company_folder_id')->constrained('company_folders')->onDelete('cascade');
             $table->timestamps();
         });
+
+        DB::table('user_module_permissions')->insert([
+            // John Doe
+            [
+                'id' => 1,
+                'user_id' => 4,
+                'module_id' => 1,
+                'permission_id' => 4,
+                'company_folder_id' => 1,
+                'created_at' => null,
+                'updated_at' => null
+            ],
+            [
+                'id' => 2,
+                'user_id' => 4,
+                'module_id' => 2,
+                'permission_id' => 4,
+                'company_folder_id' => 1,
+                'created_at' => null,
+                'updated_at' => null
+            ],
+            [
+                'id' => 3,
+                'user_id' => 4,
+                'module_id' => 3,
+                'permission_id' => 4,
+                'company_folder_id' => 1,
+                'created_at' => null,
+                'updated_at' => null
+            ],
+            [
+                'id' => 4,
+                'user_id' => 4,
+                'module_id' => 4,
+                'permission_id' => 4,
+                'company_folder_id' => 1,
+                'created_at' => null,
+                'updated_at' => null
+            ],
+            [
+                'id' => 5,
+                'user_id' => 4,
+                'module_id' => 5,
+                'permission_id' => 4,
+                'company_folder_id' => 1,
+                'created_at' => null,
+                'updated_at' => null
+            ],
+            // Jane Doe
+            [
+                'id' => 6,
+                'user_id' => 5,
+                'module_id' => 1,
+                'permission_id' => 1,
+                'company_folder_id' => 2,
+                'created_at' => null,
+                'updated_at' => null
+            ],
+            [
+                'id' => 7,
+                'user_id' => 5,
+                'module_id' => 2,
+                'permission_id' => 1,
+                'company_folder_id' => 2,
+                'created_at' => null,
+                'updated_at' => null
+            ],
+            [
+                'id' => 8,
+                'user_id' => 5,
+                'module_id' => 3,
+                'permission_id' => 1,
+                'company_folder_id' => 2,
+                'created_at' => null,
+                'updated_at' => null
+            ],
+            [
+                'id' => 9,
+                'user_id' => 5,
+                'module_id' => 4,
+                'permission_id' => 1,
+                'company_folder_id' => 2,
+                'created_at' => null,
+                'updated_at' => null
+            ],
+            [
+                'id' => 10,
+                'user_id' => 5,
+                'module_id' => 5,
+                'permission_id' => 1,
+                'company_folder_id' => 2,
+                'created_at' => null,
+                'updated_at' => null
+            ],
+        ]);
     }
 
     /**

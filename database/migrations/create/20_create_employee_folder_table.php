@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -18,6 +19,23 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('company_folder_id')->constrained('company_folders')->cascadeOnDelete();
         });
+
+        DB::table('employee_folder')->insert([
+            [
+                'id' => 1,
+                'is_referent' => 1,
+                'has_access' => 1,
+                'user_id' => 4,
+                'company_folder_id' => 1,
+            ],
+            [
+                'id' => 2,
+                'is_referent' => 1,
+                'has_access' => 1,
+                'user_id' => 5,
+                'company_folder_id' => 2,
+            ],
+        ]);
     }
 
     /**

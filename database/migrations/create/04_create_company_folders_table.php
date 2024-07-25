@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('folder_name');
             $table->string('siret', 14);
             $table->string('siren', 9);
-            $table->string('notes', 255);
+            $table->string('notes', 255)->nullable();
             $table->string('telephone', 10)->nullable();
 
             $table->foreignId('company_id')->constrained('companies')->cascadeOnDelete();
@@ -30,26 +30,24 @@ return new class extends Migration
             [
                 'id' => 1,
                 'folder_number' => '2376284',
-                'folder_name' => 'Nom du dossier',
+                'folder_name' => 'Bron',
                 'siret' => '78234',
                 'siren' => '782348754',
-                'notes' => '',
                 'telephone' => '0123456789',
-
-                'company_id' => 1,
+                'notes' => '',
+                'company_id' => 3,
                 'interface_id' => 1,
                 'referent_id' => 1,
             ],
             [
                 'id' => 2,
                 'folder_number' => '854306',
-                'folder_name' => 'Nom du dossier',
+                'folder_name' => 'Bourgoin-Jallieu',
                 'siret' => '17869',
                 'siren' => '178698689',
-                'notes' => '',
                 'telephone' => '0123456789',
-
-                'company_id' => 1,
+                'notes' => '',
+                'company_id' => 3,
                 'interface_id' => 1,
                 'referent_id' => 1,
             ],

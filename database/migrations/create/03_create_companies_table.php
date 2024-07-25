@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('telephone', 10)->nullable();
             $table->foreignId('referent_id')->constrained('users')->cascadeOnDelete();
         });
+        
         DB::table('companies')->insert([
             [
                 'id' => 1,
@@ -39,7 +40,7 @@ return new class extends Migration
                 'name' => 'VaPiano',
                 'description' => 'Description du groupe VaPiano',
                 'telephone' => '0203040506',
-                'referent_id' => 1
+                'referent_id' => 4
             ]
         ]);
     }
