@@ -49,7 +49,11 @@ class AbsenceController extends Controller
         $customAbsence->base_calcul = request('base_calcul');
         $customAbsence->company_folder_id = request('company_folder_id');
         $customAbsence->therapeutic_part_time = request('therapeutic_part_time');
-        $customAbsence->save();
-        return response()->json($customAbsence, 201);
+        if (str_starts_with($request->get('code'), 'AB-')){
+            $customAbsence->save();
+            return response()->json($customAbsence, 201);
+        }else{
+            return response()->json(['message' => 'Le code rubrique doit commencer par AB-'], 400);
+        }
     }
 }

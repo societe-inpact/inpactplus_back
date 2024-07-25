@@ -11,11 +11,12 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use phpDocumentor\Reflection\Types\Collection;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-class ApiAuthController extends Controller
+class AuthController extends Controller
 {
     public function getUser()
     {
@@ -30,7 +31,6 @@ class ApiAuthController extends Controller
                 if (isset($folder['mappings'])) {
                     $folder['mappings'] = $folder['mappings']['data'];
                 }
-                $folder['software'] = $folder['software'];
             }
 
             // Fusionner les données de l'employé avec les données des dossiers mises à jour
@@ -52,7 +52,7 @@ class ApiAuthController extends Controller
                         'name' => $company['name'],
                         'description' => $company['description'],
                         'folders' => $company['folders']->map(function ($folder) {
-                            if (isset($folder['mappings'])){
+                            if (isset($folder['mappings'])) {
                                 return [
                                     'id' => $folder['id'],
                                     'folder_number' => $folder['folder_number'],
@@ -63,9 +63,10 @@ class ApiAuthController extends Controller
                                         'id' => $folder['mappings']['id'],
                                         'data' => $folder['mappings']['data'],
                                     ],
-                                    'software' => $folder['software'], 
+                                    'notes' => $folder['notes'],
+                                    'software' => $folder['software'],
                                 ];
-                            }else {
+                            } else {
                                 return [
                                     'id' => $folder['id'],
                                     'folder_number' => $folder['folder_number'],
@@ -73,14 +74,14 @@ class ApiAuthController extends Controller
                                     'siret' => $folder['siret'],
                                     'siren' => $folder['siren'],
                                     'mappings' => [],
-                                    'software' => $folder['software'], 
+                                    'notes' => $folder['notes'],
+                                    'software' => $folder['software'],
                                 ];
                             }
                         }),
                     ];
                 }),
             ];
-
 
             return response()->json($user);
         }
@@ -132,11 +133,11 @@ class ApiAuthController extends Controller
                 'civility' => $request->civility,
                 'lastname' => $request->lastname,
                 'firstname' => $request->firstname
-                ]);
+            ]);
 
 
-                // Si l'utilisateur est un employé, créez une entrée correspondante dans la table employees
-                if ($request->is_employee) {
+            // Si l'utilisateur est un employé, créez une entrée correspondante dans la table employees
+            if ($request->is_employee) {
 
                 $employeeInfo = EmployeeInfo::create([
                     'employee_code' => $request->employee_code,
@@ -146,25 +147,58 @@ class ApiAuthController extends Controller
                     'social_security_number' => $request->social_security_number
                 ]);
 
-                if($employeeInfo->save()){
+                if ($employeeInfo->save()) {
                     $employee = Employee::create([
                         'user_id' => $user->id,
                         'is_company_referent' => $request->is_company_referent ?? false,
                         'is_folder_referent' => $request->is_folder_referent ?? false,
                         'informations_id' => $employeeInfo->id,
-                        ]);
+                    ]);
 
                     $user->employee()->save($employee);
                     return response()->json(['message' => 'Employé créé avec succès'], 200);
                 }
 
-            }else{
+            } else {
                 return response()->json(['message' => 'Utilisateur créé avec succès'], 200);
             }
 
         } catch (\Exception $e) {
             // Gestion des erreurs
             return response()->json(['error' => 'Une erreur est survenue lors de la création de l\'utilisateur.'], 500);
+        }
+    }
+
+    protected function updateUser(Request $request, $id)
+    {
+
+        $user = User::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'nullable|email|unique:users,email,' . $id,
+            'civility' => 'nullable',
+            'lastname' => 'nullable',
+            'firstname' => 'nullable',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $fields = ['email', 'civility', 'lastname', 'firstname'];
+
+        $updateData = [];
+
+        foreach ($fields as $field) {
+            if ($request->filled($field)) {
+                $updateData[$field] = $request->input($field);
+            }
+        }
+
+        if ($user->update($updateData)){
+            return response()->json(['user' => $user, 'status' => 204]);
+        }else{
+            return response()->json(['message' => 'Erreur lors de la mise à jour']);
         }
     }
 

@@ -15,10 +15,20 @@ use Illuminate\Support\Facades\Route;
 
 // LOGIN AND REGISTER
 Route::group(['middleware' => 'cors'], function () {
-    Route::post('/login', [App\Http\Controllers\API\ApiAuthController::class, 'login']);
-    Route::post('/register', [App\Http\Controllers\API\ApiAuthController::class, 'register']);
-    Route::post('/reset-password', [App\Http\Controllers\API\ApiAuthController::class, 'resetPassword']);
+    Route::post('/login', [App\Http\Controllers\API\AuthController::class, 'login']);
+    Route::post('/register', [App\Http\Controllers\API\AuthController::class, 'register']);
 });
+
+Route::middleware('throttle:10,1')->group(function () {
+    Route::post('/password/email', [App\Http\Controllers\API\PasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::post('/password/reset', [App\Http\Controllers\API\PasswordController::class, 'reset'])->name('password.update');
+});
+
+Route::get('/password/reset/{token}', function ($token) {
+    return view('auth.passwords.reset', ['token' => $token]);
+})->name('password.reset');
+
+Route::patch('/user/update/{id}/password', [App\Http\Controllers\API\PasswordController::class, 'changePassword']);
 
 // IMPORT AND CONVERT
 Route::post("/import", [App\Http\Controllers\API\ConvertController::class, 'importFile']);
@@ -29,7 +39,7 @@ Route::post("/convert", [App\Http\Controllers\API\ConvertController::class, 'con
 // MAPPING
 Route::post("/mapping", [App\Http\Controllers\API\MappingController::class, 'getMapping']);
 Route::post("/mapping/store", [App\Http\Controllers\API\MappingController::class, 'storeMapping']);
-Route::put("/mapping/update/{id}", [App\Http\Controllers\API\MappingController::class, 'updateMapping']);
+Route::patch("/mapping/update/{id}", [App\Http\Controllers\API\MappingController::class, 'updateMapping']);
 
 // ABSENCES
 Route::get("/absences", [App\Http\Controllers\API\AbsenceController::class, 'getAbsences']);
@@ -51,7 +61,7 @@ Route::post("/company/create", [App\Http\Controllers\API\CompanyController::clas
 
 // FOLDER OF COMPANIES
 Route::post("/company_folder/create", [App\Http\Controllers\API\CompanyFolderController::class, 'createCompanyFolder']);
-Route::put("/company_folder/update/{id}", [App\Http\Controllers\API\CompanyFolderController::class, 'updateCompanyFolder']);
+Route::patch("/company_folder/update/{id}", [App\Http\Controllers\API\CompanyFolderController::class, 'updateCompanyFolder']);
 
 // SOFTWARE
 Route::get("/software", [App\Http\Controllers\API\SoftwareController::class, 'getSoftware']);
@@ -77,9 +87,12 @@ Route::post('company_folder/notes/create', [App\Http\Controllers\API\NoteControl
 Route::put('company_folder/notes/update', [App\Http\Controllers\API\NoteController::class, 'updateNotes']);
 Route::delete('company_folder/notes/delete', [App\Http\Controllers\API\NoteController::class, 'deleteNotes']);
 
-// PROTECTED ROUTES
-    Route::group(['middleware' => 'auth:sanctum'], function () {
-    Route::post("/logout", [App\Http\Controllers\API\ApiAuthController::class, 'logout']);
-    Route::get("/user", [App\Http\Controllers\API\ApiAuthController::class, 'getUser']);
+// USER
 
+// PROTECTED ROUTES
+Route::patch('/user/update/{id}', [App\Http\Controllers\API\AuthController::class, 'updateUser']);
+
+Route::group(['middleware' => 'auth:sanctum'], function () {
+    Route::post("/logout", [App\Http\Controllers\API\AuthController::class, 'logout']);
+    Route::get("/user", [App\Http\Controllers\API\AuthController::class, 'getUser']);
 });

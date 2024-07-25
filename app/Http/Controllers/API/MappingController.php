@@ -65,7 +65,6 @@ class MappingController extends Controller
             if (!isset($record[3])) {
                 continue;
             }
-
             $inputRubrique = $this->findInputRubrique($record[3], $rubriqueRegex);
 
             if ($inputRubrique && !$processedRecords->contains($inputRubrique)) {
@@ -81,6 +80,7 @@ class MappingController extends Controller
                         'base_calcul' => null,
                         'label' => null,
                         'is_mapped' => false,
+                        'is_used' => false,
                         'company_folder_id' => $companyFolder,
                     ];
                 }
@@ -117,6 +117,18 @@ class MappingController extends Controller
                             'output_rubrique' => $output->code,
                             'base_calcul' => $output->base_calcul,
                             'label' => $output->label,
+                            'is_used' => $data['is_used'],
+                            'is_mapped' => true,
+                            'company_folder_id' => $companyFolder,
+                        ];
+                    }else{
+                        return [
+                            'input_rubrique' => $data['input_rubrique'],
+                            'type_rubrique' => $data['output_type'],
+                            'output_rubrique' => '',
+                            'base_calcul' => '',
+                            'label' => '',
+                            'is_used' => $data['is_used'],
                             'is_mapped' => true,
                             'company_folder_id' => $companyFolder,
                         ];
@@ -160,8 +172,6 @@ class MappingController extends Controller
         $updateResult = $this->updateMappingData($mapping, $validatedData);
         if ($updateResult === 'updated') {
             return response()->json(['message' => 'Mapping mis à jour avec succès']);
-        } elseif ($updateResult === 'already_associated') {
-            return response()->json(['error' => 'La rubrique est déjà associée'], 409);
         } else {
             return response()->json(['error' => 'Rubrique introuvable'], 404);
         }
@@ -174,10 +184,11 @@ class MappingController extends Controller
     {
         return $request->validate([
             'input_rubrique' => 'required|string|regex:/^[A-Za-z0-9]{1,3}$/',
-            'name_rubrique' => 'required|string|max:255',
-            'output_rubrique_id' => 'required|integer',
-            'company_folder_id' => 'required|integer',
-            'output_type' => 'required|string',
+            'name_rubrique' => 'nullable|string|max:255',
+            'output_rubrique_id' => 'nullable|integer',
+            'company_folder_id' => 'required',
+            'output_type' => 'nullable|string',
+            'is_used' => 'required|boolean',
         ]);
     }
 
@@ -185,26 +196,17 @@ class MappingController extends Controller
     protected function updateMappingData($mapping, $validatedData)
     {
         $data = $mapping->data;
-        $updated = false;
-     
-        // Parcourir les données existantes pour trouver et mettre à jour l'input_rubrique si trouvé
+
         foreach ($data as &$entry) {
             if ($entry['input_rubrique'] === $validatedData['input_rubrique']) {
                 $entry['name_rubrique'] = $validatedData['name_rubrique'];
                 $entry['output_rubrique_id'] = $validatedData['output_rubrique_id'];
                 $entry['output_type'] = $validatedData['output_type'];
-                $updated = true;
-                break; // Sortir de la boucle une fois la mise à jour effectuée
+                $entry['is_used'] = $validatedData['is_used'];
+                $mapping->data = $data;
+                $mapping->save();
+                return 'updated';
             }
-        }
-     
-        // Si l'input_rubrique n'a pas été trouvé, $updated restera false et la mise à jour ne sera pas considérée comme effectuée
-        if ($updated) {
-            $mapping->data = $data;
-            $mapping->save();
-            return 'updated';
-        } else {
-            return 'not_found'; // Peut-être logguer une erreur ici si nécessaire
         }
     }
 
@@ -219,39 +221,27 @@ class MappingController extends Controller
         foreach ($mappedRubriques as $mappedRubrique) {
             $allMappedRubriques = $mappedRubrique->data;
             foreach ($allMappedRubriques as $inputMappedRubrique) {
+                $isUsed = filter_var($validatedRequestData['is_used'], FILTER_VALIDATE_BOOLEAN) || filter_var($inputMappedRubrique['is_used'], FILTER_VALIDATE_BOOLEAN);
                 if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData['input_rubrique']) {
-                    return response()->json([
-                        'error' => 'La rubrique d\'entrée ' . $validatedRequestData['input_rubrique'] . ' est déjà associée à la rubrique ' . $this->getSilaeRubrique($validatedRequestData)->code,
-                    ], 409);
-                }elseif($inputMappedRubrique['output_rubrique_id'] === $validatedRequestData['output_rubrique_id']){
-                    return response()->json([
-                        'error' => 'La rubrique de sortie ' . $this->getSilaeRubrique($validatedRequestData)->code . ' est déjà associée à la rubrique ' . $inputMappedRubrique['input_rubrique'],
-                    ], 409);
+
+                    if ($isUsed === false){
+                        return response()->json([
+                            'error' => 'La rubrique d\'entrée ' . $validatedRequestData['input_rubrique'] . ' n\'est pas utilisée',
+                        ], 409);
+                    }else{
+                        return response()->json([
+                            'error' => 'La rubrique d\'entrée ' . $validatedRequestData['input_rubrique'] . ' est déjà associée à la rubrique ' . $this->getSilaeRubrique($validatedRequestData)->code,
+                        ], 409);
+                    }
                 }
-//                } else {
-//                    if ($validatedRequestData['output_type'] === 'App\Models\CustomAbsence' || $validatedRequestData['output_type'] === 'App\Models\Absence'){
-//                        if ($this->getSilaeRubrique($inputMappedRubrique) !== null){
-//                            if ($this->getSilaeRubrique($validatedRequestData)->code === $this->getSilaeRubrique($inputMappedRubrique)->code){
-//                                return response()->json([
-//                                    'error' => 'Impossible de mapper la rubrique ' . $validatedRequestData['input_rubrique'] . ' au code ' . $this->getSilaeRubrique($inputMappedRubrique)->code,
-//                                    'error_details' => 'Le code ' . $this->getSilaeRubrique($inputMappedRubrique)->code . ' ' . 'de la table ' . $this->getSilaeRubrique($inputMappedRubrique)->getTable() . ' est déjà associée à la rubrique d\'entrée ' . $inputMappedRubrique['input_rubrique'],
-//                                    'rubrique' =>  $this->getSilaeRubrique($inputMappedRubrique)
-//                                ], 409);
-//                            }
-//                        }
-//                    }
+//                if (!$this->validateOutputClassAndRubrique($validatedRequestData) && $isUsed) {
+//                    return response()->json([
+//                        'error' => 'La rubrique ou le type de rubrique spécifié n\'existe pas.',
+//                    ], 404);
 //                }
             }
         }
-
-        if (!$this->validateOutputClassAndRubrique($validatedRequestData)) {
-            return response()->json([
-                'error' => 'La rubrique spécifiée n\'existe pas ou le type spécifié n\'existe pas.',
-            ], 404);
-        }
-
         $this->saveMappingData($companyFolder, $validatedRequestData);
-
         return response()->json(['success' => 'Mapping ajouté avec succès'], 201);
     }
 
@@ -288,6 +278,7 @@ class MappingController extends Controller
             'name_rubrique' => $validatedData['name_rubrique'],
             'output_rubrique_id' => $validatedData['output_rubrique_id'],
             'output_type' => $validatedData['output_type'],
+            'is_used' => $validatedData['is_used']
         ];
 
         $mapping = Mapping::where('company_folder_id', $companyFolder)->first();
