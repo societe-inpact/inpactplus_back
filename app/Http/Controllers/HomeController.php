@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CompanyFolder;
-use App\Models\User;
-use Illuminate\Http\Request;
+use App\Models\Companies\CompanyFolder;
+use App\Models\Misc\User;
 
 class HomeController extends Controller
 {

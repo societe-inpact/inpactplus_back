@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\CompanyFolder;
+use App\Models\Companies\CompanyFolder;
 use Illuminate\Http\Request;
 
 class NoteController extends Controller
 {
-    public function createNotes(Request $request){
+    public function createUpdateDeleteNote(Request $request){
         $companyFolderId = $request->get('company_folder_id');
         $companyFolder = CompanyFolder::findOrFail($companyFolderId);
         $validatedData = request()->validate([

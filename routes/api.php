@@ -28,40 +28,86 @@ Route::get('/password/reset/{token}', function ($token) {
     return view('auth.passwords.reset', ['token' => $token]);
 })->name('password.reset');
 
-Route::patch('/user/update/{id}/password', [App\Http\Controllers\API\PasswordController::class, 'changePassword']);
+// PROTECTED ROUTES
 
-// IMPORT AND CONVERT
-Route::post("/import", [App\Http\Controllers\API\ConvertController::class, 'importFile']);
-Route::post("/convert", [App\Http\Controllers\API\ConvertController::class, 'convertFile']);
+Route::group(['middleware' => ['auth:sanctum']], function () {
+
+    // ---------------------- ACCES AUX MODULES --------------------- //
+    Route::middleware(['company.module.access:convert'])->group(function () {
+        Route::post("/import", [App\Http\Controllers\API\ConvertController::class, 'importFile']);
+        Route::post("/convert", [App\Http\Controllers\API\ConvertController::class, 'convertFile']);
+
+        Route::post("/mapping", [App\Http\Controllers\API\MappingController::class, 'getMapping']);
+        Route::post("/mapping/store", [App\Http\Controllers\API\MappingController::class, 'storeMapping']);
+        Route::patch("/mapping/update/{id}", [App\Http\Controllers\API\MappingController::class, 'updateMapping']);
+        Route::delete("/mapping/delete/{id}", [App\Http\Controllers\API\MappingController::class, 'deleteMapping']);
+        Route::delete("/mapping/delete", [App\Http\Controllers\API\MappingController::class, 'deleteAllMapping']);
+    });
+
+    Route::middleware(['company.module.access:statistics'])->group(function () {
+        // TODO : Routes et fonctions associées au module
+    });
+
+    Route::middleware(['company.module.access:history'])->group(function () {
+        // TODO : Routes et fonctions associées au module
+    });
+
+    Route::middleware(['company.module.access:admin_panel'])->group(function () {
+        // TODO : Routes et fonctions associées au module
+    });
+    // ---------------------- FIN ACCES AUX MODULES --------------------- //
 
 
 
-// MAPPING
-Route::post("/mapping", [App\Http\Controllers\API\MappingController::class, 'getMapping']);
-Route::post("/mapping/store", [App\Http\Controllers\API\MappingController::class, 'storeMapping']);
-Route::patch("/mapping/update/{id}", [App\Http\Controllers\API\MappingController::class, 'updateMapping']);
+    // ACCESS AND PERMISSIONS
+    Route::post('/company_folder/add-user', [App\Http\Controllers\API\AccessController::class, 'addUserToCompanyFolder']);
+    Route::post('/company_folder/delete-user', [App\Http\Controllers\API\AccessController::class, 'deleteUserFromCompanyFolder']);
 
-// ABSENCES
-Route::get("/absences", [App\Http\Controllers\API\AbsenceController::class, 'getAbsences']);
-Route::get("/custom-absences", [App\Http\Controllers\API\AbsenceController::class, 'getCustomAbsences']);
-Route::post("/custom-absences/create", [App\Http\Controllers\API\AbsenceController::class, 'createCustomAbsence']);
+    // USERS
+    Route::patch('/user/update/{id}', [App\Http\Controllers\API\AuthController::class, 'updateUser']);
+    Route::patch('/user/update/{id}/password', [App\Http\Controllers\API\PasswordController::class, 'changePassword']);
 
-// HOURS
-Route::get("/hours", [App\Http\Controllers\API\HourController::class, 'getHours']);
-Route::get("/custom-hours", [App\Http\Controllers\API\HourController::class, 'getCustomHours']);
-Route::post("/custom-hours/create", [App\Http\Controllers\API\HourController::class, 'createCustomHour']);
+    // CUSTOM ABSENCES
+    Route::get("/custom-absences", [App\Http\Controllers\API\AbsenceController::class, 'getCustomAbsences']);
+    Route::post("/custom-absences/create", [App\Http\Controllers\API\AbsenceController::class, 'createCustomAbsence']);
+    Route::patch("/custom-absences/update/{id}", [App\Http\Controllers\API\AbsenceController::class, 'updateCustomAbsence']);
+    Route::delete("/custom-absences/delete", [App\Http\Controllers\API\AbsenceController::class, 'deleteCustomAbsence']);
 
-// VARIABLES ELEMENTS
-Route::get("/variables-elements", [App\Http\Controllers\API\VariablesElementsController::class, 'getVariablesElements']);
-Route::post("/variables-elements/create", [App\Http\Controllers\API\VariablesElementsController::class, 'createVariableElement']);
+    // ABSENCES
+    Route::get("/absences", [App\Http\Controllers\API\AbsenceController::class, 'getAbsences']);
+    Route::post("/absences/create", [App\Http\Controllers\API\AbsenceController::class, 'createAbsence']);
+    Route::patch("/absences/update/{id}", [App\Http\Controllers\API\AbsenceController::class, 'updateAbsence']);
+    Route::delete("/absences/delete", [App\Http\Controllers\API\AbsenceController::class, 'deleteAbsence']);
 
-// COMPANIES
-Route::get("/companies", [App\Http\Controllers\API\CompanyController::class, 'getCompanies']);
-Route::post("/company/create", [App\Http\Controllers\API\CompanyController::class, 'createCompany']);
+    // HOURS
+    Route::get("/hours", [App\Http\Controllers\API\HourController::class, 'getHours']);
+    Route::post("/hours/create", [App\Http\Controllers\API\HourController::class, 'createHour']);
+    Route::patch("/hours/update/{id}", [App\Http\Controllers\API\HourController::class, 'updateHour']);
+    Route::delete("/hours/delete", [App\Http\Controllers\API\HourController::class, 'deleteHour']);
 
-// FOLDER OF COMPANIES
-Route::post("/company_folder/create", [App\Http\Controllers\API\CompanyFolderController::class, 'createCompanyFolder']);
-Route::patch("/company_folder/update/{id}", [App\Http\Controllers\API\CompanyFolderController::class, 'updateCompanyFolder']);
+    // CUSTOM HOURS
+    Route::get("/custom-hours", [App\Http\Controllers\API\HourController::class, 'getCustomHours']);
+    Route::post("/custom-hours/create", [App\Http\Controllers\API\HourController::class, 'createCustomHour']);
+    Route::patch("/custom-hours/update/{id}", [App\Http\Controllers\API\HourController::class, 'updateCustomHour']);
+    Route::delete("/custom-hours/delete", [App\Http\Controllers\API\HourController::class, 'deleteCustomHour']);
+
+    // VARIABLES ELEMENTS
+    Route::get("/variables-elements", [App\Http\Controllers\API\VariablesElementsController::class, 'getVariablesElements']);
+    Route::post("/variables-elements/create", [App\Http\Controllers\API\VariablesElementsController::class, 'createVariableElement']);
+    Route::patch("/variables-elements/update/{id}", [App\Http\Controllers\API\VariablesElementsController::class, 'updateVariableElement']);
+    Route::delete("/variables-elements/delete", [App\Http\Controllers\API\VariablesElementsController::class, 'deleteVariableElement']);
+
+    // COMPANIES
+    Route::get("/companies", [App\Http\Controllers\API\CompanyController::class, 'getCompanies']);
+    Route::post("/company/create", [App\Http\Controllers\API\CompanyController::class, 'createCompany']);
+    Route::post("/company/update/{id}", [App\Http\Controllers\API\CompanyController::class, 'updateCompany']);
+    Route::delete("/company/delete", [App\Http\Controllers\API\CompanyController::class, 'deleteCompany']);
+
+    // FOLDER OF COMPANIES
+    Route::get("/company_folders", [App\Http\Controllers\API\CompanyFolderController::class, 'getCompanyFolders']);
+    Route::post("/company_folder/create", [App\Http\Controllers\API\CompanyFolderController::class, 'createCompanyFolder']);
+    Route::patch("/company_folder/update/{id}", [App\Http\Controllers\API\CompanyFolderController::class, 'updateCompanyFolder']);
+    Route::delete("/company_folder/delete", [App\Http\Controllers\API\CompanyFolderController::class, 'deleteCompanyFolder']);
 
 // SOFTWARE
 Route::get("/software", [App\Http\Controllers\API\SoftwareController::class, 'getSoftware']);
@@ -81,18 +127,12 @@ Route::get("/test/indexcolonne", [App\Http\Controllers\API\ConvertInterfaceContr
 Route::post("/test/convert", [App\Http\Controllers\API\ConvertInterfaceController::class, 'convertinterface']);
 Route::post("/test/maraton", [App\Http\Controllers\API\ConvertMEController::class, 'marathonConvert']);
 
-// NOTES FROM FOLDER OF COMPANIES
-Route::get('/company_folder/notes', [App\Http\Controllers\API\NoteController::class, 'getNotes']);
-Route::post('company_folder/notes/create', [App\Http\Controllers\API\NoteController::class, 'createNotes']);
-Route::put('company_folder/notes/update', [App\Http\Controllers\API\NoteController::class, 'updateNotes']);
-Route::delete('company_folder/notes/delete', [App\Http\Controllers\API\NoteController::class, 'deleteNotes']);
+    // NOTES FROM FOLDER OF COMPANIES
+    Route::get('/company_folder/notes', [App\Http\Controllers\API\NoteController::class, 'getNotes']);
+    Route::post('company_folder/notes/create', [App\Http\Controllers\API\NoteController::class, 'createUpdateDeleteNote']);
 
-// USER
-
-// PROTECTED ROUTES
-Route::patch('/user/update/{id}', [App\Http\Controllers\API\AuthController::class, 'updateUser']);
-
-Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post("/logout", [App\Http\Controllers\API\AuthController::class, 'logout']);
     Route::get("/user", [App\Http\Controllers\API\AuthController::class, 'getUser']);
 });
+
+

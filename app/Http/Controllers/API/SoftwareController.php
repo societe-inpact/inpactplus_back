@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Software;
+use App\Models\Misc\Software;
 use App\Models\InterfaceSoftware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;

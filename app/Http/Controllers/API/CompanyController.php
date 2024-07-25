@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Company;
+use App\Models\Companies\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class CompanyController extends Controller
 {
     public function getCompanies(){
-        $companies = Company::with('folders')->get();
+        $companies = Company::with('folders', 'modules')->get();
         return response()->json($companies);
     }
 
@@ -18,7 +18,7 @@ class CompanyController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string',
             'description' => 'nullable|string',
-            'referent_id' => 'nullable|exists:users,id',
+            'referent_id' => 'exists:users,id',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -27,11 +27,8 @@ class CompanyController extends Controller
             $data = [
                 'name' => $request->name,
                 'description' => $request->description,
+                'referent_id' => $request->referent_id,
             ];
-
-            if ($request->has('referent_id')) {
-                $data['referent_id'] = $request->referent_id;
-            }
 
             $company = Company::create($data);
             return response()->json(['message' => 'Entreprise créée avec succès', 'company' => ['id' => $company->id]], 200);

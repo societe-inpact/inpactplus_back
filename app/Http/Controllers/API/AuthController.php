@@ -3,89 +3,175 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Company;
-use App\Models\CompanyFolder;
-use App\Models\Employee;
-use App\Models\EmployeeInfo;
-use App\Models\User;
+use App\Models\Companies\Company;
+use App\Models\Employees\Employee;
+use App\Models\Employees\EmployeeInfo;
+use App\Models\Misc\Role;
+use App\Models\Misc\User;
+use App\Models\Misc\UserModulePermission;
+use App\Models\Modules\Module;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use phpDocumentor\Reflection\Types\Collection;
+use Spatie\Permission\Models\Permission;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
 class AuthController extends Controller
 {
     public function getUser()
     {
-        $user = Auth::user()->load(['employee.informations', 'employee.folders', 'employee.folders.company', 'employee.folders.mappings', 'employee.folders.software']);
-        $userArray = $user->toArray();
+        $user = Auth::user();
+        $user->load([
+            'folders.modules.module',
+            'companies',
+            'folders.mappings',
+            'folders.software',
+        ]);
 
-        if ($user->employee) {
-            $employeeArray = $user->employee->toArray();
+        $folders = $user->folders;
+        $roles = $user->getRoleNames();
 
-            // Parcourir chaque dossier pour extraire uniquement les données 'data' de la relation 'mappings'
-            foreach ($employeeArray['folders'] as &$folder) {
-                if (isset($folder['mappings'])) {
-                    $folder['mappings'] = $folder['mappings']['data'];
-                }
-            }
+        if ($roles->contains('client')) {
+            // Ajoute has_access dans l'objet module
+            $folders->each(function ($folder) {
+                $folder->modules->each(function ($folderModule) {
+                    $folderModule->module->has_access = $folderModule->has_access;
+                });
+            });
 
-            // Fusionner les données de l'employé avec les données des dossiers mises à jour
-            $employee = array_merge($userArray, $employeeArray);
+            $folderIds = $folders->pluck('id')->toArray();
+            $companyIds = $user->companies->pluck('id')->toArray();
 
-            return response()->json($employee);
-        } else {
-            // Récupérer les informations de l'utilisateur sans les données des dossiers
-            $companies = Company::with(['folders.software', 'folders.mappings'])->get();
-            $user = [
-                'civility' => $user->civility,
-                'email' => $user->email,
-                'firstname' => $user->firstname,
+            $modules = Module::whereIn('id', function ($query) use ($user, $folderIds, $companyIds) {
+                $query->select('module_id')
+                    ->from('user_module_permissions')
+                    ->where('user_id', $user->id)
+                    ->whereIn('module_id', function ($subQuery) use ($folderIds) {
+                        $subQuery->select('module_id')
+                            ->from('company_folder_module_access')
+                            ->whereIn('company_folder_id', $folderIds)
+                            ->where('has_access', true);
+                    })
+                    ->whereIn('module_id', function ($subQuery) use ($companyIds) {
+                        $subQuery->select('module_id')
+                            ->from('company_module_access')
+                            ->whereIn('company_id', $companyIds)
+                            ->where('has_access', true);
+                    });
+            })->with('permissions')->get();
+            $modules = $modules->map(function ($module) {
+                return [
+                    'id' => $module->id,
+                    'name' => $module->name,
+                    'permissions' => $module->permissions->map(function ($permission) {
+                        return [
+                            'id' => $permission->permission_id,
+                            'name' => $permission->name,
+                            'label' => $permission->label,
+                            'company_folder_id' => $permission->company_folder_id
+                        ];
+                    }),
+                ];
+            });
+
+            $userResponse = [
                 'id' => $user->id,
+                'email' => $user->email,
+                'civility' => $user->civility,
                 'lastname' => $user->lastname,
+                'firstname' => $user->firstname,
+                'telephone' => $user->telephone,
+                'companies' => $user->companies->map(function ($company) use ($folders) {
+                    return [
+                        'id' => $company->id,
+                        'name' => $company->name,
+                        'referent_id' => $company->referent_id,
+                        'folders' => $folders->filter(function ($folder) use ($company) {
+                            return $folder->company_id === $company->id;
+                        })->map(function ($folder) {
+                            return [
+                                'id' => $folder->id,
+                                'folder_number' => $folder->folder_number,
+                                'folder_name' => $folder->folder_name,
+                                'siret' => $folder->siret,
+                                'siren' => $folder->siren,
+                                'modules' => $folder->modules->map(function ($folderModule) {
+                                    return [
+                                        'id' => $folderModule->module->id,
+                                        'name' => $folderModule->module->name,
+                                        'has_access' => $folderModule->has_access,
+                                    ];
+                                }),
+                                'mappings' => $folder->mappings,
+                                'software' => $folder->software,
+                            ];
+                        }),
+                    ];
+                }),
+                'modules' => $modules,
+                'roles' => $roles,
+            ];
+
+        } else {
+            $companies = Company::with(['folders.software', 'folders.mappings', 'folders.users', 'folders.users.modules.permissions'])->get();
+
+            $userResponse = [
+                'id' => $user->id,
+                'email' => $user->email,
+                'civility' => $user->civility,
+                'lastname' => $user->lastname,
+                'firstname' => $user->firstname,
+                'telephone' => $user->telephone,
+                'roles' => $roles,
                 'companies' => $companies->map(function ($company) {
                     return [
-                        'id' => $company['id'],
-                        'name' => $company['name'],
-                        'description' => $company['description'],
-                        'folders' => $company['folders']->map(function ($folder) {
-                            if (isset($folder['mappings'])) {
-                                return [
-                                    'id' => $folder['id'],
-                                    'folder_number' => $folder['folder_number'],
-                                    'folder_name' => $folder['folder_name'],
-                                    'siret' => $folder['siret'],
-                                    'siren' => $folder['siren'],
-                                    'mappings' => [
-                                        'id' => $folder['mappings']['id'],
-                                        'data' => $folder['mappings']['data'],
-                                    ],
-                                    'notes' => $folder['notes'],
-                                    'software' => $folder['software'],
-                                ];
-                            } else {
-                                return [
-                                    'id' => $folder['id'],
-                                    'folder_number' => $folder['folder_number'],
-                                    'folder_name' => $folder['folder_name'],
-                                    'siret' => $folder['siret'],
-                                    'siren' => $folder['siren'],
-                                    'mappings' => [],
-                                    'notes' => $folder['notes'],
-                                    'software' => $folder['software'],
-                                ];
-                            }
+                        'id' => $company->id,
+                        'name' => $company->name,
+                        'description' => $company->description,
+                        'folders' => $company->folders->map(function ($folder) {
+                            return [
+                                'id' => $folder->id,
+                                'folder_number' => $folder->folder_number,
+                                'folder_name' => $folder->folder_name,
+                                'siret' => $folder->siret,
+                                'siren' => $folder->siren,
+                                'mappings' => $folder->mappings,
+                                'notes' => $folder->notes,
+                                'employees' => $folder->users->map(function ($user) {
+                                    return [
+                                        "email" => $user->email,
+                                        "civility" => $user->civility,
+                                        "lastname" => $user->lastname,
+                                        "firstname" => $user->firstname,
+                                        "telephone" => $user->telephone,
+                                        'modules' => $user->modules->map(function ($module) {
+                                            return [
+                                                'id' => $module->id,
+                                                'name' => $module->name,
+                                                'permissions' => $module->permissions->map(function ($permission) {
+                                                    return [
+                                                        'id' => $permission->permission_id,
+                                                        'name' => $permission->name,
+                                                        'label' => $permission->label,
+                                                    ];
+                                                }),
+                                            ];
+                                        }),
+                                    ];
+                                }),
+                                'software' => $folder->software,
+                            ];
                         }),
                     ];
                 }),
             ];
 
-            return response()->json($user);
         }
+        return response()->json($userResponse);
     }
+
+
 
     public function login(Request $request)
     {
@@ -105,20 +191,14 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
+        // Valider les données d'entrée
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|unique:users',
             'password' => 'required|min:8',
             'civility' => 'required',
             'lastname' => 'required',
             'firstname' => 'required',
-            'is_employee' => 'required|boolean',
-            'is_company_referent' => 'nullable|boolean',
-            'is_folder_referent' => 'nullable|boolean',
-            'employee_code' => 'required_if:is_employee,true|max:120',
-            'RIB' => 'required_if:is_employee,true',
-            'postal_code' => 'required_if:is_employee,true|min:5|max:5',
-            'postal_address' => 'required_if:is_employee,true|max:120',
-            'social_security_number' => 'required_if:is_employee,true| max:255',
+            'telephone' => 'nullable|string|min:10|max:10',
         ]);
 
         if ($validator->fails()) {
@@ -126,42 +206,29 @@ class AuthController extends Controller
         }
 
         try {
-            // Créer un nouvel utilisateur
+            // Creation du nouvel utilisateur
             $user = User::create([
                 'email' => $request->email,
                 'password' => bcrypt($request->password),
                 'civility' => $request->civility,
                 'lastname' => $request->lastname,
-                'firstname' => $request->firstname
+                'firstname' => $request->firstname,
+                'telephone' => $request->telephone
             ]);
 
-
-            // Si l'utilisateur est un employé, créez une entrée correspondante dans la table employees
+            // Assignation du rôle et des permissions
             if ($request->is_employee) {
-
-                $employeeInfo = EmployeeInfo::create([
-                    'employee_code' => $request->employee_code,
-                    'RIB' => $request->RIB,
-                    'postal_code' => $request->postal_code,
-                    'postal_address' => $request->postal_address,
-                    'social_security_number' => $request->social_security_number
-                ]);
-
-                if ($employeeInfo->save()) {
-                    $employee = Employee::create([
-                        'user_id' => $user->id,
-                        'is_company_referent' => $request->is_company_referent ?? false,
-                        'is_folder_referent' => $request->is_folder_referent ?? false,
-                        'informations_id' => $employeeInfo->id,
-                    ]);
-
-                    $user->employee()->save($employee);
-                    return response()->json(['message' => 'Employé créé avec succès'], 200);
+                if (!Role::where('name', 'client')->exists()) {
+                    Role::create(['name' => 'client', 'guard_name' => 'web']);
                 }
-
+                $user->assignRole('client');
             } else {
-                return response()->json(['message' => 'Utilisateur créé avec succès'], 200);
+                if (!Role::where('name', 'inpact')->exists()) {
+                    Role::create(['name' => 'inpact', 'guard_name' => 'web']);
+                }
+                $user->assignRole('inpact');
             }
+            return response()->json(['message' => 'Utilisateur créé avec succès'], 200);
 
         } catch (\Exception $e) {
             // Gestion des erreurs
@@ -169,9 +236,9 @@ class AuthController extends Controller
         }
     }
 
+
     protected function updateUser(Request $request, $id)
     {
-
         $user = User::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
@@ -179,13 +246,14 @@ class AuthController extends Controller
             'civility' => 'nullable',
             'lastname' => 'nullable',
             'firstname' => 'nullable',
+            'telephone' => 'nullable',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $fields = ['email', 'civility', 'lastname', 'firstname'];
+        $fields = ['email', 'civility', 'lastname', 'firstname', 'telephone'];
 
         $updateData = [];
 

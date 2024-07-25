@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('label', 120);
             $table->enum('base_calcul', ['H', 'J']);
             $table->string('therapeutic_part_time')->nullable();
+            $table->foreignId('company_folder_id')->constrained('company_folders')->cascadeOnDelete();
         });
     }
 

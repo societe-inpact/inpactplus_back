@@ -3,14 +3,18 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\CompanyFolder;
-use App\Models\InterfaceFolder;
-use App\Models\Mapping;
+use App\Models\Companies\CompanyFolder;
+use App\Models\Mapping\Mapping;
+use App\Models\Misc\InterfaceFolder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class CompanyFolderController extends Controller
 {
+    public function getCompanyFolders(){
+        $companyFolders = CompanyFolder::with('modules','company','software','mappings','users')->get();
+        return response()->json($companyFolders);
+    }
     public function createCompanyFolder(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -20,6 +24,7 @@ class CompanyFolderController extends Controller
             'siren' => 'required|string',
             'interface_id' => 'required|exists:interfaces,id',
             'company_id' => 'exists:companies,id',
+            'notes' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -34,6 +39,7 @@ class CompanyFolderController extends Controller
                 'siren' => $request->siren,
                 'interface_id' => $request->interface_id,
                 'company_id' => $request->company_id,
+                'notes' => $request->notes,
             ];
             $existingFolder = CompanyFolder::all()->where('folder_number', '==', $request->get('folder_number'))->first();
             if ($existingFolder){
