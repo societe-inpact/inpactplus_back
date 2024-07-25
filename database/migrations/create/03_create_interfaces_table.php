@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('interfaces', function (Blueprint $table) {
             $table->id();
             $table->string('name', 255);
-            $table->foreignId('interface_software_id')->nullable()->constrained('interface_software')->cascadeOnDelete();
+            $table->foreignId('interface_software_id')->nullable()->constrained('interface_software')->nullOnDelete()->cascadeOnUpdate();
         });
         
         DB::table('interfaces')->insert([

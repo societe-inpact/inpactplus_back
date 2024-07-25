@@ -112,8 +112,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // SOFTWARE
     Route::get("/software", [App\Http\Controllers\API\SoftwareController::class, 'getSoftware']);
-    Route::put("/software/update", [App\Http\Controllers\API\SoftwareController::class, 'updateNameSoftware']);
-    Route::delete("/software/delete", [App\Http\Controllers\API\SoftwareController::class, 'deleteNameSoftware']); // Supprime tout le software
+    Route::put("/software/update/{id}", [App\Http\Controllers\API\SoftwareController::class, 'updateNameSoftware']);
+    Route::delete("/software/delete/{id}", [App\Http\Controllers\API\SoftwareController::class, 'deleteNameSoftware']); // Supprime tout le software
 
     // INTERFACES SOFTWARE
     Route::get("/interfacesoftware/info", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'getInterfaceSoftware']);

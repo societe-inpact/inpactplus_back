@@ -29,10 +29,9 @@ class ConvertController extends BaseController
     {
         // reprise des différentes informations en fonction de l'interface
 
-        $interface = $request->get('nom_interface');
-        $nominterface = ['nomInterface' => $interface,];
+        $idInterface = $request->get('interface_id');
 
-        $softwaresNames = Software::all()->where('name',$interface)->first();
+        $softwaresNames = Software::all()->where('id',$idInterface)->first();
         if ($softwaresNames !== null){
             $idSoftware = $softwaresNames->interface_software_id;
         }else{
@@ -40,6 +39,7 @@ class ConvertController extends BaseController
         }
 
         if ($idSoftware !== null){
+            $nominterface =  $softwaresNames->name;
             $columnindex = $this->indexColumn($nominterface);
             $type_separateur = $columnindex->type_separateur;
             $format = $columnindex->format; 
@@ -153,11 +153,9 @@ class ConvertController extends BaseController
         // executer le convert adéquat à l'interface
 
         $data = [];
-        $interface = $request->get('nom_interface');
-        $nominterface = ['nomInterface' => $interface,];
+        $interface = $request->get('interface_id');
 
-
-        $softwaresNames = Software::all()->where('name',$interface)->first();
+        $softwaresNames = Software::all()->where('id',$interface)->first();
         if ($softwaresNames !== null){
             $idSoftware = $softwaresNames->interface_software_id;
         }else{
