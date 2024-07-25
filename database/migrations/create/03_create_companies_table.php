@@ -16,6 +16,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('description', 120);
+            $table->string('telephone', 10)->nullable();
             $table->foreignId('referent_id')->constrained('users')->cascadeOnDelete();
         });
         DB::table('companies')->insert([
@@ -23,18 +24,21 @@ return new class extends Migration
                 'id' => 1,
                 'name' => 'McDonalds',
                 'description' => 'Description du groupe McDonalds',
+                'telephone' => '0203040506',
                 'referent_id' => 1
             ],
             [
                 'id' => 2,
                 'name' => 'Burger King',
                 'description' => 'Description du groupe Burger King',
+                'telephone' => '0203040506',
                 'referent_id' => 1
             ],
             [
                 'id' => 3,
                 'name' => 'VaPiano',
                 'description' => 'Description du groupe VaPiano',
+                'telephone' => '0203040506',
                 'referent_id' => 1
             ]
         ]);
