@@ -17,6 +17,16 @@ return new class extends Migration
             $table->json('data');
             $table->timestamps();
         });
+
+        DB::table('mapping')->insert([
+            [
+                'id' => 1,
+                'company_folder_id' => 3,
+                'data' => [],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        ]);
     }
 
     /**
