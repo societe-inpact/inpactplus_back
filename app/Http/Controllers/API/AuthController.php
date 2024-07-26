@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Companies\Company;
 use App\Models\Employees\Employee;
+use App\Models\Employees\EmployeeFolder;
 use App\Models\Employees\EmployeeInfo;
 use App\Models\Misc\Role;
 use App\Models\Misc\User;
@@ -13,6 +14,7 @@ use App\Models\Modules\Module;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Spatie\Permission\Models\Permission;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
@@ -24,13 +26,16 @@ class AuthController extends Controller
         $user = Auth::user();
         $user->load([
             'folders.modules.module',
-            'companies',
             'folders.mappings',
             'folders.software',
         ]);
-
         $folders = $user->folders;
         $roles = $user->getRoleNames();
+        $companies = EmployeeFolder::with('folder.company') // Charge les relations en une seule requête
+        ->where('user_id', $user->id)
+            ->where('has_access', true)
+            ->get()
+            ->pluck('folder.company');
 
         if ($roles->contains('client')) {
             // Ajoute has_access dans l'objet module
@@ -40,26 +45,7 @@ class AuthController extends Controller
                 });
             });
 
-            $folderIds = $folders->pluck('id')->toArray();
-            $companyIds = $user->companies->pluck('id')->toArray();
-
-            $modules = Module::whereIn('id', function ($query) use ($user, $folderIds, $companyIds) {
-                $query->select('module_id')
-                    ->from('user_module_permissions')
-                    ->where('user_id', $user->id)
-                    ->whereIn('module_id', function ($subQuery) use ($folderIds) {
-                        $subQuery->select('module_id')
-                            ->from('company_folder_module_access')
-                            ->whereIn('company_folder_id', $folderIds)
-                            ->where('has_access', true);
-                    })
-                    ->whereIn('module_id', function ($subQuery) use ($companyIds) {
-                        $subQuery->select('module_id')
-                            ->from('company_module_access')
-                            ->whereIn('company_id', $companyIds)
-                            ->where('has_access', true);
-                    });
-            })->with('permissions')->get();
+            $modules = $user->modules;
             $modules = $modules->map(function ($module) {
                 return [
                     'id' => $module->id,
@@ -82,7 +68,7 @@ class AuthController extends Controller
                 'lastname' => $user->lastname,
                 'firstname' => $user->firstname,
                 'telephone' => $user->telephone,
-                'companies' => $user->companies->map(function ($company) use ($folders) {
+                'companies' => $companies->map(function ($company) use ($folders) {
                     return [
                         'id' => $company->id,
                         'name' => $company->name,
@@ -140,6 +126,7 @@ class AuthController extends Controller
                                 'notes' => $folder->notes,
                                 'employees' => $folder->users->map(function ($user) {
                                     return [
+                                        "id" => $user->id,
                                         "email" => $user->email,
                                         "civility" => $user->civility,
                                         "lastname" => $user->lastname,

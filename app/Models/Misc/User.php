@@ -12,6 +12,7 @@ use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -46,9 +47,14 @@ class User extends Authenticatable
         'laravel_through_key'
     ];
 
+    public function employeeFolders()
+    {
+        return $this->hasMany(EmployeeFolder::class, 'user_id');
+    }
+
     public function modules()
     {
-        return $this->hasManyThrough(Module::class, UserModulePermission::class, 'module_id', 'id', 'id', 'user_id');
+        return $this->belongsToMany(Module::class, 'user_module_permissions', 'user_id', 'module_id');
     }
 
     public function folders()
@@ -56,15 +62,10 @@ class User extends Authenticatable
         return $this->hasManyThrough(CompanyFolder::class, EmployeeFolder::class, 'user_id', 'id', 'id', 'company_folder_id')->where('has_access', true);
     }
 
-    /**
-     * Check if the user has a specific permission for a module if the company has access.
-     *
-     * @param string $permissionName
-     * @param int $moduleId
-     * @return bool
-     */
     public function companies(){
-        return $this->belongsToMany(Company::class, 'employee_folder', 'user_id', 'company_folder_id');
+        return $this->hasManyThrough(Company::class, EmployeeFolder::class, 'id', 'id', 'company_folder_id', 'company_id')
+            ->join('employee_folder', 'company_folders.id', '=', 'employee_folder.company_folder_id')
+            ->where('employee_folder.user_id', $this->id);
     }
 
     public function permissions(): \Illuminate\Database\Eloquent\Relations\BelongsToMany

@@ -21,7 +21,7 @@ return new class extends Migration
         DB::table('mapping')->insert([
             [
                 'id' => 1,
-                'company_folder_id' => 3,
+                'company_folder_id' => 1,
                 'data' => [],
                 'created_at' => now(),
                 'updated_at' => now(),

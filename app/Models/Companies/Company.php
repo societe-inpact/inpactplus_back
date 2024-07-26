@@ -4,6 +4,7 @@ namespace App\Models\Companies;
 
 use App\Models\Employees\Employee;
 use App\Models\Employees\EmployeeFolder;
+use App\Models\Misc\User;
 use App\Models\Modules\CompanyModuleAccess;
 use App\Models\Modules\Module;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,6 +20,7 @@ class Company extends Model
     protected $fillable = [
         "name",
         "description",
+        "telephone",
         "referent_id"
     ];
 
@@ -33,10 +35,11 @@ class Company extends Model
 
     public function folders()
     {
-        return $this->hasMany(CompanyFolder::class, 'company_id');
+        return $this->hasMany(CompanyFolder::class, 'company_id', 'id');
     }
 
     public function employees(){
-        return $this->hasManyThrough(Employee::class, EmployeeFolder::class, 'id', 'employee_id');
+
+        return $this->hasManyThrough(User::class, EmployeeFolder::class, 'id', 'user_id');
     }
 }
