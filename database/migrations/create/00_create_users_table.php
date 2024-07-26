@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('firstname');
             $table->string('telephone', 10)->nullable();
         });
-        
+
         DB::table('users')->insert([
             [
                 'id' => 1,
@@ -52,6 +52,42 @@ return new class extends Migration
             ],
             [
                 'id' => 4,
+                'email' => 's.marchant@inpact.fr',
+                'password' => bcrypt('s.marchant@inpact.fr'), // Utilisez bcrypt pour hacher le mot de passe
+                'civility' => 'Monsieur',
+                'lastname' => 'Marchant',
+                'firstname' => 'Serge',
+                'telephone' => '0123456789',
+            ],
+            [
+                'id' => 5,
+                'email' => 'k.bizot@inpact.fr',
+                'password' => bcrypt('k.bizot@inpact.fr'), // Utilisez bcrypt pour hacher le mot de passe
+                'civility' => 'madame',
+                'lastname' => 'Bizot',
+                'firstname' => 'Karla',
+                'telephone' => '0123456789',
+            ],
+            [
+                'id' => 6,
+                'email' => 'f.bizot@inpact.fr',
+                'password' => bcrypt('f.bizot@inpact.fr'), // Utilisez bcrypt pour hacher le mot de passe
+                'civility' => 'Monsieur',
+                'lastname' => 'Bizot',
+                'firstname' => 'François',
+                'telephone' => '0123456789',
+            ],
+            [
+                'id' => 7,
+                'email' => 'f.diop@inpact.fr',
+                'password' => bcrypt('f.diop@inpact.fr'), // Utilisez bcrypt pour hacher le mot de passe
+                'civility' => 'Madame',
+                'lastname' => 'Diop',
+                'firstname' => 'Faty',
+                'telephone' => '0123456789',
+            ],
+            [
+                'id' => 8,
                 'email' => 'john.doe@vapiano.fr',
                 'password' => bcrypt('john.doe@vapiano.fr'), // Utilisez bcrypt pour hacher le mot de passe
                 'civility' => 'Monsieur',
@@ -60,7 +96,7 @@ return new class extends Migration
                 'telephone' => '0987654321',
             ],
             [
-                'id' => 5,
+                'id' => 9,
                 'email' => 'jane.doe@vapiano.fr',
                 'password' => bcrypt('jane.doe@vapiano.fr'), // Utilisez bcrypt pour hacher le mot de passe
                 'civility' => 'Madame',
