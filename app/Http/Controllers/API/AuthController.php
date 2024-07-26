@@ -215,7 +215,7 @@ class AuthController extends Controller
                 }
                 $user->assignRole('inpact');
             }
-            return response()->json(['message' => 'Utilisateur créé avec succès'], 200);
+            return response()->json(['message' => 'Utilisateur créé avec succès', 'id' => $user->id], 200);
 
         } catch (\Exception $e) {
             // Gestion des erreurs
