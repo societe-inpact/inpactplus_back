@@ -15,7 +15,7 @@ class UserModulePermission extends Model
     protected $table = 'user_module_permissions';
     protected $hidden = ['laravel_through_key'];
     protected $fillable = [
-        'user_id', 'module_id', 'permission_id', 'company_folder_id',
+        'user_id', 'module_id', 'permission_id', 'company_folder_id', 'has_access',
     ];
 
     public function user()

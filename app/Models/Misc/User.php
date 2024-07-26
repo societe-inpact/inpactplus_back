@@ -10,6 +10,7 @@ use App\Models\Employees\EmployeeFolder;
 use App\Models\Modules\Module;
 use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
@@ -47,14 +48,9 @@ class User extends Authenticatable
         'laravel_through_key'
     ];
 
-    public function employeeFolders()
-    {
-        return $this->hasMany(EmployeeFolder::class, 'user_id');
-    }
-
     public function modules()
     {
-        return $this->belongsToMany(Module::class, 'user_module_permissions', 'user_id', 'module_id');
+        return $this->belongsToMany(Module::class, 'user_module_permissions', 'user_id', 'module_id')->where('has_access', true);
     }
 
     public function folders()
@@ -68,7 +64,7 @@ class User extends Authenticatable
             ->where('employee_folder.user_id', $this->id);
     }
 
-    public function permissions(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function permissions(): BelongsToMany
     {
         return $this->hasMany(UserModulePermission::class, 'user_id');
     }
