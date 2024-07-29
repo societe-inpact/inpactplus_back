@@ -5,67 +5,119 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Absences\Absence;
 use App\Models\Mapping\Mapping;
+use App\Models\Companies\CompanyFolder;
+use App\Models\Misc\InterfaceSoftware;
+use App\Models\Misc\Software;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use League\Csv\CharsetConverter;
+use League\Csv\Exception;
 use League\Csv\Reader;
 use function Laravel\Prompts\error;
 
 class MappingController extends Controller
 {
     protected $tableNames = [
-        'App\Models\Absences\Absence' => 'Absence',
-        'App\Models\Absences\CustomAbsence' => 'Absence personnalisée',
-        'App\Models\Hours\Hour' => 'Heure',
-        'App\Models\Hours\CustomHour' => 'Heure personnalisée',
-        'App\Models\VariablesElements\VariableElement' => 'Éléments variables',
+        'Absence' => 'App\Models\Absences\Absence',
+        'Absence personnalisée' => 'App\Models\Absences\CustomAbsence',
+        'Heure' => 'App\Models\Hours\Hour',
+        'Heure personnalisée' => 'App\Models\Hours\CustomHour',
+        'Éléments variables' => 'App\Models\VariablesElements\VariableElement',
     ];
 
     // Fonction permettant de récupérer les mappings existants d'un dossier
     public function getMapping(Request $request)
     {
         $companyFolder = $request->get('company_folder_id');
+        $companyFolderInfo = CompanyFolder::where('id',$companyFolder)->first();
+        $interface = $companyFolderInfo->interface_id;
+
+        // $interface = $request->get('interface_id');
+        
+        $softwaresNames = Software::all()->where('id',$interface)->first();
+
+        if ($softwaresNames !== null){
+            $idSoftware = $softwaresNames->interface_software_id;
+        }else{
+            return response()->json(['message' => 'L\'interface n\'existe pas','status' => 400]);
+        }
+
+        if ($idSoftware !== null){
+            $columnindex = InterfaceSoftware::all()->where('id',$idSoftware)->first();
+            $type_separateur = $columnindex->type_separateur;
+            $format = $columnindex->format; 
+            $index_rubrique = $columnindex->colonne_rubrique-1;
+            $colonne_matricule = $columnindex->colonne_matricule-1;
+            
+        }else{
+
+            // interfaces spécifique
+            $softwaresName = strtolower($softwaresNames["name"]);
+            switch ($softwaresName){
+                case "marathon":
+                    $controller = new ConvertMEController();
+                    $columnindex = $controller->formatFilesMarathon();
+                    $type_separateur = $columnindex["separateur"];
+                    $format = $columnindex ["format"];
+                    $index_rubrique = $columnindex ["index_rubrique"];
+                    $colonne_matricule = 0;
+                    break; 
+
+                default:
+                    return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]); 
+                 
+            }
+        }
+
         if (!$companyFolder) {
             return response()->json("L'id du dossier est requis", 400);
         }
 
-        if (!$request->hasFile('csv')) {
+        if (!$request->hasFile($format)) {
             return response()->json('Aucun fichier importé');
         }
 
+        // ajouter les condition de type de fichier
+
         $file = $request->file('csv');
-        $reader = $this->prepareCsvReader($file->getPathname());
-        $records = $reader->getRecords();
-        $results = $this->processCsvRecords($records, $companyFolder);
+        $reader = $this->prepareCsvReader($file->getPathname(),$type_separateur);
+        $records = iterator_to_array($reader->getRecords(), true);
+        $results = $this->processCsvRecords($records, $companyFolder,$index_rubrique,$colonne_matricule);
 
         return response()->json($results);
     }
 
     // Fonction permettant de configurer l'import du fichier
-    protected function prepareCsvReader($path)
+    protected function prepareCsvReader($path,$type_separateur)
     {
         $reader = Reader::createFromPath($path, 'r');
         $encoder = (new CharsetConverter())->inputEncoding('utf-8');
         $reader->addFormatter($encoder);
-        $reader->setDelimiter(';');
+        $reader->setDelimiter($type_separateur);
 
         return $reader;
     }
 
     // Fonction permettant de récupérer les mappings existants d'un dossier
-    protected function processCsvRecords($records, $companyFolder)
+    protected function processCsvRecords($records, $companyFolder,$index_rubrique,$colonne_matricule)
     {
         $processedRecords = collect();
         $unmatchedRubriques = [];
-        $rubriqueRegex = '/^[A-Za-z0-9]{1,3}$/';
         $results = [];
+        
+        $containsDigit = ctype_digit($records[0][$colonne_matricule]);
+        if (($containsDigit) === false) {
+            unset($records[0]);
+        }
 
         foreach ($records as $record) {
-            // $record[3] représente la colonne RUBRIQUE
-            if (!isset($record[3])) {
+
+            // colonne à ne pas prendre en compte
+            if (!isset($record[$index_rubrique])) {
                 continue;
             }
-            $inputRubrique = $this->findInputRubrique($record[3], $rubriqueRegex);
+            // $inputRubrique = $this->findInputRubrique($record[$index_rubrique]);
+            $inputRubrique = $record[$index_rubrique];
 
             if ($inputRubrique && !$processedRecords->contains($inputRubrique)) {
                 $processedRecords->push($inputRubrique);
@@ -113,7 +165,7 @@ class MappingController extends Controller
                     if ($output) {
                         return [
                             'input_rubrique' => $data['input_rubrique'],
-                            'type_rubrique' => $this->tableNames[$data['output_type']] ?? $data['output_type'],
+                            'type_rubrique' => $data['output_type'],
                             'output_rubrique' => $output->code,
                             'base_calcul' => $output->base_calcul,
                             'label' => $output->label,
@@ -218,6 +270,10 @@ class MappingController extends Controller
         $validatedRequestData = $this->validateMappingData($request);
         $companyFolder = $validatedRequestData['company_folder_id'];
         $mappedRubriques = Mapping::where('company_folder_id', $companyFolder)->get();
+        
+        $out = array("output_type"=>$this->tableNames[$request['output_type']]);
+        $validatedRequestData = array_replace($validatedRequestData,$out);
+        
         foreach ($mappedRubriques as $mappedRubrique) {
             $allMappedRubriques = $mappedRubrique->data;
             foreach ($allMappedRubriques as $inputMappedRubrique) {
@@ -230,7 +286,7 @@ class MappingController extends Controller
                         ], 409);
                     }else{
                         return response()->json([
-                            'error' => 'La rubrique d\'entrée ' . $validatedRequestData['input_rubrique'] . ' est déjà associée à la rubrique ' . $this->getSilaeRubrique($validatedRequestData)->code,
+                            'error' => 'La rubrique d\'entrée ' . $validatedRequestData['input_rubrique'] . ' est déjà associée à la rubrique '
                         ], 409);
                     }
                 }
