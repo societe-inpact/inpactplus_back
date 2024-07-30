@@ -295,8 +295,10 @@ class MappingController extends Controller
         $companyFolder = $validatedRequestData['company_folder_id'];
         $mappedRubriques = Mapping::where('company_folder_id', $companyFolder)->get();
         
-        $out = array("output_type"=>$this->tableNames[$request['name_rubrique']]);
-        $validatedRequestData = array_replace($validatedRequestData,$out);
+        if ($validatedRequestData['name_rubrique'] !== null){
+            $out = array("output_type"=>$this->tableNames[$validatedRequestData['name_rubrique']]);
+            $validatedRequestData = array_replace($validatedRequestData,$out);
+        }
         
         foreach ($mappedRubriques as $mappedRubrique) {
             $allMappedRubriques = $mappedRubrique->data;

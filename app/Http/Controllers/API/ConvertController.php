@@ -12,9 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Csv\CharsetConverter;
 use League\Csv\Exception;
-
 use League\Csv\Reader;
-
 use League\Csv\Writer;
 
 class ConvertController extends BaseController
@@ -122,7 +120,7 @@ class ConvertController extends BaseController
 
         $csv = Writer::createFromPath($csvPath, 'w+');
         $csv->setDelimiter(';');
-
+        
         // Écriture de l'en-tête du fichier
         $csv->insertOne(['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin' , 'H/J' , 'Pourcentage TP']);
 
@@ -184,6 +182,8 @@ class ConvertController extends BaseController
             }
         }
 
+        $header = ['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin'];
+
         if (!empty($data[0])) {
             $csvConverted = $this->writeToFile($data, $date);
             return response()->json([
@@ -192,6 +192,7 @@ class ConvertController extends BaseController
                 'status' => 200,
                 'file' => $csvConverted,
                 'rows' => $data[0],
+                'header' => $header
             ]);
         } else {
             return response()->json([
