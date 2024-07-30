@@ -12,22 +12,12 @@ use Illuminate\Support\Facades\Validator;
 class InterfaceSoftwareController extends ConvertController
 {
     public function getInterfaceSoftware($request){
-
-        // $validator = Validator::make($request->all(), [
-        //     'nomInterface' => 'required|string',
-        // ]);
-
-        // if ($validator->fails()) {
-        //     return response()->json(['errors' => $validator->errors()], 422);
-        // }  
-// dd($request);
-//         $softwareID = $request['interface_id'];
+        // récupère l'interface software
         $softwaresNames = Software::all()->where('id',$request)->first();
 
         if ($softwaresNames !== null){
             $idSoftware = $softwaresNames->interface_software_id;
             $interfaceSoftwares = InterfaceSoftware::all()->where('id',$idSoftware)->first();
-            // return response()->json($interfaceSoftwares, 200);
             return $interfaceSoftwares;       
         }
         else{

@@ -4,6 +4,9 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Absences\Absence;
+use App\Models\Absences\CustomAbsence;
+use App\Models\Hours\CustomHour;
+use App\Models\Hours\Hour;
 use App\Models\Mapping\Mapping;
 use App\Models\Companies\CompanyFolder;
 use App\Models\Misc\InterfaceSoftware;
@@ -260,6 +263,9 @@ class MappingController extends Controller
         $dataBis = [];
 
         // permet de modifier output_type en se basant sur le nom de la rubrique (si ce n'est pas null)
+
+        $validatedData = $this->controleAbsenceHours($validatedData);
+
         if ($validatedData['name_rubrique'] !== null){
             $out = array("output_type"=>$this->tableNames[$validatedData['name_rubrique']]);
             $validatedData = array_replace($validatedData,$out);
@@ -287,6 +293,31 @@ class MappingController extends Controller
         }
     }
 
+    // Fonction de contrôle des absences perso et des heures perso
+
+    private function controleAbsenceHours($validatedRequestData){
+
+        if ($validatedRequestData['name_rubrique'] === "Absence"){
+            
+            $labelAbs = Absence::where("id",$validatedRequestData['output_rubrique_id'])->first();
+            
+            $absPerso = CustomAbsence::where("code",$labelAbs->code)->where("company_folder_id",$validatedRequestData['company_folder_id'])->first();
+            if ($absPerso !== null){
+                $out = array("name_rubrique"=>'Absence personnalisée', "output_rubrique_id"=>($absPerso->id));
+                $validatedRequestData = array_replace($validatedRequestData,$out);
+            }
+        }
+
+        if ($validatedRequestData['name_rubrique'] === "Heure personnalisée"){
+            $labelHourCust = CustomHour::where("id",$validatedRequestData['output_rubrique_id'])->where("company_folder_id",$validatedRequestData['company_folder_id'])->first();
+            $hour = Hour::where("code",$labelHourCust->code)->first();
+            if ($hour !== null){
+                $out = array("name_rubrique"=>'Heure', "output_rubrique_id"=>($hour->id));
+                $validatedRequestData = array_replace($validatedRequestData,$out);
+            }
+        }
+        return $validatedRequestData;
+    }
 
     // Fonction permettant d'enregistrer un nouveau mapping en BDD
     public function storeMapping(Request $request)
@@ -294,12 +325,14 @@ class MappingController extends Controller
         $validatedRequestData = $this->validateMappingData($request);
         $companyFolder = $validatedRequestData['company_folder_id'];
         $mappedRubriques = Mapping::where('company_folder_id', $companyFolder)->get();
-        
+
+        $validatedRequestData = $this->controleAbsenceHours($validatedRequestData);
+
         if ($validatedRequestData['name_rubrique'] !== null){
             $out = array("output_type"=>$this->tableNames[$validatedRequestData['name_rubrique']]);
             $validatedRequestData = array_replace($validatedRequestData,$out);
         }
-        
+
         foreach ($mappedRubriques as $mappedRubrique) {
             $allMappedRubriques = $mappedRubrique->data;
             foreach ($allMappedRubriques as $inputMappedRubrique) {
