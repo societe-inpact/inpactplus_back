@@ -25,6 +25,14 @@ class MappingController extends Controller
         'Éléments variables' => 'App\Models\VariablesElements\VariableElement',
     ];
 
+    protected $tableNamesRevers = [
+        'App\Models\Absences\Absence' => 'Absence',
+        'App\Models\Absences\CustomAbsence' => 'Absence personnalisée',
+        'App\Models\Hours\Hour' => 'Heure',
+        'App\Models\Hours\CustomHour' => 'Heure personnalisée',
+        'App\Models\VariablesElements\VariableElement' => 'Éléments variables',
+    ];
+
     // Fonction permettant de récupérer les mappings existants d'un dossier
     public function getMapping(Request $request)
     {
@@ -165,7 +173,7 @@ class MappingController extends Controller
                     if ($output) {
                         return [
                             'input_rubrique' => $data['input_rubrique'],
-                            'type_rubrique' => $data['output_type'],
+                            'type_rubrique' => $this->tableNamesRevers[$data['output_type']] ?? $data['output_type'],
                             'output_rubrique' => $output->code,
                             'base_calcul' => $output->base_calcul,
                             'label' => $output->label,
@@ -206,13 +214,13 @@ class MappingController extends Controller
     // Fonction permettant de mettre à jour un mapping existant
     public function updateMapping(Request $request, $id)
     {
-        $companyFolder = $request->get('company_folder_id');
+        $validatedData = $this->validateMappingData($request);
 
+        $companyFolder = $request->get('company_folder_id');
         if (!$companyFolder) {
             return response()->json("L'id du dossier est requis", 400);
         }
 
-        $validatedData = $this->validateMappingData($request);
         $mapping = Mapping::with('folder')
             ->where('company_folder_id', $companyFolder)
             ->findOrFail($id);
@@ -222,6 +230,7 @@ class MappingController extends Controller
         }
 
         $updateResult = $this->updateMappingData($mapping, $validatedData);
+
         if ($updateResult === 'updated') {
             return response()->json(['message' => 'Mapping mis à jour avec succès']);
         } else {
@@ -248,20 +257,35 @@ class MappingController extends Controller
     protected function updateMappingData($mapping, $validatedData)
     {
         $data = $mapping->data;
+        $dataBis = [];
 
-        foreach ($data as &$entry) {
+        // permet de modifier output_type en se basant sur le nom de la rubrique (si ce n'est pas null)
+        if ($validatedData['name_rubrique'] !== null){
+            $out = array("output_type"=>$this->tableNames[$validatedData['name_rubrique']]);
+            $validatedData = array_replace($validatedData,$out);
+        }
+
+        // permet d'enregister les modifications
+        foreach ($data as $entry) {     
             if ($entry['input_rubrique'] === $validatedData['input_rubrique']) {
                 $entry['name_rubrique'] = $validatedData['name_rubrique'];
                 $entry['output_rubrique_id'] = $validatedData['output_rubrique_id'];
                 $entry['output_type'] = $validatedData['output_type'];
                 $entry['is_used'] = $validatedData['is_used'];
-                $mapping->data = $data;
-                $mapping->save();
-                return 'updated';
+                $dataBis[] = $entry; 
+            }else{
+                $dataBis[] = $entry;
             }
         }
-    }
 
+        if ($data !== $dataBis) {
+            $mapping->data = $dataBis;
+            $mapping->save();
+            return 'updated';
+        }else{
+            return 'nomodif';
+        }
+    }
 
 
     // Fonction permettant d'enregistrer un nouveau mapping en BDD
@@ -271,7 +295,7 @@ class MappingController extends Controller
         $companyFolder = $validatedRequestData['company_folder_id'];
         $mappedRubriques = Mapping::where('company_folder_id', $companyFolder)->get();
         
-        $out = array("output_type"=>$this->tableNames[$request['output_type']]);
+        $out = array("output_type"=>$this->tableNames[$request['name_rubrique']]);
         $validatedRequestData = array_replace($validatedRequestData,$out);
         
         foreach ($mappedRubriques as $mappedRubrique) {
