@@ -110,6 +110,7 @@ class ConvertController extends BaseController
      */
     private function writeToFile(array $data, $date)
     {
+        // dd($data); 
         $filename = 'EVY_' . $date; // TODO : Modifier le nom du fichier
         $directory = storage_path('csv');
         $csvPath = $directory . '/' . $filename . '.csv';
@@ -126,7 +127,7 @@ class ConvertController extends BaseController
         $csv->insertOne(['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin' , 'H/J' , 'Pourcentage TP']);
 
         // Écriture des collections dans le fichier CSV
-        $csv->insertAll($data);
+        $csv->insertAll($data[0]);
 
         // Return the URL of the CSV file
         return str_replace('\\', '/', 'http://localhost/evypaie_back/storage/csv/' . $filename . '.csv');
