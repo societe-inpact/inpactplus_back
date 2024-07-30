@@ -159,9 +159,9 @@ class ConvertInterfaceController extends ConvertController
         // reprise des différentes informations
 
         $folderId = $request->get('company_folder_id');
-        $interface = $request->get('nom_interface');
-        $nominterface = ['nomInterface' => $interface,];
-        $columnindex = $this->indexColumn($nominterface);
+        $interface = $request->get('interface_id');
+        // $nominterface = ['id' => $interface,];
+        $columnindex = $this->indexColumn($interface);
         $type_separateur = $columnindex->type_separateur;
         $format = strtolower($columnindex->format); 
 

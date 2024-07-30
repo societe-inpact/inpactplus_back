@@ -38,7 +38,7 @@ class ConvertController extends BaseController
 
         if ($idSoftware !== null){
             $nominterface =  $softwaresNames->name;
-            $columnindex = $this->indexColumn($nominterface);
+            $columnindex = $this->indexColumn($idInterface);
             $type_separateur = $columnindex->type_separateur;
             $format = $columnindex->format; 
         }else{
@@ -74,7 +74,6 @@ class ConvertController extends BaseController
                     $reader->setDelimiter($type_separateur);
                     $reader->addFormatter($formatter);
                     $reader->setHeaderOffset(null);
-                    $header = $reader->getHeader();
                     $records = iterator_to_array($reader->getRecords(), true);
        
                     return response()->json([

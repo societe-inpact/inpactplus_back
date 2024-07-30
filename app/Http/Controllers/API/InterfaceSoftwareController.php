@@ -20,9 +20,9 @@ class InterfaceSoftwareController extends ConvertController
         // if ($validator->fails()) {
         //     return response()->json(['errors' => $validator->errors()], 422);
         // }  
-
-        $softwareName = $request['nomInterface'];
-        $softwaresNames = Software::all()->where('name',$softwareName)->first();
+// dd($request);
+//         $softwareID = $request['interface_id'];
+        $softwaresNames = Software::all()->where('id',$request)->first();
 
         if ($softwaresNames !== null){
             $idSoftware = $softwaresNames->interface_software_id;
