@@ -86,7 +86,7 @@ class InterfaceSoftwareController extends ConvertController
                 $softwares = Software::create(['name'=>$softwareName,'interface_software_id'=>$softwareId]);
             }
             
-            return response()->json(['message' => 'La création de l interface', 'software' =>  $softwares->id], 200);
+            return response()->json(['message' => 'Création de l\'interface réussie', 'software' =>  $softwares], 200);
         }
         catch (\Exception $e) {
             //  dd($e);
@@ -170,5 +170,3 @@ class InterfaceSoftwareController extends ConvertController
 
     } 
 }
-
-?>

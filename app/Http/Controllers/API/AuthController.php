@@ -140,6 +140,7 @@ class AuthController extends Controller
                                 'notes' => $folder->notes,
                                 'employees' => $folder->users->map(function ($user) {
                                     return [
+                                        "id" => $user->id,
                                         "email" => $user->email,
                                         "civility" => $user->civility,
                                         "lastname" => $user->lastname,

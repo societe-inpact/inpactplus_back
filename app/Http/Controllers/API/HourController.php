@@ -75,7 +75,7 @@ class HourController extends Controller
                 'company_folder_id' => $validated['company_folder_id'],
             ]);
             if ($customHour) {
-                return response()->json(['message' => 'Heure personnalisée créée'], 201);
+                return response()->json(['message' => 'Heure personnalisée créée', "id" => $customHour->id], 201);
             }
         }else{
             return response()->json(['message' => 'Le code rubrique doit commencer par HS-'], 400);

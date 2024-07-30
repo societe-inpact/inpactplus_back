@@ -71,7 +71,7 @@ class AbsenceController extends Controller
                 'therapeutic_part_time' => $request->input('therapeutic_part_time', null),
             ]);
             if ($customAbsence) {
-                return response()->json(['message' => 'Absence personnalisée créée'], 201);
+                return response()->json(['message' => 'Absence personnalisée créée', "id" => $customAbsence->id], 201);
             }
         } else {
             return response()->json(['message' => 'Le code rubrique doit commencer par AB-'], 400);
