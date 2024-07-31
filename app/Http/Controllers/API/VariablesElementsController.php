@@ -71,14 +71,55 @@ class VariablesElementsController extends Controller
         return response()->json(['message' => 'Impossible de créer la rubrique personnalisée'], 400);
     }
 
-    public function updateVariableElement()
+    public function updateVariableElement(Request $request,$id)
     {
-        // TODO : Update un élément variable
+        // Validation des données
+        $validated = $request->validate([
+            'label' => 'required|string|max:255',
+            'code' => ['required', new CustomRubricRule],
+            'company_folder_id' => 'required|integer',
+        ]);
+
+        // Nettoyage du champ 'code' avant l'enregistrement
+        $validated['code'] = preg_replace('/\s*-\s*/', '-', trim($validated['code']));
+
+        // Vérification si l'élément variable avec ce code et ce label existe déjà
+        $isVariableElementExist = VariableElement::where('company_folder_id', $validated['company_folder_id'])
+            ->where('code', $validated['code'])
+            ->where('label', $validated['label'])
+            ->exists();
+
+        if ($isVariableElementExist) {
+            return response()->json(['message' => 'Élément variable déjà existant.'], 400);
+        }
+
+
+        // Création de l'élément variable si le code rubrique commence par EV-
+        if (str_starts_with($validated['code'], 'EV-')){
+
+            $variableElement = VariableElement::where('id',$id)->update([
+                'label' => $validated['label'],
+                'code' => $validated['code'],
+            ]);
+            if ($variableElement) {
+                return response()->json(['message' => 'Élément variable a été modifié', "id" => $id], 201);
+            }
+        }else{
+            return response()->json(['message' => 'Le code rubrique doit commencer par EV-'], 400);
+        }
+
+        return response()->json(['message' => 'Impossible de modifier la rubrique personnalisée'], 400);
     }
 
-    public function deleteVariableElement()
+    public function deleteVariableElement($id)
     {
-        // TODO : Delete un élément variable
+        $deleteVariableElement = VariableElement::find($id)->delete();
+        if ($deleteVariableElement){
+            return response()->json(['message' => 'l\'élément variable a été supprimé'], 200);
+        }
+        else{
+            return response()->json(['message' => 'L\'élément variable n\'existe pas.'], 404);
+        }
     }
 
 }

@@ -80,14 +80,64 @@ class AbsenceController extends Controller
         return response()->json(['message' => 'Impossible de créer la rubrique personnalisée'], 400);
     }
 
-    public function updateCustomAbsence()
+    public function updateCustomAbsence(Request $request, $id)
     {
-        // TODO : Update une custom absence
+        // Validation des données
+        $validated = $request->validate([
+            'label' => 'required|string|max:255',
+            'code' => ['required', new CustomRubricRule],
+            'base_calcul' => 'required|string|max:255',
+            'company_folder_id' => 'required|integer',
+            'therapeutic_part_time' => 'nullable|boolean',
+        ]);
+
+        // Nettoyage du champ 'code' avant l'enregistrement
+        $validated['code'] = preg_replace('/\s*-\s*/', '-', trim($validated['code']));
+
+        // Vérifie si la custom absence avec ce code et ce label existe déjà
+        $isCustomAbsenceExists = CustomAbsence::where('company_folder_id', $validated['company_folder_id'])
+            ->where('code', $validated['code'])
+            ->where('label', $validated['label'])
+            ->where('base_calcul', $validated['base_calcul'])
+            ->exists();
+
+
+        $isAbsenceExists = Absence::where('code', $validated['code'])
+            ->where('base_calcul', $validated['base_calcul'])
+            ->exists();
+
+        if ($isCustomAbsenceExists || $isAbsenceExists) {
+            return response()->json(['message' => 'Absence déjà existante.'], 400);
+        }
+
+        if (str_starts_with($validated['code'], 'AB-')) {
+            // Création de l'absence personnalisée
+            
+            $customAbsence = CustomAbsence::where('id',$id)->update([
+                'label' => $validated['label'],
+                'code' => $validated['code'],
+                'base_calcul' => $validated['base_calcul'],
+                'therapeutic_part_time' => $request->input('therapeutic_part_time', null),
+            ]);
+            if ($customAbsence) {
+                return response()->json(['message' => 'Absence personnalisée modifiée', "id" => $id], 201);
+            }
+        } else {
+            return response()->json(['message' => 'Le code rubrique doit commencer par AB-'], 400);
+        }
+
+        return response()->json(['message' => 'Impossible de modifier la rubrique personnalisée'], 400);
     }
 
-    public function deleteCustomAbsence()
+    public function deleteCustomAbsence($id)
     {
-        // TODO : Delete une custom absence
+        $deleteCustomAbsence = CustomAbsence::find($id)->delete();
+        if ($deleteCustomAbsence){
+            return response()->json(['message' => 'l\'absence custom a été supprimé'], 200);
+        }
+        else{
+            return response()->json(['message' => 'L\'absence custom n\'existe pas.'], 404);
+        }
     }
 
     // PARTIE ABSENCES

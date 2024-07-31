@@ -11,17 +11,17 @@ use Illuminate\Support\Facades\Validator;
 
 class InterfaceSoftwareController extends ConvertController
 {
-    public function getInterfaceSoftware($request){
+    public function getInterfaceSoftware($id){
         // récupère l'interface software
-        $softwaresNames = Software::all()->where('id',$request)->first();
 
-        if ($softwaresNames !== null){
-            $idSoftware = $softwaresNames->interface_software_id;
-            $interfaceSoftwares = InterfaceSoftware::all()->where('id',$idSoftware)->first();
-            return $interfaceSoftwares;       
+        $idSoftware = InterfaceSoftware::all()->where('id',$id)->first();
+
+        if ($idSoftware){
+            $interfaceSoftwares = InterfaceSoftware::all()->where('id',$id)->first();
+            return $interfaceSoftwares;  
         }
         else{
-            return response()->json(['message'=>'il n\'y pas d\'interface', $softwaresNames], 400);
+            return response()->json(['message'=>'il n\'y pas d\'interface', $idSoftware], 400);
         }
     }
 
@@ -82,7 +82,7 @@ class InterfaceSoftwareController extends ConvertController
         }
     }   
 
-    public function updateInterfaceSoftware(Request $request){
+    public function updateInterfaceSoftware(Request $request,$id){
 
         $validator = Validator::make($request->all(), [
             'matricule' => 'required|integer',
@@ -95,7 +95,6 @@ class InterfaceSoftwareController extends ConvertController
             'periode' => 'nullable|integer',
             'separateur' => 'nullable|string',
             'format'=> 'required|string',
-            'nomInterface' => 'required|string',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -115,14 +114,14 @@ class InterfaceSoftwareController extends ConvertController
                 'format'=> $request->format,
             ];
 
-            $softwareName = $request->nomInterface;
+            // $softwareName = $request->nomInterface;
 
-            $softwaresNames = Software::all()->where('name',$softwareName)->first();
-            $idSoftwares = $softwaresNames->interface_software_id;
+            // $softwaresNames = Software::all()->where('name',$softwareName)->first();
+            $idSoftwares = $id;
 
             $softwareuptade = InterfaceSoftware::where('id',$idSoftwares)->update($data);
        
-            return response()->json(['message' => 'Mise à jour faite', 'software' =>  $softwareName], 200);
+            return response()->json(['message' => 'Mise à jour faite', 'software' =>  $id], 200);
         }
         catch (\Exception $e) {
             //  dd($e);
@@ -130,31 +129,18 @@ class InterfaceSoftwareController extends ConvertController
         }
     }
 
-    public function deleteInterfaceSoftware(Request $request){
+    public function deleteInterfaceSoftware($id){
 
-        $validator = Validator::make($request->all(), [
-            'nomInterface' => 'required|string',
-        ]);
+        $idSoftware = InterfaceSoftware::all()->where('id',$id)->first();
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }  
-        
-        $softwareName = $request->nomInterface;
-        $softwaresNames = Software::all()->where('name',$softwareName)->first();
-        if ($softwaresNames){
-            $idSoftware = $softwaresNames->interface_software_id;
-            if ($idSoftware){
-                $interfaceSoftware = InterfaceSoftware::find($idSoftware)->delete();
-                return response()->json(['message' => 'l\'interface a été supprimé'], 200);
-            }
-            else{
-                return response()->json(['message' => 'L\interface n\'existe pas.'], 404);
-            }
+        if ($idSoftware){
+            $interfaceSoftware = InterfaceSoftware::find($id)->delete();
+            return response()->json(['message' => 'l\'interface a été supprimé'], 200);
         }
         else{
-            return response()->json(['error' => 'L\interface n\'a pas été trouvé.'], 404);
+            return response()->json(['message' => 'L\interface n\'existe pas.'], 404);
         }
+
 
     } 
 }

@@ -84,14 +84,56 @@ class HourController extends Controller
         return response()->json(['message' => 'Impossible de créer la rubrique personnalisée'], 400);
     }
 
-    public function updateCustomHour()
+    public function updateCustomHour(Request $request, $id)
     {
-        // TODO : Update une custom hour
+        // Validation des données
+        $validated = request()->validate([
+            'label' => 'required',
+            'code' => ['required', new CustomRubricRule],
+            'company_folder_id' => 'required|integer',
+        ]);
+
+        // Nettoyage du champ 'code' avant l'enregistrement
+        $validated['code'] = preg_replace('/\s*-\s*/', '-', trim($validated['code']));
+
+        // Vérification si une heure personnalisée avec ce code et ce label existe déjà
+        $isCustomHourExists = CustomHour::where('company_folder_id', $validated['company_folder_id'])
+            ->where('code', $validated['code'])
+            ->where('label', $validated['label'])
+            ->exists();
+
+        // Vérification si une heure avec ce code existe déjà
+        $isHourExists = Hour::where('code', $validated['code'])->exists();
+
+        if($isCustomHourExists || $isHourExists){
+            return response()->json(['message' => 'Heure personnalisée déjà existante.'], 400);
+        }
+
+        if (str_starts_with($validated['code'], 'HS-')) {
+            // Création de l'heure personnalisée
+            $customHour = CustomHour::where('id',$id)->update([
+                'label' => $validated['label'],
+                'code' => $validated['code'],
+            ]);
+            if ($customHour) {
+                return response()->json(['message' => 'Heure personnalisée modifiée', "id" => $id], 201);
+            }
+        }else{
+            return response()->json(['message' => 'Le code rubrique doit commencer par HS-'], 400);
+        }
+
+        return response()->json(['message' => 'Impossible de modifier la rubrique personnalisée'], 400);
     }
 
-    public function deleteCustomHour()
+    public function deleteCustomHour($id)
     {
-        // TODO : Delete une custom hour
+        $deleteCustomHour = CustomHour::find($id)->delete();
+        if ($deleteCustomHour){
+            return response()->json(['message' => 'l\'heure custom a été supprimé'], 200);
+        }
+        else{
+            return response()->json(['message' => 'L\'heure custom n\'existe pas.'], 404);
+        }
     }
 
     public function createHour(Request $request){

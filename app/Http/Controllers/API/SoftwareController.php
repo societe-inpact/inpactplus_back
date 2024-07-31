@@ -46,7 +46,6 @@ class SoftwareController extends Controller
         if ($softwarename){
 
             $idInterfaceSoftware = $softwarename->interface_software_id;
-            // dd($idInterfaceSoftware);
             if ($idInterfaceSoftware){
                 $delinterfaceSoftware = InterfaceSoftware::find($idInterfaceSoftware)->delete();
             }
