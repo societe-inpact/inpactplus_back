@@ -58,6 +58,7 @@ class ConvertController extends BaseController
         }
 
         // extraction en fonction du format => voir pour le sortir dans une autre fonction
+        $format = strtolower($format);
         switch ($format){
             case "csv":
                 $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15');

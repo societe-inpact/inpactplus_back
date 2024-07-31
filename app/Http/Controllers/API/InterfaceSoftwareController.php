@@ -67,7 +67,6 @@ class InterfaceSoftwareController extends ConvertController
             $softwareName = $request->nomInterface;
 
             $softwaresNames = Software::all()->where('name',$softwareName)->first();
-            // dd($softwaresNames);
             if ($softwaresNames){
                 $softwareuptade = $softwaresNames->update(['interface_software_id'=>$softwareId]);
                 $softwares = $softwaresNames;
@@ -79,7 +78,6 @@ class InterfaceSoftwareController extends ConvertController
             return response()->json(['message' => 'Création de l\'interface réussie', 'software' =>  $softwares], 200);
         }
         catch (\Exception $e) {
-            //  dd($e);
             return response()->json(['error' => 'Une erreur est survenue lors de la création de l\'interface.'], 500);
         }
     }   

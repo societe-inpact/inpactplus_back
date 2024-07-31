@@ -56,7 +56,8 @@ class MappingController extends Controller
         if ($idSoftware !== null){
             $columnindex = InterfaceSoftware::all()->where('id',$idSoftware)->first();
             $type_separateur = $columnindex->type_separateur;
-            $format = $columnindex->format; 
+            $format = $columnindex->format;
+            $format = strtolower($format);
             $index_rubrique = $columnindex->colonne_rubrique-1;
             $colonne_matricule = $columnindex->colonne_matricule-1;
             
@@ -247,7 +248,8 @@ class MappingController extends Controller
     protected function validateMappingData(Request $request)
     {
         return $request->validate([
-            'input_rubrique' => 'required|string|regex:/^[A-Za-z0-9]{1,3}$/',
+            // 'input_rubrique' => 'required|string|regex:/^[A-Za-z0-9]{1,3}$/',
+            'input_rubrique' => 'required|string|max:255',
             'name_rubrique' => 'nullable|string|max:255',
             'output_rubrique_id' => 'nullable|integer',
             'company_folder_id' => 'required',
