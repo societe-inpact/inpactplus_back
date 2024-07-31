@@ -214,7 +214,7 @@ class ConvertMEController extends ConvertController
         }
         return $data;
     }
-
+// TODO : ajouter une condition d'erreur 
     // Fonction permettant de convertir les valeurs negatives ou commençant par un point
     private function convertNegativeOrDotValue(array $data, array $record, $codeSilae): array
     {
