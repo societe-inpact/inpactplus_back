@@ -131,6 +131,14 @@ class AbsenceController extends Controller
 
     public function deleteCustomAbsence($id)
     {
+        // permet de supprimer dans la mapping la custom hour supprimée
+        $companyFolder = CustomAbsence::where('id', $id)->first();
+        $companyFolderId = $companyFolder->company_folder_id;
+        $nameRubrique = "Absence personnalisée";
+
+        $controller = new MappingController();
+        $data =  $controller->deleteOneMappingData($companyFolderId,$id,$nameRubrique);
+
         $deleteCustomAbsence = CustomAbsence::find($id)->delete();
         if ($deleteCustomAbsence){
             return response()->json(['message' => 'l\'absence custom a été supprimé'], 200);

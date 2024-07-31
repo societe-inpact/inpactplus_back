@@ -113,6 +113,17 @@ class VariablesElementsController extends Controller
 
     public function deleteVariableElement($id)
     {
+        // permet de supprimer dans la mapping la custom hour supprimée
+        $companyFolder = VariableElement::where('id', $id)->first();
+        $companyFolderId = $companyFolder->company_folder_id;
+        $nameRubrique = "Éléments variables";
+
+
+        $controller = new MappingController();
+        $data =  $controller->deleteOneMappingData($companyFolderId,$id,$nameRubrique);
+
+        // supprime l'élément variable
+
         $deleteVariableElement = VariableElement::find($id)->delete();
         if ($deleteVariableElement){
             return response()->json(['message' => 'l\'élément variable a été supprimé'], 200);

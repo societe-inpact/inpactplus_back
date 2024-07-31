@@ -429,4 +429,30 @@ class MappingController extends Controller
     protected function deleteAllMapping(){
         
     }
+
+    // Fonction permettant de mettre à jour un mappings existant
+    public function deleteOneMappingData($companyFolderId, $idDelete,$nameRubrique)
+    {
+        // permet de récupérer le mapping
+        $mappingCompagny = Mapping::where("company_folder_id", $companyFolderId)->first();
+        $data = $mappingCompagny->data;
+        $dataBis = [];
+
+        // permet d'enregister les modifications
+        foreach ($data as $entry) {  
+            if ((string)$entry['output_rubrique_id'] === (string)$idDelete && $entry['name_rubrique'] === $nameRubrique ) {
+                // supprimer la valeur
+            }else{
+                $dataBis[] = $entry;
+            }
+        }
+
+        if ($data !== $dataBis) {
+            $mappingCompagny->data = $dataBis;
+            $mappingCompagny->save();
+            return 'updated';
+        }else{
+            return 'nomodif';
+        }
+    }  
 }

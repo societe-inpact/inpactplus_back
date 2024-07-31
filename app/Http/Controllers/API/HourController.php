@@ -127,6 +127,16 @@ class HourController extends Controller
 
     public function deleteCustomHour($id)
     {
+        // permet de supprimer dans la mapping la custom hour supprimée
+        $companyFolder = CustomHour::where('id', $id)->first();
+        $companyFolderId = $companyFolder->company_folder_id;
+        $nameRubrique = "Heure personnalisée";
+
+
+        $controller = new MappingController();
+        $data =  $controller->deleteOneMappingData($companyFolderId,$id,$nameRubrique);
+
+        // supprime la customhour
         $deleteCustomHour = CustomHour::find($id)->delete();
         if ($deleteCustomHour){
             return response()->json(['message' => 'l\'heure custom a été supprimé'], 200);

@@ -127,6 +127,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get("/test/indexcolonne", [App\Http\Controllers\API\ConvertInterfaceController::class, 'indexColumn']);
     Route::post("/test/convert", [App\Http\Controllers\API\ConvertInterfaceController::class, 'convertinterface']);
     Route::post("/test/maraton", [App\Http\Controllers\API\ConvertMEController::class, 'marathonConvert']);
+    Route::delete("/test//mapping/deleteOne", [App\Http\Controllers\API\MappingController::class, 'deleteOneMappingData']);
 
     // NOTES FROM FOLDER OF COMPANIES
     Route::get('/company_folder/notes', [App\Http\Controllers\API\NoteController::class, 'getNotes']);
