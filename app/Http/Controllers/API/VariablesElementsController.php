@@ -120,7 +120,7 @@ class VariablesElementsController extends Controller
 
 
         $controller = new MappingController();
-        $data =  $controller->deleteOneMappingData($companyFolderId,$id,$nameRubrique);
+        $data =  $controller->deleteOneLineMappingData($companyFolderId,$id,$nameRubrique);
 
         // supprime l'élément variable
 

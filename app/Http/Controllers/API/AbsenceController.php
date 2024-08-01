@@ -137,7 +137,7 @@ class AbsenceController extends Controller
         $nameRubrique = "Absence personnalisée";
 
         $controller = new MappingController();
-        $data =  $controller->deleteOneMappingData($companyFolderId,$id,$nameRubrique);
+        $data =  $controller->deleteOneLineMappingData($companyFolderId,$id,$nameRubrique);
 
         $deleteCustomAbsence = CustomAbsence::find($id)->delete();
         if ($deleteCustomAbsence){

@@ -134,7 +134,7 @@ class HourController extends Controller
 
 
         $controller = new MappingController();
-        $data =  $controller->deleteOneMappingData($companyFolderId,$id,$nameRubrique);
+        $data =  $controller->deleteOneInfoMappingData($companyFolderId,$id,$nameRubrique);
 
         // supprime la customhour
         $deleteCustomHour = CustomHour::find($id)->delete();

@@ -416,14 +416,16 @@ class MappingController extends Controller
     // Fonction permettant de supprimer un mapping existant
     protected function deleteMapping(Request $request)
     {
+
+        // TODO : revoir le delete mapping 
         $request->validate([
             'user_id' => 'required|integer',
         ]);
         $userToDelete = Mapping::where('user_id', intval($request->user_id))->delete();
         if ($userToDelete){
-            return response()->json(['message' => 'Utilisateur supprimé du dossier avec succès']);
+            return response()->json(['message' => 'Mapping supprimé du dossier avec succès']);
         }
-        return response()->json(['message' => 'Erreur lors de la suppression de l\'utilisateur']);
+        return response()->json(['message' => 'Erreur lors de la suppression du mapping']);
     }
 
     protected function deleteAllMapping(){
@@ -431,7 +433,7 @@ class MappingController extends Controller
     }
 
     // Fonction permettant de mettre à jour un mappings existant
-    public function deleteOneMappingData($companyFolderId, $idDelete,$nameRubrique)
+    public function deleteOneLineMappingData($companyFolderId, $idDelete,$nameRubrique)
     {
         // permet de récupérer le mapping
         $mappingCompagny = Mapping::where("company_folder_id", $companyFolderId)->first();
