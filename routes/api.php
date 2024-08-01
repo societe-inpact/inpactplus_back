@@ -42,7 +42,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post("/mapping/store", [App\Http\Controllers\API\MappingController::class, 'storeMapping']);
         Route::patch("/mapping/update/{id}", [App\Http\Controllers\API\MappingController::class, 'updateMapping']);
         Route::delete("/mapping/delete/{id}", [App\Http\Controllers\API\MappingController::class, 'deleteMapping']);
-        Route::delete("/mapping/delete", [App\Http\Controllers\API\MappingController::class, 'deleteAllMapping']);
+        Route::delete("/mapping/deleteOneLine", [App\Http\Controllers\API\MappingController::class, 'deleteOneLineMappingData']);
     });
 
     Route::middleware(['company.module.access:statistics'])->group(function () {
@@ -130,7 +130,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::delete("/test//mapping/deleteOne", [App\Http\Controllers\API\MappingController::class, 'deleteOneMappingData']);
 
     // NOTES FROM FOLDER OF COMPANIES
-    Route::get('/company_folder/notes', [App\Http\Controllers\API\NoteController::class, 'getNotes']);
+
     Route::post('company_folder/notes/create', [App\Http\Controllers\API\NoteController::class, 'createUpdateDeleteNote']);
 
     Route::post("/logout", [App\Http\Controllers\API\AuthController::class, 'logout']);

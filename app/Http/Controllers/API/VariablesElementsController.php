@@ -62,7 +62,7 @@ class VariablesElementsController extends Controller
                 'company_folder_id' => $validated['company_folder_id'],
             ]);
             if ($variableElement) {
-                return response()->json(['message' => 'Élément variable créée', "id" => $variableElement->id], 201);
+                return response()->json(['message' => 'Élément variable créée', "id" => $variableElement], 201);
             }
         }else{
             return response()->json(['message' => 'Le code rubrique doit commencer par EV-'], 400);
@@ -118,9 +118,15 @@ class VariablesElementsController extends Controller
         $companyFolderId = $companyFolder->company_folder_id;
         $nameRubrique = "Éléments variables";
 
-
-        $controller = new MappingController();
-        $data =  $controller->deleteOneLineMappingData($companyFolderId,$id,$nameRubrique);
+        $deletMapping =new Request([
+            "companyFolderId" => $companyFolderId,
+            "output_rubrique_id" => $id,
+            "nameRubrique" => $nameRubrique,
+            "input_rubrique" => ""
+         ]);
+ 
+         $controller = new MappingController();
+         $controller->deleteOneLineMappingData($deletMapping);
 
         // supprime l'élément variable
 

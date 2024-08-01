@@ -17,6 +17,7 @@ use League\Csv\CharsetConverter;
 use League\Csv\Exception;
 use League\Csv\Reader;
 use function Laravel\Prompts\error;
+use Illuminate\Support\Facades\Validator;
 
 class MappingController extends Controller
 {
@@ -414,27 +415,37 @@ class MappingController extends Controller
     }
 
     // Fonction permettant de supprimer un mapping existant
-    protected function deleteMapping(Request $request)
+    protected function deleteMapping($id)
     {
-
-        // TODO : revoir le delete mapping 
-        $request->validate([
-            'user_id' => 'required|integer',
-        ]);
-        $userToDelete = Mapping::where('user_id', intval($request->user_id))->delete();
-        if ($userToDelete){
+        $mappingCompagny = Mapping::where("id", $id)->first();
+        $dataBis = [];
+        $mappingCompagny->data = $dataBis;
+        $mappingCompagny->save();
+        if ($mappingCompagny){
             return response()->json(['message' => 'Mapping supprimé du dossier avec succès']);
         }
         return response()->json(['message' => 'Erreur lors de la suppression du mapping']);
     }
 
-    protected function deleteAllMapping(){
-        
-    }
-
     // Fonction permettant de mettre à jour un mappings existant
-    public function deleteOneLineMappingData($companyFolderId, $idDelete,$nameRubrique)
+    public function deleteOneLineMappingData(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'companyFolderId' => 'required|integer',
+            'output_rubrique_id' => 'required|integer',
+            'nameRubrique' => 'required|string',
+            'input_rubrique' => ''
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+        
+        $companyFolderId = $request ["companyFolderId"];
+        $output_rubrique_id = $request ["output_rubrique_id"];
+        $nameRubrique = $request ["nameRubrique"];
+        $input_rubrique = $request ["input_rubrique"];
+     
         // permet de récupérer le mapping
         $mappingCompagny = Mapping::where("company_folder_id", $companyFolderId)->first();
         $data = $mappingCompagny->data;
@@ -442,8 +453,17 @@ class MappingController extends Controller
 
         // permet d'enregister les modifications
         foreach ($data as $entry) {  
-            if ((string)$entry['output_rubrique_id'] === (string)$idDelete && $entry['name_rubrique'] === $nameRubrique ) {
-                // supprimer la valeur
+            if ((string)$entry['output_rubrique_id'] === (string)$output_rubrique_id && $entry['name_rubrique'] === $nameRubrique ) {
+                if($input_rubrique !== ""){
+                    if ((string)$entry['input_rubrique'] === (string)$input_rubrique) {
+                        // supprimer la valeur
+                    } else {
+                        $dataBis[] = $entry;
+                    }
+                }else{
+                    
+                    // supprimer la valeur
+                }                
             }else{
                 $dataBis[] = $entry;
             }

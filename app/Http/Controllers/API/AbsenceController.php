@@ -71,7 +71,7 @@ class AbsenceController extends Controller
                 'therapeutic_part_time' => $request->input('therapeutic_part_time', null),
             ]);
             if ($customAbsence) {
-                return response()->json(['message' => 'Absence personnalisée créée', "id" => $customAbsence->id], 201);
+                return response()->json(['message' => 'Absence personnalisée créée', "id" => $customAbsence], 201);
             }
         } else {
             return response()->json(['message' => 'Le code rubrique doit commencer par AB-'], 400);
@@ -136,9 +136,17 @@ class AbsenceController extends Controller
         $companyFolderId = $companyFolder->company_folder_id;
         $nameRubrique = "Absence personnalisée";
 
-        $controller = new MappingController();
-        $data =  $controller->deleteOneLineMappingData($companyFolderId,$id,$nameRubrique);
+        $deletMapping =new Request([
+            "companyFolderId" => $companyFolderId,
+            "output_rubrique_id" => $id,
+            "nameRubrique" => $nameRubrique,
+            "input_rubrique" => ""
+         ]);
 
+        $controller = new MappingController();
+        $controller->deleteOneLineMappingData($deletMapping);
+
+        // supprime l'absence custom
         $deleteCustomAbsence = CustomAbsence::find($id)->delete();
         if ($deleteCustomAbsence){
             return response()->json(['message' => 'l\'absence custom a été supprimé'], 200);
