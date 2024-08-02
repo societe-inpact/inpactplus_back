@@ -476,9 +476,9 @@ class MappingController extends Controller
         if ($data !== $dataBis) {
             $mappingCompagny->data = $dataBis;
             $mappingCompagny->save();
-            return 'updated';
+            return response()->json(['message' => 'updated']);
         }else{
-            return 'nomodif';
+            return response()->json(['message' => 'nomodif']);
         }
     }  
 }
