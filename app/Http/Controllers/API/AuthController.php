@@ -271,6 +271,16 @@ class AuthController extends Controller
         }
     }
 
+    public function deleteUser($id){
+
+        $userToDelete = User::where('id', $id)->delete();
+        if ($userToDelete) {
+            return response()->json(['message'=> 'Utilisateur supprimé du dossier avec succès']);
+        }else{
+            return response()->json(['message'=> 'Erreur lors de la suppression de l\'utilisteur']);
+        }
+    }
+
     protected function logout()
     {
         $cookie = Cookie::forget('jwt');

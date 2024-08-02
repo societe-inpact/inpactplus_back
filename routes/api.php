@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 Route::group(['middleware' => 'cors'], function () {
     Route::post('/login', [App\Http\Controllers\API\AuthController::class, 'login']);
     Route::post('/register', [App\Http\Controllers\API\AuthController::class, 'register']);
+    Route::delete('/user/delete/{id}', [App\Http\Controllers\API\AuthController::class, 'deleteUser']);
 });
 
 Route::middleware('throttle:10,1')->group(function () {
@@ -67,6 +68,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // USERS
     Route::patch('/user/update/{id}', [App\Http\Controllers\API\AuthController::class, 'updateUser']);
     Route::patch('/user/update/{id}/password', [App\Http\Controllers\API\PasswordController::class, 'changePassword']);
+   
 
     // CUSTOM ABSENCES
     Route::get("/custom-absences", [App\Http\Controllers\API\AbsenceController::class, 'getCustomAbsences']);
