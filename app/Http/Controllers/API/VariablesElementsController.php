@@ -62,7 +62,7 @@ class VariablesElementsController extends Controller
                 'company_folder_id' => $validated['company_folder_id'],
             ]);
             if ($variableElement) {
-                return response()->json(['message' => 'Élément variable créée', "id" => $variableElement], 201);
+                return response()->json(['message' => 'Élément variable créée', "data" => $variableElement], 201);
             }
         }else{
             return response()->json(['message' => 'Le code rubrique doit commencer par EV-'], 400);
