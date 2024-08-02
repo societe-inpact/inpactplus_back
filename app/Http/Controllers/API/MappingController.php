@@ -452,7 +452,11 @@ class MappingController extends Controller
         $dataBis = [];
 
         // permet d'enregister les modifications
-        foreach ($data as $entry) {  
+        foreach ($data as $entry) {
+            if ($entry['name_rubrique'] === null){
+                $entry['name_rubrique'] = "Ne pas utiliser";
+                $entry['output_rubrique_id'] = 0;
+            }
             if ((string)$entry['output_rubrique_id'] === (string)$output_rubrique_id && $entry['name_rubrique'] === $nameRubrique ) {
                 if($input_rubrique !== ""){
                     if ((string)$entry['input_rubrique'] === (string)$input_rubrique) {
