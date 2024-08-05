@@ -9,26 +9,38 @@ use Illuminate\Support\Facades\Validator;
 
 class AccessController extends Controller
 {
-    public function addUserToCompanyFolder(Request $request){
+    public function addUserToCompanyFolder(Request $request) {
         $validator = Validator::make($request->all(), [
             'is_referent' => 'required|boolean',
             'has_access' => 'required|boolean',
             'user_id' => 'required|exists:users,id',
             'company_folder_id' => 'required|exists:company_folders,id',
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-
-        EmployeeFolder::create([
-            'is_referent' => $request->is_referent,
-            'has_access' => $request->has_access,
-            'user_id' => $request->user_id,
-            'company_folder_id' => $request->company_folder_id
-        ]);
-
-        return response()->json(['message' => 'Utilisateur ajouté au dossier avec succès'], 200);
+    
+        try {
+            $employeeFolder = EmployeeFolder::create([
+                'is_referent' => $request->is_referent,
+                'has_access' => $request->has_access,
+                'user_id' => $request->user_id,
+                'company_folder_id' => $request->company_folder_id
+            ]);
+    
+            return response()->json([
+                'message' => 'Utilisateur ajouté au dossier avec succès',
+                'status' => 200,
+                'data' => $employeeFolder
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Une erreur est survenue lors de l\'ajout de l\'utilisateur au dossier',
+                'status' => 500,
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function deleteUserFromCompanyFolder(Request $request){
