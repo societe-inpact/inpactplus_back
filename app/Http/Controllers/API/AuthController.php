@@ -116,7 +116,7 @@ class AuthController extends Controller
                                 'folder_name' => $folder->folder_name,
                                 'siret' => $folder->siret,
                                 'siren' => $folder->siren,
-                                'referent_id' => $folder->users->filter(function($user) use($folder){
+                                'referent' => $folder->users->filter(function($user) use($folder){
                                     return $user->id === $folder->referent_id;
                                 })->map(function($user){
                                     return [
@@ -168,7 +168,7 @@ class AuthController extends Controller
                                 'siren' => $folder->siren,
                                 'mappings' => $folder->mappings,
                                 'notes' => $folder->notes,
-                                'referent_id' => $folder->users->filter(function($user) use($folder){
+                                'referent' => $folder->users->filter(function($user) use($folder){
                                     return $user->id === $folder->referent_id;
                                 })->map(function($user){
                                     return [
