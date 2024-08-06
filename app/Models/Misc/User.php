@@ -65,10 +65,12 @@ class User extends Authenticatable
     *
     * @param string $permissionName
     * @param int $moduleId
-    * @return bool
+    * 
     */
-   public function companies(){
-       return $this->belongsToMany(Company::class, 'employee_folder', 'user_id', 'company_folder_id');
+
+    // TODO il faudrait corriger companies par companyFolder
+    public function companies(){
+       return $this->belongsToMany(CompanyFolder::class, 'employee_folder', 'user_id', 'company_folder_id');
    }
 
    public function permissions()
