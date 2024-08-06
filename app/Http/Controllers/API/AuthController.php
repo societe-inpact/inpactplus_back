@@ -24,15 +24,34 @@ class AuthController extends Controller
         $user = Auth::user();
         $user->load([
             'folders.modules.module',
-            'companies',
+            'folders.companies', 
             'folders.mappings',
             'folders.software',
+            'folders.users',
         ]);
 
         $folders = $user->folders;
         $roles = $user->getRoleNames();
 
-        if ($roles->contains('client')) {
+        
+        // vérification s'il y a un referent_id dans le dossier si pas referent companies
+        foreach ($folders as $folder) {
+            $referent_id = $folder->referent_id;
+                    
+            if($referent_id !== null) {   
+                $folder['referent_id'] = $referent_id ;
+            } else {
+                $folder['referent_id'] = $folder['companies']->referent_id ;
+            }
+        }
+
+        $role = $roles[0];
+
+        switch ($role) {
+
+        case 'client' : 
+            // reprendre la compagnie du premier dossier
+            $companies = $folders[0]['companies'];
             // Ajoute has_access dans l'objet module
             $folders->each(function ($folder) {
                 $folder->modules->each(function ($folderModule) {
@@ -41,7 +60,7 @@ class AuthController extends Controller
             });
 
             $folderIds = $folders->pluck('id')->toArray();
-            $companyIds = $user->companies->pluck('id')->toArray();
+            $companyIds = $companies->pluck('id')->toArray();
 
             $modules = Module::whereIn('id', function ($query) use ($user, $folderIds, $companyIds) {
                 $query->select('module_id')
@@ -82,13 +101,14 @@ class AuthController extends Controller
                 'lastname' => $user->lastname,
                 'firstname' => $user->firstname,
                 'telephone' => $user->telephone,
-                'companies' => $user->companies->map(function ($company) use ($folders) {
-                    return [
-                        'id' => $company->id,
-                        'name' => $company->name,
-                        'referent_id' => $company->referent_id,
-                        'folders' => $folders->filter(function ($folder) use ($company) {
-                            return $folder->company_id === $company->id;
+                'companies' =>  [
+                        // reprise des informations de la compagnie
+                        'id' => $companies->id,
+                        'name' => $companies->name,
+                        'referent_id' => $companies->referent_id,
+                        // reprise des informations des folders
+                        'folders' => $folders->filter(function ($folder) use ($companies) {
+                            return $folder->company_id === $companies->id;
                         })->map(function ($folder) {
                             return [
                                 'id' => $folder->id,
@@ -96,6 +116,17 @@ class AuthController extends Controller
                                 'folder_name' => $folder->folder_name,
                                 'siret' => $folder->siret,
                                 'siren' => $folder->siren,
+                                'referent_id' => $folder->users->filter(function($user) use($folder){
+                                    return $user->id === $folder->referent_id;
+                                })->map(function($user){
+                                    return [
+                                        'id'=> $user->id,
+                                        'lastname' => $user->lastname,
+                                        'firstname' => $user->firstname,
+                                        'telephone' => $user->telephone,
+                                        'email' => $user->email,
+                                    ];
+                                }),
                                 'modules' => $folder->modules->map(function ($folderModule) {
                                     return [
                                         'id' => $folderModule->module->id,
@@ -107,13 +138,12 @@ class AuthController extends Controller
                                 'software' => $folder->software,
                             ];
                         }),
-                    ];
-                }),
+                    ],
                 'modules' => $modules,
                 'roles' => $roles,
             ];
-
-        } else {
+            break;
+        case 'inpact' :
             $companies = Company::with(['folders.software', 'folders.mappings', 'folders.users', 'folders.users.modules.permissions'])->get();
 
             $userResponse = [
@@ -138,6 +168,17 @@ class AuthController extends Controller
                                 'siren' => $folder->siren,
                                 'mappings' => $folder->mappings,
                                 'notes' => $folder->notes,
+                                'referent_id' => $folder->users->filter(function($user) use($folder){
+                                    return $user->id === $folder->referent_id;
+                                })->map(function($user){
+                                    return [
+                                        'id'=> $user->id,
+                                        'lastname' => $user->lastname,
+                                        'firstname' => $user->firstname,
+                                        'telephone' => $user->telephone,
+                                        'email' => $user->email,
+                                    ];
+                                }),
                                 'employees' => $folder->users->map(function ($user) {
                                     return [
                                         "id" => $user->id,
@@ -168,8 +209,13 @@ class AuthController extends Controller
                 }),
             ];
 
+            break;
+        default :
+        $userResponse = ['erreur' => 'il manque le rôle', 'status' => 500]; 
+
         }
-        return response()->json($userResponse);
+        return response()->json($userResponse);   
+
     }
 
 

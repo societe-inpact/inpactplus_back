@@ -32,6 +32,12 @@ class CompanyFolder extends Model
         return $this->belongsTo(Company::class, 'company_id', 'id');
     }
 
+    //Ajout de companies pour le reprendre dans le get user
+    public function companies()
+    {
+        return $this->belongsTo(Company::class, 'company_id', 'id');
+    }
+
     public function software()
     {
         return $this->belongsTo(Software::class, 'interface_id');

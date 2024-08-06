@@ -6,6 +6,7 @@ use App\Models\Companies\Company;
 use App\Models\Companies\CompanyFolder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Misc\User;
 
 class EmployeeFolder extends Model
 {
@@ -18,11 +19,6 @@ class EmployeeFolder extends Model
 
     public function company(){
         return $this->belongsTo(Company::class);
-    }
-
-    public function employee()
-    {
-        return $this->belongsTo(Employee::class, 'employee_id', 'user_id');
     }
 
     public function folder()

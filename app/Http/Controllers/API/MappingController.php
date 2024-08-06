@@ -43,8 +43,6 @@ class MappingController extends Controller
         $companyFolder = $request->get('company_folder_id');
         $companyFolderInfo = CompanyFolder::where('id',$companyFolder)->first();
         $interface = $companyFolderInfo->interface_id;
-
-        // $interface = $request->get('interface_id');
         
         $softwaresNames = Software::all()->where('id',$interface)->first();
 
@@ -129,7 +127,7 @@ class MappingController extends Controller
             if (!isset($record[$index_rubrique])) {
                 continue;
             }
-            // $inputRubrique = $this->findInputRubrique($record[$index_rubrique]);
+
             $inputRubrique = $record[$index_rubrique];
 
             if ($inputRubrique && !$processedRecords->contains($inputRubrique)) {

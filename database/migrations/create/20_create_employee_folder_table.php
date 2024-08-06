@@ -14,7 +14,6 @@ return new class extends Migration
     {
         Schema::create('employee_folder', function (Blueprint $table) {
             $table->id();
-            $table->boolean('is_referent');
             $table->boolean('has_access');
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('company_folder_id')->constrained('company_folders')->cascadeOnDelete();
@@ -23,14 +22,24 @@ return new class extends Migration
         DB::table('employee_folder')->insert([
             [
                 'id' => 1,
-                'is_referent' => 1,
                 'has_access' => 1,
                 'user_id' => 4,
                 'company_folder_id' => 1,
             ],
             [
                 'id' => 2,
-                'is_referent' => 1,
+                'has_access' => 1,
+                'user_id' => 4,
+                'company_folder_id' => 2,
+            ],
+            [
+                'id' => 3,
+                'has_access' => 1,
+                'user_id' => 5,
+                'company_folder_id' => 1,
+            ],
+            [
+                'id' => 4,
                 'has_access' => 1,
                 'user_id' => 5,
                 'company_folder_id' => 2,

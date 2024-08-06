@@ -14,6 +14,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
@@ -61,13 +62,10 @@ class User extends Authenticatable
      *
      * @param string $permissionName
      * @param int $moduleId
-     * @return bool
+     *
      */
-    public function companies(){
-        return $this->belongsToMany(Company::class, 'employee_folder', 'user_id', 'company_folder_id');
-    }
 
-    public function permissions(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function permissions()
     {
         return $this->hasMany(UserModulePermission::class, 'user_id');
     }
