@@ -60,15 +60,22 @@ class User extends Authenticatable
     /**
      * Check if the user has a specific permission for a module if the company has access.
      *
-     * @param string $permissionName
-     * @param int $moduleId
-     *
-     */
 
-    public function permissions()
-    {
-        return $this->hasMany(UserModulePermission::class, 'user_id');
-    }
+
+    *
+    * @param string $permissionName
+    * @param int $moduleId
+    * @return bool
+    */
+   public function companies(){
+       return $this->belongsToMany(Company::class, 'employee_folder', 'user_id', 'company_folder_id');
+   }
+
+   public function permissions()
+   {
+       return $this->hasMany(UserModulePermission::class, 'user_id');
+   }
+
 
     public function grantAccessToFolder($folderId)
     {
