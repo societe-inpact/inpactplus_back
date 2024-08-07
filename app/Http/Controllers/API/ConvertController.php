@@ -37,8 +37,8 @@ class ConvertController extends BaseController
         }
 
         if ($idSoftware !== null){
-            $nominterface =  $softwaresNames->name;
-            $columnindex = $this->indexColumn($idInterface);
+            $idsoftware = Software::findOrFail($idInterface);
+            $columnindex = $this->indexColumn($idsoftware->interface_software_id);
             $type_separateur = $columnindex->type_separateur;
             $format = $columnindex->format; 
         }else{

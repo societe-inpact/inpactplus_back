@@ -68,14 +68,16 @@ class InterfaceSoftwareController extends ConvertController
 
             $softwaresNames = Software::all()->where('name',$softwareName)->first();
             if ($softwaresNames){
-                $softwareuptade = $softwaresNames->update(['interface_software_id'=>$softwareId]);
-                $softwares = $softwaresNames;
+                // $softwareuptade = $softwaresNames->update(['interface_software_id'=>$softwareId]);
+                // $softwares = $softwaresNames;
+                return response()->json(['error' => 'Le nom de l\'interface existe déjà'], 500);
             }
             else{
                 $softwares = Software::create(['name'=>$softwareName,'interface_software_id'=>$softwareId]);
+                return response()->json(['message' => 'Création de l\'interface réussie', 'software' =>  $softwares], 200);
             }
             
-            return response()->json(['message' => 'Création de l\'interface réussie', 'software' =>  $softwares], 200);
+            
         }
         catch (\Exception $e) {
             return response()->json(['error' => 'Une erreur est survenue lors de la création de l\'interface.'], 500);

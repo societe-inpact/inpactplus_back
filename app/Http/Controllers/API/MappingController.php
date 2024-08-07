@@ -451,6 +451,7 @@ class MappingController extends Controller
 
         // permet d'enregister les modifications
         foreach ($data as $entry) {
+            // si c'est une valeur ne pas utiliser, il faut modifier le 'name_rubrique'
             if ($entry['name_rubrique'] === null){
                 $entry['name_rubrique'] = "Ne pas utiliser";
                 $entry['output_rubrique_id'] = 0;

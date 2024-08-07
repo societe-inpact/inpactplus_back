@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\API\ConvertController2;
 use Illuminate\Http\Request;
 use App\Models\Mapping\Mapping;
+use App\Models\Misc\Software;
+use App\Models\Misc\InterfaceSoftware;
 use Illuminate\Support\Facades\App;
 use League\Csv\CharsetConverter;
 use League\Csv\Exception;
@@ -160,14 +162,14 @@ class ConvertInterfaceController extends ConvertController
 
         $folderId = $request->get('company_folder_id');
         $interface = $request->get('interface_id');
-        // $nominterface = ['id' => $interface,];
-        $columnindex = $this->indexColumn($interface);
+        $idsoftware = $request->get('interface_id');
+        
+        $softwareId = Software::findOrFail($idsoftware);
+        $columnindex = $this->indexColumn($softwareId->interface_software_id);
+
         $type_separateur = $columnindex->type_separateur;
         $format = strtolower($columnindex->format); 
 
-
-        // extraction en fonction du format => voir pour le sortir dans une autre fonction
-        $format = strtolower($format);
         switch ($format){
             case "csv":
                 $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15');
@@ -188,8 +190,9 @@ class ConvertInterfaceController extends ConvertController
                     $header = $reader->getHeader();
                     $records = iterator_to_array($reader->getRecords(), true);
                     $result = $this->convertInter($records, $folderId, $columnindex);
-        
+                           
                     return $result;
+
                 }
             default :
                 return response()->json(['message' => 'Conversion impossible, format non pris en compte ','status' => 400,]);
