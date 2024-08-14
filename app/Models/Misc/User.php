@@ -48,6 +48,11 @@ class User extends Authenticatable
         'laravel_through_key'
     ];
 
+    public function company()
+    {
+        return $this->belongsToMany(Company::class, 'company_folders', 'id', 'company_id', 'company_id', 'company_folder_id');
+    }
+
     public function modules()
     {
         return $this->hasManyThrough(Module::class, UserModulePermission::class, 'module_id', 'id', 'id', 'user_id');
@@ -55,7 +60,7 @@ class User extends Authenticatable
 
     public function folders()
     {
-        return $this->hasManyThrough(CompanyFolder::class, EmployeeFolder::class, 'user_id', 'id', 'id', 'company_folder_id')->where('has_access', true);
+        return $this->hasManyThrough(CompanyFolder::class, EmployeeFolder::class, 'user_id', 'id', 'id', 'company_folder_id');
     }
 
     // TODO il faudrait corriger companies par companyFolder

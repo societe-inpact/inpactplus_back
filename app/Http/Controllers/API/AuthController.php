@@ -24,6 +24,7 @@ class AuthController extends Controller
         $user = User::with([
             'folders.modules',
             'folders.company',
+            'folders.company',
             'folders.mappings',
             'folders.software',
             'folders.employees',
@@ -42,11 +43,12 @@ class AuthController extends Controller
 
     private function getClientResponse($user, $folders, $role)
     {
-        $company = $folders->first()->company;
-        $folderIds = $folders->pluck('id')->toArray();
-        $companyId = $company->pluck('id')->toArray();
 
-        $modules = Module::whereIn('id', function ($query) use ($user, $folderIds, $companyId) {
+        $companyOfFolder = $folders->first()->company;
+        $folderIds = $folders->pluck('id')->toArray();
+        $companyId = $companyOfFolder->pluck('id')->toArray();
+
+        $userModulesAccess = Module::whereIn('id', function ($query) use ($user, $folderIds, $companyId) {
             $query->select('module_id')
                 ->from('user_module_permissions')
                 ->where('user_id', $user->id)
@@ -64,8 +66,7 @@ class AuthController extends Controller
                 });
         })->with('permissions')->get();
 
-
-        $modules = $modules->map(function ($module) {
+        $modules = $userModulesAccess->map(function ($module) {
             return [
                 'id' => $module->id,
                 'name' => $module->name,
@@ -90,12 +91,13 @@ class AuthController extends Controller
             'roles' => $role,
             'modules' => $modules,
             'company' => [
-                'id' => $company->id,
-                'name' => $company->name,
-                'referent' => $company->referent,
-                'description' => $company->description,
-                'modules' => $company->modules->where('has_access'),
-                'folders' => $folders->where('company_id', $company->id)->map(function ($folder) {
+                'id' => $companyOfFolder->id,
+                'name' => $companyOfFolder->name,
+                'referent' => $companyOfFolder->referent,
+                'employees' => $companyOfFolder->getEmployees(),
+                'description' => $companyOfFolder->description,
+                'modules' => $companyOfFolder->modules->where('has_access'),
+                'folders' => $folders->where('company_id', $companyOfFolder->id)->map(function ($folder) {
                     return [
                         'id' => $folder->id,
                         'folder_number' => $folder->folder_number,
@@ -113,7 +115,7 @@ class AuthController extends Controller
                         'mappings' => $folder->mappings,
                         'software' => $folder->software,
                     ];
-                }),
+                })
             ]
         ]);
     }

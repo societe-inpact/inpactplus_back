@@ -182,7 +182,6 @@ class ConvertController extends BaseController
         }
 
         $header = ['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin'];
-
         if (!empty($data[0])) {
             $csvConverted = $this->writeToFile($data, $date);
             return response()->json([

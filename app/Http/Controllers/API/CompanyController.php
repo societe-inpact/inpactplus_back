@@ -15,16 +15,11 @@ class CompanyController extends Controller
             'folders',
             'folders.referent',
             'modules',
-            'referent'
+            'referent',
         ])->get();
 
         $companies->each(function ($company) {
-            $company->employees = DB::table('users')
-                ->join('employee_folder', 'users.id', '=', 'employee_folder.user_id')
-                ->join('company_folders', 'employee_folder.company_folder_id', '=', 'company_folders.id')
-                ->where('company_folders.company_id', $company->id)
-                ->select('users.*')
-                ->get();
+            $company->employees = $company->getEmployees();
         });
 
         return response()->json($companies);

@@ -40,10 +40,13 @@ class Company extends Model
         return $this->hasMany(CompanyFolder::class, 'company_id');
     }
 
-    public function employees()
+    public function getEmployees()
     {
-        return $this->hasManyThrough(User::class, EmployeeFolder::class, 'company_folder_id', 'id', 'id', 'user_id')
+        return DB::table('users')
+            ->join('employee_folder', 'users.id', '=', 'employee_folder.user_id')
             ->join('company_folders', 'employee_folder.company_folder_id', '=', 'company_folders.id')
-            ->select('users.*');
+            ->where('company_folders.company_id', $this->id)
+            ->select('users.*')
+            ->get();
     }
 }
