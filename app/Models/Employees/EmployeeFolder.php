@@ -21,6 +21,11 @@ class EmployeeFolder extends Model
         return $this->belongsTo(Company::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public function folder()
     {
         return $this->belongsTo(CompanyFolder::class, 'company_folder_id');

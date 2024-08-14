@@ -9,6 +9,7 @@ use App\Models\Companies\CompanyModuleAccess;
 use App\Models\Employees\EmployeeFolder;
 use App\Models\Modules\Module;
 use App\Notifications\ResetPasswordNotification;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -57,23 +58,13 @@ class User extends Authenticatable
         return $this->hasManyThrough(CompanyFolder::class, EmployeeFolder::class, 'user_id', 'id', 'id', 'company_folder_id')->where('has_access', true);
     }
 
-    /**
-     * Check if the user has a specific permission for a module if the company has access.
-     *
-
-
-    *
-    * @param string $permissionName
-    * @param int $moduleId
-    * 
-    */
-
     // TODO il faudrait corriger companies par companyFolder
-    public function companies(){
-       return $this->belongsToMany(CompanyFolder::class, 'employee_folder', 'user_id', 'company_folder_id');
-   }
+    // Déjà existant au dessus
+//    public function companies(){
+//       return $this->belongsToMany(CompanyFolder::class, 'employee_folder', 'user_id', 'company_folder_id');
+//   }
 
-   public function permissions()
+   public function permissions(): BelongsToMany
    {
        return $this->hasMany(UserModulePermission::class, 'user_id');
    }

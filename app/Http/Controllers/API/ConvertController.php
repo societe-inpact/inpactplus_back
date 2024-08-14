@@ -28,7 +28,6 @@ class ConvertController extends BaseController
         // reprise des différentes informations en fonction de l'interface
 
         $idInterface = $request->get('interface_id');
-
         $softwaresNames = Software::all()->where('id',$idInterface)->first();
         if ($softwaresNames !== null){
             $idSoftware = $softwaresNames->interface_software_id;
@@ -40,7 +39,7 @@ class ConvertController extends BaseController
             $idsoftware = Software::findOrFail($idInterface);
             $columnindex = $this->indexColumn($idsoftware->interface_software_id);
             $type_separateur = $columnindex->type_separateur;
-            $format = $columnindex->format; 
+            $format = $columnindex->format;
         }else{
             $softwaresName = strtolower($softwaresNames["name"]);
             switch ($softwaresName){
@@ -49,11 +48,11 @@ class ConvertController extends BaseController
                     $columnindex = $controller->formatFilesMarathon();
                     $type_separateur = $columnindex["separateur"];
                     $format = $columnindex ["format"];
-                    break; 
+                    break;
 
                 default:
                     return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]);
-                 
+
             }
         }
 
@@ -67,7 +66,7 @@ class ConvertController extends BaseController
                 $request->validate([
                     'csv' => 'required|file|mimes:csv,txt',
                 ]);
-        
+
                 if ($request->hasFile('csv')) {
                     $file = $request->file('csv');
                     $reader = Reader::createFromPath($file->getPathname(), 'r');
@@ -76,7 +75,7 @@ class ConvertController extends BaseController
                     $reader->addFormatter($formatter);
                     $reader->setHeaderOffset(null);
                     $records = iterator_to_array($reader->getRecords(), true);
-       
+
                     return response()->json([
                         'success' => true,
                         'message' => 'Votre fichier a été importé',
@@ -89,11 +88,11 @@ class ConvertController extends BaseController
                         'message' => 'Veuillez importer un fichier',
                         'status' => 400
                     ]);
-                } 
+                }
                 break;
 
             default :
-                return response()->json(['message' => 'il manque le format suivant', 'format' => $format ,'status' => 400]);      
+                return response()->json(['message' => 'il manque le format suivant', 'format' => $format ,'status' => 400]);
         }
     }
 
@@ -108,7 +107,7 @@ class ConvertController extends BaseController
      */
     private function writeToFile(array $data, $date)
     {
-        // dd($data); 
+        // dd($data);
         $filename = 'EVY_' . $date; // TODO : Modifier le nom du fichier
         $directory = storage_path('csv');
         $csvPath = $directory . '/' . $filename . '.csv';
@@ -120,7 +119,7 @@ class ConvertController extends BaseController
 
         $csv = Writer::createFromPath($csvPath, 'w+');
         $csv->setDelimiter(';');
-        
+
         // Écriture de l'en-tête du fichier
         $csv->insertOne(['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin' , 'H/J' , 'Pourcentage TP']);
 
@@ -165,7 +164,7 @@ class ConvertController extends BaseController
         if ($idSoftware !== null){
             $controller = new ConvertInterfaceController();
             $data =  $controller->convertinterface($request);
-            
+
         }else{
 
             // interfaces spécifique
@@ -174,11 +173,11 @@ class ConvertController extends BaseController
                 case "marathon":
                     $controller = new ConvertMEController();
                     $data = $controller->marathonConvert($request);
-                    break; 
+                    break;
 
                 default:
-                    return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]); 
-                 
+                    return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]);
+
             }
         }
 

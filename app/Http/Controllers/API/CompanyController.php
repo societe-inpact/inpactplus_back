@@ -5,12 +5,28 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Companies\Company;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class CompanyController extends Controller
 {
     public function getCompanies(){
-        $companies = Company::with('folders', 'modules')->get();
+        $companies = Company::with([
+            'folders',
+            'folders.referent',
+            'modules',
+            'referent'
+        ])->get();
+
+        $companies->each(function ($company) {
+            $company->employees = DB::table('users')
+                ->join('employee_folder', 'users.id', '=', 'employee_folder.user_id')
+                ->join('company_folders', 'employee_folder.company_folder_id', '=', 'company_folders.id')
+                ->where('company_folders.company_id', $company->id)
+                ->select('users.*')
+                ->get();
+        });
+
         return response()->json($companies);
     }
 

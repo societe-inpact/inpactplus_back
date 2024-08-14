@@ -40,11 +40,12 @@ class MappingController extends Controller
     // Fonction permettant de récupérer les mappings existants d'un dossier
     public function getMapping(Request $request)
     {
-        $companyFolder = $request->get('company_folder_id');
-        $companyFolderInfo = CompanyFolder::where('id',$companyFolder)->first();
+        $companyFolder = $request->integer('company_folder_id');
+        $companyFolderInfo = CompanyFolder::where('id', $companyFolder)->first();
         $interface = $companyFolderInfo->interface_id;
-        
-        $softwaresNames = Software::all()->where('id',$interface)->first();
+
+
+        $softwaresNames = Software::all()->where('id', $interface)->first();
 
         if ($softwaresNames !== null){
             $idSoftware = $softwaresNames->interface_software_id;
@@ -59,7 +60,7 @@ class MappingController extends Controller
             $format = strtolower($format);
             $index_rubrique = $columnindex->colonne_rubrique-1;
             $colonne_matricule = $columnindex->colonne_matricule-1;
-            
+
         }else{
 
             // interfaces spécifique
@@ -72,11 +73,11 @@ class MappingController extends Controller
                     $format = $columnindex ["format"];
                     $index_rubrique = $columnindex ["index_rubrique"];
                     $colonne_matricule = 0;
-                    break; 
+                    break;
 
                 default:
-                    return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]); 
-                 
+                    return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]);
+
             }
         }
 
@@ -109,13 +110,14 @@ class MappingController extends Controller
         return $reader;
     }
 
+
     // Fonction permettant de récupérer les mappings existants d'un dossier
     protected function processCsvRecords($records, $companyFolder,$index_rubrique,$colonne_matricule)
     {
         $processedRecords = collect();
         $unmatchedRubriques = [];
         $results = [];
-        
+
         $containsDigit = ctype_digit($records[0][$colonne_matricule]);
         if (($containsDigit) === false) {
             unset($records[0]);
@@ -273,13 +275,13 @@ class MappingController extends Controller
         }
 
         // permet d'enregister les modifications
-        foreach ($data as $entry) {     
+        foreach ($data as $entry) {
             if ($entry['input_rubrique'] === $validatedData['input_rubrique']) {
                 $entry['name_rubrique'] = $validatedData['name_rubrique'];
                 $entry['output_rubrique_id'] = $validatedData['output_rubrique_id'];
                 $entry['output_type'] = $validatedData['output_type'];
                 $entry['is_used'] = $validatedData['is_used'];
-                $dataBis[] = $entry; 
+                $dataBis[] = $entry;
             }else{
                 $dataBis[] = $entry;
             }
@@ -299,9 +301,9 @@ class MappingController extends Controller
     private function controleAbsenceHours($validatedRequestData){
 
         if ($validatedRequestData['name_rubrique'] === "Absence"){
-            
+
             $labelAbs = Absence::where("id",$validatedRequestData['output_rubrique_id'])->first();
-            
+
             $absPerso = CustomAbsence::where("code",$labelAbs->code)->where("company_folder_id",$validatedRequestData['company_folder_id'])->first();
             if ($absPerso !== null){
                 $out = array("name_rubrique"=>'Absence personnalisée', "output_rubrique_id"=>($absPerso->id));
@@ -438,12 +440,12 @@ class MappingController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        
+
         $companyFolderId = $request ["companyFolderId"];
         $output_rubrique_id = $request ["output_rubrique_id"];
         $nameRubrique = $request ["nameRubrique"];
         $input_rubrique = $request ["input_rubrique"];
-     
+
         // permet de récupérer le mapping
         $mappingCompagny = Mapping::where("company_folder_id", $companyFolderId)->first();
         $data = $mappingCompagny->data;
@@ -464,9 +466,9 @@ class MappingController extends Controller
                         $dataBis[] = $entry;
                     }
                 }else{
-                    
+
                     // supprimer la valeur
-                }                
+                }
             }else{
                 $dataBis[] = $entry;
             }
@@ -479,5 +481,5 @@ class MappingController extends Controller
         }else{
             return response()->json(['message' => 'nomodif']);
         }
-    }  
+    }
 }

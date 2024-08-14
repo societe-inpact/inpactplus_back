@@ -6,6 +6,7 @@ use App\Models\Employees\EmployeeFolder;
 use App\Models\Mapping\Mapping;
 use App\Models\Misc\Software;
 use App\Models\Misc\User;
+use App\Models\Modules\CompanyModuleAccess;
 use App\Models\Modules\Module;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,6 +26,7 @@ class CompanyFolder extends Model
         'company',
         'laravel_through_key',
         'interface_id',
+        'referent_id'
     ];
 
     public function company()
@@ -33,10 +35,11 @@ class CompanyFolder extends Model
     }
 
     //Ajout de companies pour le reprendre dans le get user
-    public function companies()
-    {
-        return $this->belongsTo(Company::class, 'company_id', 'id');
-    }
+    // Déjà présent au dessus ??
+//    public function companies()
+//    {
+//        return $this->belongsTo(Company::class, 'company_id', 'id');
+//    }
 
     public function software()
     {
@@ -48,15 +51,19 @@ class CompanyFolder extends Model
         return $this->belongsTo(Mapping::class, 'id', 'company_folder_id');
     }
 
-    public function users()
+    public function employees()
     {
         return $this->hasManyThrough(User::class, EmployeeFolder::class, 'company_folder_id', 'id', 'id', 'user_id')->with('modules');
     }
 
+    public function referent(){
+        return $this->hasOne(User::class, 'id', 'referent_id');
+    }
+
     public function modules()
     {
-        return $this->hasMany(CompanyFolderModuleAccess::class, 'company_folder_id', 'id')
-            ->with('module')
-            ->select('company_folder_id', 'module_id', 'has_access');
+        return $this->hasManyThrough(Module::class, CompanyFolderModuleAccess::class, 'company_folder_id', 'id', 'id', 'module_id')
+            ->select('modules.id', 'modules.name', 'company_folder_module_access.has_access');
     }
+
 }

@@ -82,8 +82,8 @@ class ConvertMEController extends ConvertController
     {
         $data = [];
         $unmapped = [];
-        
-        // Vérification s'il y a une en-tête en fonction du matricule 
+
+        // Vérification s'il y a une en-tête en fonction du matricule
 
         $containsDigit = ctype_digit($records[0][0]);
         if (($containsDigit) === false) {
@@ -93,8 +93,8 @@ class ConvertMEController extends ConvertController
         // Création de la nouvelle table qui correspond à silae
 
         foreach ($records as $record) {
-            
-            $codeSilae = $this->getSilaeCode($record[3], $folderId);       
+
+            $codeSilae = $this->getSilaeCode($record[3], $folderId);
             $matricule = $record[0];
             $valeur = $record[4];
 
@@ -119,10 +119,10 @@ class ConvertMEController extends ConvertController
                     'Code' => $record[3],
                     'Valeur' => $valeur,
                     'Date debut' => '',
-                    'Date fin' => '',                 
-                ]; 
+                    'Date fin' => '',
+                ];
             }
-        } 
+        }
         // dd($unmapped);
         return [$data, $unmapped];
     }
@@ -142,7 +142,7 @@ class ConvertMEController extends ConvertController
             //         'Date debut' => '',
             //         'Date fin' => ''
             //     ];
-            // }else 
+            // }else
             if ($start_date != $end_date) {
                 $data[] = [
                     'Matricule' => $record[0],
@@ -214,7 +214,7 @@ class ConvertMEController extends ConvertController
         }
         return $data;
     }
-// TODO : ajouter une condition d'erreur 
+// TODO : ajouter une condition d'erreur
     // Fonction permettant de convertir les valeurs negatives ou commençant par un point
     private function convertNegativeOrDotValue(array $data, array $record, $codeSilae): array
     {
@@ -272,9 +272,8 @@ class ConvertMEController extends ConvertController
     public function marathonConvert(request $request)
     {
         // reprise des différentes informations
-        
-        $folderId = $request->get('company_folder_id');
 
+        $folderId = $request->get('company_folder_id');
         // extraction en fonction du format => voir pour le sortir dans une autre fonction
 
         $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15');
@@ -284,7 +283,7 @@ class ConvertMEController extends ConvertController
             'csv' => 'required|file|mimes:csv,txt',
         ]);
 
-        if ($request->hasFile('csv')) 
+        if ($request->hasFile('csv'))
         {
             $file = $request->file('csv');
             $reader = Reader::createFromPath($file->getPathname(), 'r');

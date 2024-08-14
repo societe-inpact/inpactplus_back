@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Validator;
 class CompanyFolderController extends Controller
 {
     public function getCompanyFolders(){
-        $companyFolders = CompanyFolder::with('modules','company','software','mappings','users')->get();
+        $companyFolders = CompanyFolder::with('modules','company','software','mappings','employees', 'referent')->get();
         return response()->json($companyFolders);
     }
     public function createCompanyFolder(Request $request)

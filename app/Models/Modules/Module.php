@@ -33,13 +33,13 @@ class Module extends Model
             ->select('user_module_permissions.*', 'permissions.name', 'permissions.label');
     }
 
-    public function companyModuleAccess()
+    public function companyAccess()
     {
         return $this->belongsToMany(Company::class, 'company_module_access', 'module_id', 'company_id')
             ->withPivot('has_access');
     }
 
-    public function companyFolderModuleAccess()
+    public function companyFolderAccess()
     {
         return $this->belongsToMany(CompanyFolder::class, 'company_folder_module_access', 'module_id', 'company_folder_id')
             ->withPivot('has_access');

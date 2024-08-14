@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Companies\CompanyFolder;
 use App\Models\Employees\EmployeeFolder;
+use App\Models\Misc\User;
 use App\Models\Modules\Module;
 use Closure;
 use Illuminate\Http\Request;
@@ -22,7 +23,15 @@ class VerifyCompanyModuleAccess
      */
     public function handle(Request $request, Closure $next, string $moduleName): Response
     {
-        $user = Auth::user()->load('roles', 'companies', 'folders');
+        $user = User::with([
+            'folders.modules',
+            'folders.company',
+            'folders.mappings',
+            'folders.software',
+            'folders.employees',
+            'folders',
+            'roles',
+        ])->find(Auth::id());
         if (!$user) {
             return response()->json(['error' => 'Vous n\'êtes pas connecté'], 401);
         }
@@ -47,7 +56,7 @@ class VerifyCompanyModuleAccess
 
         // Vérification de l'accès au module via l'entreprise
         $companyHasAccess = Module::where('name', $moduleName)
-            ->whereHas('companyModuleAccess', function ($query) use ($companyIds) {
+            ->whereHas('companyAccess', function ($query) use ($companyIds) {
                 $query->where('has_access', true)
                     ->whereIn('company_id', $companyIds);
             })->exists();
@@ -58,7 +67,7 @@ class VerifyCompanyModuleAccess
 
         // Vérification de l'accès au module via le dossier de l'entreprise
         $userHasAccess = Module::where('name', $moduleName)
-            ->whereHas('companyFolderModuleAccess', function ($query) use ($folderIds) {
+            ->whereHas('companyFolderAccess', function ($query) use ($folderIds) {
                 $query->where('has_access', true)
                     ->whereIn('company_folder_id', $folderIds);
             })->exists();
