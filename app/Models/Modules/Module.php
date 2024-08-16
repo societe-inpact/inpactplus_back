@@ -15,9 +15,10 @@ class Module extends Model
     use HasFactory;
 
     protected $table = 'modules';
-    protected $hidden = ['laravel_through_key'];
+    protected $hidden = ['laravel_through_key', 'has_access'];
     protected $fillable = [
-        'name'
+        'name',
+        'label'
     ];
 
     public function users()

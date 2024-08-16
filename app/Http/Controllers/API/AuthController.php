@@ -26,7 +26,7 @@ class AuthController extends Controller
             'folders.company',
             'folders.company',
             'folders.mappings',
-            'folders.software',
+            'folders.interfaces',
             'folders.employees',
             'folders',
         ])->find(Auth::id());
@@ -67,11 +67,11 @@ class AuthController extends Controller
             $query->where('user_id', $user->id);
         }])->get();
 
-
         $modules = $userModulesAccess->map(function ($module) {
             return [
                 'id' => $module->id,
                 'name' => $module->name,
+                'label' => $module->label,
                 'permissions' => $module->permissions->map(function ($permission) {
                     return [
                         'id' => $permission->permission_id,
@@ -95,9 +95,9 @@ class AuthController extends Controller
             'companies' => [
                 'id' => $companyOfFolder->id,
                 'name' => $companyOfFolder->name,
+                'description' => $companyOfFolder->description,
                 'referent' => $companyOfFolder->referent,
                 'employees' => $companyOfFolder->getEmployees(),
-                'description' => $companyOfFolder->description,
                 'modules' => $companyOfFolder->modules->where('has_access'),
                 'folders' => $folders->where('company_id', $companyOfFolder->id)->map(function ($folder) use ($companyOfFolder) {
                     return [
@@ -107,9 +107,9 @@ class AuthController extends Controller
                         'siret' => $folder->siret,
                         'siren' => $folder->siren,
                         'notes' => $folder->notes,
-                        'referent' => $folder->employees->firstWhere('id', $folder->referent_id)->only('id', 'lastname', 'firstname', 'telephone', 'email'),
+                        'software' => $folder->software,
+                        'referent' => $folder->referent,
                         'modules' => $folder->modules->filter(function ($folderModule) use ($companyOfFolder) {
-                            // Filtrer uniquement les modules où has_access est vrai pour la compagnie et le dossier
                             $companyModule = $companyOfFolder->modules->firstWhere('id', $folderModule->id);
                             return $folderModule->has_access && $companyModule && $companyModule->has_access;
                         })->map(function ($filteredModule) {
@@ -120,7 +120,6 @@ class AuthController extends Controller
                             ];
                         }),
                         'mappings' => $folder->mappings,
-                        'software' => $folder->software,
                     ];
                 })
             ]

@@ -4,6 +4,7 @@ namespace App\Models\Companies;
 
 use App\Models\Employees\EmployeeFolder;
 use App\Models\Mapping\Mapping;
+use App\Models\Misc\InterfaceFolder;
 use App\Models\Misc\Software;
 use App\Models\Misc\User;
 use App\Models\Modules\CompanyModuleAccess;
@@ -41,9 +42,9 @@ class CompanyFolder extends Model
 //        return $this->belongsTo(Company::class, 'company_id', 'id');
 //    }
 
-    public function software()
+    public function interfaces()
     {
-        return $this->belongsTo(Software::class, 'interface_id');
+        return $this->hasMany(InterfaceFolder::class, 'company_folder_id', 'id');
     }
 
     public function mappings()
@@ -64,7 +65,7 @@ class CompanyFolder extends Model
     {
         return $this->hasManyThrough(Module::class, CompanyFolderModuleAccess::class, 'company_folder_id', 'id', 'id', 'module_id')
             ->where('company_folder_module_access.has_access', true)
-            ->select('modules.id', 'modules.name', 'company_folder_module_access.has_access');
+            ->select('modules.id', 'modules.name');
     }
 
 }
