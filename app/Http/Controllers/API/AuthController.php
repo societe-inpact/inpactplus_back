@@ -66,6 +66,7 @@ class AuthController extends Controller
                 });
         })->with('permissions')->get();
 
+
         $modules = $userModulesAccess->map(function ($module) {
             return [
                 'id' => $module->id,
@@ -90,14 +91,14 @@ class AuthController extends Controller
             'telephone' => $user->telephone,
             'roles' => $role,
             'modules' => $modules,
-            'company' => [
+            'companies' => [
                 'id' => $companyOfFolder->id,
                 'name' => $companyOfFolder->name,
                 'referent' => $companyOfFolder->referent,
                 'employees' => $companyOfFolder->getEmployees(),
                 'description' => $companyOfFolder->description,
                 'modules' => $companyOfFolder->modules->where('has_access'),
-                'folders' => $folders->where('company_id', $companyOfFolder->id)->map(function ($folder) {
+                'folders' => $folders->where('company_id', $companyOfFolder->id)->map(function ($folder) use ($companyOfFolder) {
                     return [
                         'id' => $folder->id,
                         'folder_number' => $folder->folder_number,
@@ -105,11 +106,15 @@ class AuthController extends Controller
                         'siret' => $folder->siret,
                         'siren' => $folder->siren,
                         'referent' => $folder->employees->firstWhere('id', $folder->referent_id)->only('id', 'lastname', 'firstname', 'telephone', 'email'),
-                        'modules' => $folder->modules->map(function ($folderModule) {
+                        'modules' => $folder->modules->filter(function ($folderModule) use ($companyOfFolder) {
+                            // Filtrer uniquement les modules où has_access est vrai pour la compagnie et le dossier
+                            $companyModule = $companyOfFolder->modules->firstWhere('id', $folderModule->id);
+                            return $folderModule->has_access && $companyModule && $companyModule->has_access;
+                        })->map(function ($filteredModule) {
                             return [
-                                'id' => $folderModule->id,
-                                'name' => $folderModule->name,
-                                'has_access' => $folderModule->has_access,
+                                'id' => $filteredModule->id,
+                                'name' => $filteredModule->name,
+                                'has_access' => $filteredModule->has_access,
                             ];
                         }),
                         'mappings' => $folder->mappings,

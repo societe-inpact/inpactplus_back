@@ -63,6 +63,7 @@ class CompanyFolder extends Model
     public function modules()
     {
         return $this->hasManyThrough(Module::class, CompanyFolderModuleAccess::class, 'company_folder_id', 'id', 'id', 'module_id')
+            ->where('company_folder_module_access.has_access', true)
             ->select('modules.id', 'modules.name', 'company_folder_module_access.has_access');
     }
 
