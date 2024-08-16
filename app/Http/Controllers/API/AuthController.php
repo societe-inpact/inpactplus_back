@@ -47,7 +47,6 @@ class AuthController extends Controller
         $companyOfFolder = $folders->first()->company;
         $folderIds = $folders->pluck('id')->toArray();
         $companyId = $companyOfFolder->pluck('id')->toArray();
-
         $userModulesAccess = Module::whereIn('id', function ($query) use ($user, $folderIds, $companyId) {
             $query->select('module_id')
                 ->from('user_module_permissions')
@@ -64,7 +63,9 @@ class AuthController extends Controller
                         ->whereIn('company_id', $companyId)
                         ->where('has_access', true);
                 });
-        })->with('permissions')->get();
+        })->with(['permissions' => function($query) use ($user) {
+            $query->where('user_id', $user->id);
+        }])->get();
 
 
         $modules = $userModulesAccess->map(function ($module) {
