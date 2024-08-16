@@ -111,7 +111,7 @@ class AuthController extends Controller
                         'referent' => $folder->referent,
                         'modules' => $folder->modules->filter(function ($folderModule) use ($companyOfFolder) {
                             $companyModule = $companyOfFolder->modules->firstWhere('id', $folderModule->id);
-                            return $folderModule && $companyModule;
+                            return $folderModule && $companyModule && $companyModule->has_access;
                         })->map(function ($filteredModule) {
                             return [
                                 'id' => $filteredModule->id,
