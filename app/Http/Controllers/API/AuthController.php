@@ -106,6 +106,7 @@ class AuthController extends Controller
                         'folder_name' => $folder->folder_name,
                         'siret' => $folder->siret,
                         'siren' => $folder->siren,
+                        'notes' => $folder->notes,
                         'referent' => $folder->employees->firstWhere('id', $folder->referent_id)->only('id', 'lastname', 'firstname', 'telephone', 'email'),
                         'modules' => $folder->modules->filter(function ($folderModule) use ($companyOfFolder) {
                             // Filtrer uniquement les modules où has_access est vrai pour la compagnie et le dossier
