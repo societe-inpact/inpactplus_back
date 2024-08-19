@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Classes\Rubric;
 use App\Http\Controllers\Controller;
 use App\Models\Absences\Absence;
 use App\Models\Absences\CustomAbsence;
@@ -14,9 +15,7 @@ use App\Models\Misc\InterfaceSoftware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use League\Csv\CharsetConverter;
-use League\Csv\Exception;
 use League\Csv\Reader;
-use function Laravel\Prompts\error;
 use Illuminate\Support\Facades\Validator;
 
 class MappingController extends Controller
@@ -260,27 +259,27 @@ class MappingController extends Controller
     }
 
     // Fonction permettant de mettre à jour un mappings existant
-    protected function updateMappingData($mapping, $validatedData)
+    protected function updateMappingData($mapping, $rubricRequest)
     {
         $data = $mapping->data;
         $dataBis = [];
-
+        $companyFolderId = $mapping->company_folder_id;
         // permet de modifier output_type en se basant sur le nom de la rubrique (si ce n'est pas null)
 
-        $validatedData = $this->controleAbsenceHours($validatedData);
+        $rubric = $this->controleAbsenceHours($rubricRequest, $companyFolderId);
 
-        if ($validatedData['name_rubrique'] !== null) {
-            $out = array("output_type" => $this->tableNames[$validatedData['name_rubrique']]);
-            $validatedData = array_replace($validatedData, $out);
+        if ($rubric['name_rubrique'] !== null) {
+            $out = array("output_type" => $this->tableNames[$rubric['name_rubrique']]);
+            $rubric = array_replace($rubric, $out);
         }
 
         // permet d'enregister les modifications
         foreach ($data as $entry) {
-            if ($entry['input_rubrique'] === $validatedData['input_rubrique']) {
-                $entry['name_rubrique'] = $validatedData['name_rubrique'];
-                $entry['output_rubrique_id'] = $validatedData['output_rubrique_id'];
-                $entry['output_type'] = $validatedData['output_type'];
-                $entry['is_used'] = $validatedData['is_used'];
+            if ($entry['input_rubrique'] === $rubric['input_rubrique']) {
+                $entry['name_rubrique'] = $rubric['name_rubrique'];
+                $entry['output_rubrique_id'] = $rubric['output_rubrique_id'];
+                $entry['output_type'] = $rubric['output_type'];
+                $entry['is_used'] = $rubric['is_used'];
                 $dataBis[] = $entry;
             } else {
                 $dataBis[] = $entry;
@@ -298,51 +297,110 @@ class MappingController extends Controller
 
     // Fonction de contrôle des absences perso et des heures perso
 
-    private function controleAbsenceHours($validatedRequestData)
+    private function controleAbsenceHours($rubricRequest, $companyFolderId)
     {
-        if ($validatedRequestData['name_rubrique'] === "Absence personnalisée") {
+        // On controle si dans le mapping du folder il existe déjà une absence avec le même code et le même output_rubric_id
+        $rubricRequest = new Rubric($rubricRequest);
+        $formattedRubricRequest = $rubricRequest->getFormattedRubric();
+        $companyFolderMapping = Mapping::all()->where('company_folder_id', '=', $companyFolderId);
+//        foreach ($companyFolderMapping as $mapping) {
+//            $dataMapping = $mapping->data;
+//            foreach ($dataMapping as $mappedRubric) {
+//                if (str_ends_with($rubricRequest->output_type, "CustomAbsence")) {
+//                    $existingCustomAbsences = CustomAbsence::all()
+//                        ->where('company_folder_id', '=', $companyFolderId)
+//                        ->where('code', '=', $rubricRequest->input_rubrique);
+//                    if ($existingCustomAbsences) {
+//                        foreach ($existingCustomAbsences as $existingCustomAbsence) {
+//                            $out = array("name_rubrique" => 'Absence personnalisée', "output_rubrique_id" => ($existingCustomAbsence->id));
+//                            $rubricRequest = array_replace($rubricRequest, $out);
+//                        }
+//                    }
+//                    if (!$formattedRubricRequest){
+//                        return $rubricRequest;
+//                    }
+//                    $rubric = new Rubric($mappedRubric);
+//
+//                    return $rubric->getFormattedRubric();
+//                }
+//            }
+//        }
+//
+//        if (str_ends_with($rubricRequest->output_type, "Absence")) {
+//            $existingAbsences = Absence::all()
+//                ->where('code', '=', $rubricRequest->input_rubrique)
+//                ->where('id', '=', $rubricRequest->output_rubrique_id);
+//            dd($existingAbsences);
+//            if ($existingAbsences->isNotEmpty()) {
+//                dd($existingAbsences);
+//            }
+//            return collect($rubricRequest);
+//        }
+//
+//        // On recherche dans les mappings du dossier
+//        $companyFolderMapping = Mapping::all()->where('company_folder_id', '=', $companyFolderId);
+//        foreach ($companyFolderMapping as $mapping) {
+//            $dataMapping = $mapping->data;
+//            foreach ($dataMapping as $mappedRubric) {
+//                if ($rubricRequest['output_rubrique_id'] === $mappedRubric['output_rubrique_id']) {
+//                    $mappedRubric = new Rubric($mappedRubric);
+//                    $formattedRubricRequest = $mappedRubric->getFormattedRubric($mapping->company_folder_id)->first();
+//                    $existingCustomAbsences = CustomAbsence::all()
+//                        ->where('company_folder_id', '=', $rubricRequest['company_folder_id'])
+//                        ->where('id', '=', $mappedRubric->output_rubrique_id)
+//                        ->where('code', '=', $formattedRubricRequest->code);
+//                    if ($existingCustomAbsences) {
+//                        foreach ($existingCustomAbsences as $existingCustomAbsence) {
+//                            $out = array("name_rubrique" => 'Absence personnalisée', "output_rubrique_id" => ($existingCustomAbsence->id));
+//                            $rubricRequest = array_replace($rubricRequest, $out);
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
-            $companyFolderMapping = Mapping::all()
-                ->where('company_folder_id', '=', $validatedRequestData['company_folder_id']);
-
-            foreach ($companyFolderMapping as $mapping) {
-                $dataMapping = $mapping->data;
-                foreach ($dataMapping as $data){
-                    $existingCustomAbsences = CustomAbsence::all()
-                        ->where('company_folder_id', '=', $validatedRequestData['company_folder_id'])
-                        ->where('id', '=', $data['output_rubrique_id']);
-                    if ($existingCustomAbsences) {
-                        foreach ($existingCustomAbsences as $existingCustomAbsence){
-                            $out = array("name_rubrique" => 'Absence personnalisée', "output_rubrique_id" => ($existingCustomAbsence->id));
-                            $validatedRequestData = array_replace($validatedRequestData, $out);
-                        }
-                    }
-                }
+        if ($rubricRequest->output_type === "CustomAbsence") {;
+            $labelHourCust = CustomAbsence::where("id", $rubricRequest['output_rubrique_id'])->where("company_folder_id", $rubricRequest['company_folder_id'])->get();
+            $absence = Absence::where("code", $labelHourCust->code)->first();
+            if ($absence !== null) {
+                $out = array("name_rubrique" => 'Heure', "output_rubrique_id" => ($absence->id));
+                $rubricRequest = array_replace($rubricRequest, $out);
             }
         }
 
-        if ($validatedRequestData['name_rubrique'] === "Heure personnalisée") {
-            $labelHourCust = CustomHour::where("id", $validatedRequestData['output_rubrique_id'])->where("company_folder_id", $validatedRequestData['company_folder_id'])->first();
+
+        if ($rubricRequest->output_type === "CustomHour") {
+            $labelHourCust = CustomHour::where("id", $rubricRequest['output_rubrique_id'])->where("company_folder_id", $rubricRequest['company_folder_id'])->first();
             $hour = Hour::where("code", $labelHourCust->code)->first();
             if ($hour !== null) {
                 $out = array("name_rubrique" => 'Heure', "output_rubrique_id" => ($hour->id));
-                $validatedRequestData = array_replace($validatedRequestData, $out);
+                $rubricRequest = array_replace($rubricRequest, $out);
             }
         }
-        return $validatedRequestData;
+        return collect($rubricRequest);
     }
+
+    private function getFormattedRubrique($rubriqueId): array
+    {
+        dd($rubriqueId);
+    }
+
+    private function getFormattedRubriques(): array
+    {
+        dd($this);
+    }
+
 
     // Fonction permettant d'enregistrer un nouveau mapping en BDD
     public function storeMapping(Request $request)
     {
         $validatedRequestData = $this->validateMappingData($request);
-        $companyFolder = $validatedRequestData['company_folder_id'];
-        $mappedRubriques = Mapping::where('company_folder_id', $companyFolder)->get();
-
-        $validatedRequestData = $this->controleAbsenceHours($validatedRequestData);
+        $companyFolderId = $validatedRequestData['company_folder_id'];
+        $mappedRubriques = Mapping::where('company_folder_id', $companyFolderId)->get();
+        $validatedRequestData = $this->controleAbsenceHours($validatedRequestData, $companyFolderId);
         if ($validatedRequestData['name_rubrique'] !== null) {
             $out = array("output_type" => $this->tableNames[$validatedRequestData['name_rubrique']]);
-            $validatedRequestData = array_replace($validatedRequestData, $out);
+            $validatedRequestData = array_replace($validatedRequestData->toArray(), $out);
         }
 
         foreach ($mappedRubriques as $mappedRubrique) {
@@ -368,7 +426,7 @@ class MappingController extends Controller
 //                }
             }
         }
-        $this->saveMappingData($companyFolder, $validatedRequestData);
+        $this->saveMappingData($companyFolderId, $validatedRequestData);
         return response()->json(['success' => 'Mapping ajouté avec succès'], 201);
     }
 
