@@ -13,7 +13,6 @@ class Mapping extends Model
     public $timestamps = false;
 
     protected $table = "mapping";
-    protected $hidden = ['id'];
     protected $fillable = [
         "company_folder_id",
         "data",

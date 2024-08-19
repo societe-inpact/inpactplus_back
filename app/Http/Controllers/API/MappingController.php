@@ -42,50 +42,64 @@ class MappingController extends Controller
     {
         $file = $request->file('csv');
         $companyFolder = CompanyFolder::with('interfaces')->findOrFail($id);
-        $companyFolder->interfaces->map(function ($interface) use ($request, $companyFolder, $file){
-            $interfaceNames = InterfaceSoftware::findOrFail($interface->id);
-            if ($interfaceNames){
-                $idInterfaceMapping = $interfaceNames->interface_mapping_id;
-                if ($idInterfaceMapping){
+
+        if (!$companyFolder) {
+            return response()->json("L'id du dossier est requis", 400);
+        }
+
+        if (!$file) {
+            return response()->json('Aucun fichier importé', 400);
+        }
+
+        foreach ($companyFolder->interfaces as $interface) {
+            $interface = InterfaceSoftware::findOrFail($interface->id);
+
+            if ($interface) {
+                $idInterfaceMapping = $interface->interface_mapping_id;
+
+                if ($idInterfaceMapping !== null) {
                     $columnIndex = InterfaceMapping::findOrFail($idInterfaceMapping);
                     $typeSeparateur = $columnIndex->type_separateur;
                     $extension = strtolower($columnIndex->extension);
-                    $indexRubrique = $columnIndex->colonne_rubrique;
-                    $colonneMatricule = $columnIndex->colonne_matricule;
-                }else{
+                    $indexRubrique = $columnIndex->colonne_rubrique - 1;
+                    $colonneMatricule = $columnIndex->colonne_matricule - 1;
+                } else {
                     // interfaces spécifique
-                    $interfaceNames = strtolower($interfaceNames["name"]);
-                    switch ($interfaceNames){
+                    $interfaceNames = strtolower($interface->name);
+
+                    switch ($interfaceNames) {
                         case "marathon":
                             $convertMEController = new ConvertMEController();
                             $columnIndex = $convertMEController->formatFilesMarathon();
                             $typeSeparateur = $columnIndex["separateur"];
-                            $extension = $columnIndex ["extension"];
-                            $indexRubrique = $columnIndex ["index_rubrique"];
+                            $extension = $columnIndex["extension"];
+                            $indexRubrique = $columnIndex["index_rubrique"];
                             $colonneMatricule = 0;
                             break;
                         default:
-                            return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]);
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Il manque le paramétrage spécifique de l\'interface',
+                                'status' => 400
+                            ]);
                     }
                 }
 
                 $reader = $this->prepareCsvReader($file->getPathname(), $typeSeparateur);
                 $records = iterator_to_array($reader->getRecords(), true);
-                if (!$companyFolder) {
-                    return response()->json("L'id du dossier est requis", 400);
-                }
-                if (!$request->hasFile($extension)) {
-                    return response()->json('Aucun fichier importé');
-                }
-                // ajouter les condition de type de fichier
+
                 $companyFolderId = $companyFolder->id;
                 $results = $this->processCsvRecords($records, $companyFolderId, $indexRubrique, $colonneMatricule);
+
                 return response()->json($results);
-            }else{
-                return response()->json(['message' => 'L\'interface n\'existe pas','status' => 400]);
+            } else {
+                return response()->json(['message' => 'L\'interface n\'existe pas', 'status' => 400]);
             }
-        });
+        }
+
+        return response()->json(['message' => 'Aucune interface à traiter', 'status' => 400]);
     }
+
 
 
     // Fonction permettant de configurer l'import du fichier
