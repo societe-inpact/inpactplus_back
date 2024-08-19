@@ -101,9 +101,8 @@ class MappingController extends Controller
     }
 
 
-
     // Fonction permettant de configurer l'import du fichier
-    protected function prepareCsvReader($path,$typeSeparateur)
+    protected function prepareCsvReader($path, $typeSeparateur)
     {
         $reader = Reader::createFromPath($path, 'r');
         $encoder = (new CharsetConverter())->inputEncoding('utf-8');
@@ -189,7 +188,7 @@ class MappingController extends Controller
                             'is_mapped' => true,
                             'company_folder_id' => $companyFolder,
                         ];
-                    }else{
+                    } else {
                         return [
                             'input_rubrique' => $data['input_rubrique'],
                             'type_rubrique' => $data['output_type'],
@@ -246,7 +245,6 @@ class MappingController extends Controller
     }
 
 
-
     // Fonction permettant de valider les données d'enregistrement d'un mapping
     protected function validateMappingData(Request $request)
     {
@@ -271,9 +269,9 @@ class MappingController extends Controller
 
         $validatedData = $this->controleAbsenceHours($validatedData);
 
-        if ($validatedData['name_rubrique'] !== null){
-            $out = array("output_type"=>$this->tableNames[$validatedData['name_rubrique']]);
-            $validatedData = array_replace($validatedData,$out);
+        if ($validatedData['name_rubrique'] !== null) {
+            $out = array("output_type" => $this->tableNames[$validatedData['name_rubrique']]);
+            $validatedData = array_replace($validatedData, $out);
         }
 
         // permet d'enregister les modifications
@@ -284,7 +282,7 @@ class MappingController extends Controller
                 $entry['output_type'] = $validatedData['output_type'];
                 $entry['is_used'] = $validatedData['is_used'];
                 $dataBis[] = $entry;
-            }else{
+            } else {
                 $dataBis[] = $entry;
             }
         }
@@ -293,32 +291,42 @@ class MappingController extends Controller
             $mapping->data = $dataBis;
             $mapping->save();
             return 'updated';
-        }else{
+        } else {
             return 'nomodif';
         }
     }
 
     // Fonction de contrôle des absences perso et des heures perso
 
-    private function controleAbsenceHours($validatedRequestData){
+    private function controleAbsenceHours($validatedRequestData)
+    {
+        if ($validatedRequestData['name_rubrique'] === "Absence personnalisée") {
 
-        if ($validatedRequestData['name_rubrique'] === "Absence"){
+            $companyFolderMapping = Mapping::all()
+                ->where('company_folder_id', '=', $validatedRequestData['company_folder_id']);
 
-            $labelAbs = Absence::where("id",$validatedRequestData['output_rubrique_id'])->first();
-
-            $absPerso = CustomAbsence::where("code",$labelAbs->code)->where("company_folder_id",$validatedRequestData['company_folder_id'])->first();
-            if ($absPerso !== null){
-                $out = array("name_rubrique"=>'Absence personnalisée', "output_rubrique_id"=>($absPerso->id));
-                $validatedRequestData = array_replace($validatedRequestData,$out);
+            foreach ($companyFolderMapping as $mapping) {
+                $dataMapping = $mapping->data;
+                foreach ($dataMapping as $data){
+                    $existingCustomAbsences = CustomAbsence::all()
+                        ->where('company_folder_id', '=', $validatedRequestData['company_folder_id'])
+                        ->where('id', '=', $data['output_rubrique_id']);
+                    if ($existingCustomAbsences) {
+                        foreach ($existingCustomAbsences as $existingCustomAbsence){
+                            $out = array("name_rubrique" => 'Absence personnalisée', "output_rubrique_id" => ($existingCustomAbsence->id));
+                            $validatedRequestData = array_replace($validatedRequestData, $out);
+                        }
+                    }
+                }
             }
         }
 
-        if ($validatedRequestData['name_rubrique'] === "Heure personnalisée"){
-            $labelHourCust = CustomHour::where("id",$validatedRequestData['output_rubrique_id'])->where("company_folder_id",$validatedRequestData['company_folder_id'])->first();
-            $hour = Hour::where("code",$labelHourCust->code)->first();
-            if ($hour !== null){
-                $out = array("name_rubrique"=>'Heure', "output_rubrique_id"=>($hour->id));
-                $validatedRequestData = array_replace($validatedRequestData,$out);
+        if ($validatedRequestData['name_rubrique'] === "Heure personnalisée") {
+            $labelHourCust = CustomHour::where("id", $validatedRequestData['output_rubrique_id'])->where("company_folder_id", $validatedRequestData['company_folder_id'])->first();
+            $hour = Hour::where("code", $labelHourCust->code)->first();
+            if ($hour !== null) {
+                $out = array("name_rubrique" => 'Heure', "output_rubrique_id" => ($hour->id));
+                $validatedRequestData = array_replace($validatedRequestData, $out);
             }
         }
         return $validatedRequestData;
@@ -332,9 +340,9 @@ class MappingController extends Controller
         $mappedRubriques = Mapping::where('company_folder_id', $companyFolder)->get();
 
         $validatedRequestData = $this->controleAbsenceHours($validatedRequestData);
-        if ($validatedRequestData['name_rubrique'] !== null){
-            $out = array("output_type"=>$this->tableNames[$validatedRequestData['name_rubrique']]);
-            $validatedRequestData = array_replace($validatedRequestData,$out);
+        if ($validatedRequestData['name_rubrique'] !== null) {
+            $out = array("output_type" => $this->tableNames[$validatedRequestData['name_rubrique']]);
+            $validatedRequestData = array_replace($validatedRequestData, $out);
         }
 
         foreach ($mappedRubriques as $mappedRubrique) {
@@ -343,11 +351,11 @@ class MappingController extends Controller
                 $isUsed = filter_var($validatedRequestData['is_used'], FILTER_VALIDATE_BOOLEAN) || filter_var($inputMappedRubrique['is_used'], FILTER_VALIDATE_BOOLEAN);
                 if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData['input_rubrique']) {
 
-                    if ($isUsed === false){
+                    if ($isUsed === false) {
                         return response()->json([
                             'error' => 'La rubrique d\'entrée ' . $validatedRequestData['input_rubrique'] . ' n\'est pas utilisée',
                         ], 409);
-                    }else{
+                    } else {
                         return response()->json([
                             'error' => 'La rubrique d\'entrée ' . $validatedRequestData['input_rubrique'] . ' est déjà associée à la rubrique '
                         ], 409);
@@ -422,7 +430,7 @@ class MappingController extends Controller
         $dataBis = [];
         $mappingCompagny->data = $dataBis;
         $mappingCompagny->save();
-        if ($mappingCompagny){
+        if ($mappingCompagny) {
             return response()->json(['message' => 'Mapping supprimé du dossier avec succès']);
         }
         return response()->json(['message' => 'Erreur lors de la suppression du mapping']);
@@ -455,22 +463,22 @@ class MappingController extends Controller
         // permet d'enregister les modifications
         foreach ($data as $entry) {
             // si c'est une valeur ne pas utiliser, il faut modifier le 'name_rubrique'
-            if ($entry['name_rubrique'] === null){
+            if ($entry['name_rubrique'] === null) {
                 $entry['name_rubrique'] = "Ne pas utiliser";
                 $entry['output_rubrique_id'] = 0;
             }
-            if ((string)$entry['output_rubrique_id'] === (string)$output_rubrique_id && $entry['name_rubrique'] === $nameRubrique ) {
-                if($input_rubrique !== ""){
+            if ((string)$entry['output_rubrique_id'] === (string)$output_rubrique_id && $entry['name_rubrique'] === $nameRubrique) {
+                if ($input_rubrique !== "") {
                     if ((string)$entry['input_rubrique'] === (string)$input_rubrique) {
                         // supprimer la valeur
                     } else {
                         $dataBis[] = $entry;
                     }
-                }else{
+                } else {
 
                     // supprimer la valeur
                 }
-            }else{
+            } else {
                 $dataBis[] = $entry;
             }
         }
@@ -479,7 +487,7 @@ class MappingController extends Controller
             $mappingCompagny->data = $dataBis;
             $mappingCompagny->save();
             return response()->json(['message' => 'updated']);
-        }else{
+        } else {
             return response()->json(['message' => 'nomodif']);
         }
     }
