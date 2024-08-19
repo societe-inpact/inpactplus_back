@@ -26,7 +26,7 @@ class User extends Authenticatable
     public $timestamps = false;
 
     protected $fillable = ['firstname', 'civility', 'lastname', 'email', 'password', 'telephone'];
-    protected $hidden = ['id', 'company_id', 'password', 'laravel_through_key', 'pivot'];
+    protected $hidden = ['company_id', 'password', 'laravel_through_key', 'pivot'];
 
     public function company()
     {

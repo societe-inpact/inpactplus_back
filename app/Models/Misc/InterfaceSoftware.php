@@ -13,7 +13,7 @@ class InterfaceSoftware extends Model
 
     protected $table = 'interfaces';
     public $timestamps = false;
-    protected $hidden = ["interface_mapping_id", "laravel_through_key"];
+    protected $hidden = [ "laravel_through_key"];
     protected $fillable = [
         "name", "interface_mapping_id"
     ];
