@@ -38,87 +38,76 @@ class MappingController extends Controller
     ];
 
     // Fonction permettant de récupérer les mappings existants d'un dossier
-    public function getMapping(Request $request)
+    public function getMapping(Request $request, $id)
     {
-        $companyFolder = $request->integer('company_folder_id');
-        $companyFolderInfo = CompanyFolder::where('id', $companyFolder)->first();
-        $interface = $companyFolderInfo->interface_id;
-
-
-        $softwaresNames = InterfaceSoftware::all()->where('id', $interface)->first();
-
-        if ($softwaresNames !== null){
-            $idSoftware = $softwaresNames->interface_software_id;
-        }else{
-            return response()->json(['message' => 'L\'interface n\'existe pas','status' => 400]);
-        }
-
-        if ($idSoftware !== null){
-            $columnindex = InterfaceMapping::all()->where('id',$idSoftware)->first();
-            $type_separateur = $columnindex->type_separateur;
-            $format = $columnindex->format;
-            $format = strtolower($format);
-            $index_rubrique = $columnindex->colonne_rubrique-1;
-            $colonne_matricule = $columnindex->colonne_matricule-1;
-
-        }else{
-
-            // interfaces spécifique
-            $softwaresName = strtolower($softwaresNames["name"]);
-            switch ($softwaresName){
-                case "marathon":
-                    $controller = new ConvertMEController();
-                    $columnindex = $controller->formatFilesMarathon();
-                    $type_separateur = $columnindex["separateur"];
-                    $format = $columnindex ["format"];
-                    $index_rubrique = $columnindex ["index_rubrique"];
-                    $colonne_matricule = 0;
-                    break;
-
-                default:
-                    return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]);
-
-            }
-        }
-
-        if (!$companyFolder) {
-            return response()->json("L'id du dossier est requis", 400);
-        }
-
-        if (!$request->hasFile($format)) {
-            return response()->json('Aucun fichier importé');
-        }
-
-        // ajouter les condition de type de fichier
-
         $file = $request->file('csv');
-        $reader = $this->prepareCsvReader($file->getPathname(),$type_separateur);
-        $records = iterator_to_array($reader->getRecords(), true);
-        $results = $this->processCsvRecords($records, $companyFolder,$index_rubrique,$colonne_matricule);
+        $companyFolder = CompanyFolder::with('interfaces')->findOrFail($id);
+        $companyFolder->interfaces->map(function ($interface) use ($request, $companyFolder, $file){
+            $interfaceNames = InterfaceSoftware::findOrFail($interface->id);
+            if ($interfaceNames){
+                $idInterfaceMapping = $interfaceNames->interface_mapping_id;
+                if ($idInterfaceMapping){
+                    $columnIndex = InterfaceMapping::findOrFail($idInterfaceMapping);
+                    $typeSeparateur = $columnIndex->type_separateur;
+                    $extension = strtolower($columnIndex->extension);
+                    $indexRubrique = $columnIndex->colonne_rubrique;
+                    $colonneMatricule = $columnIndex->colonne_matricule;
+                }else{
+                    // interfaces spécifique
+                    $interfaceNames = strtolower($interfaceNames["name"]);
+                    switch ($interfaceNames){
+                        case "marathon":
+                            $convertMEController = new ConvertMEController();
+                            $columnIndex = $convertMEController->formatFilesMarathon();
+                            $typeSeparateur = $columnIndex["separateur"];
+                            $extension = $columnIndex ["extension"];
+                            $indexRubrique = $columnIndex ["index_rubrique"];
+                            $colonneMatricule = 0;
+                            break;
+                        default:
+                            return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]);
+                    }
+                }
 
-        return response()->json($results);
+                $reader = $this->prepareCsvReader($file->getPathname(), $typeSeparateur);
+                $records = iterator_to_array($reader->getRecords(), true);
+                if (!$companyFolder) {
+                    return response()->json("L'id du dossier est requis", 400);
+                }
+                if (!$request->hasFile($extension)) {
+                    return response()->json('Aucun fichier importé');
+                }
+                // ajouter les condition de type de fichier
+                $companyFolderId = $companyFolder->id;
+                $results = $this->processCsvRecords($records, $companyFolderId, $indexRubrique, $colonneMatricule);
+                return response()->json($results);
+            }else{
+                return response()->json(['message' => 'L\'interface n\'existe pas','status' => 400]);
+            }
+        });
     }
 
+
     // Fonction permettant de configurer l'import du fichier
-    protected function prepareCsvReader($path,$type_separateur)
+    protected function prepareCsvReader($path,$typeSeparateur)
     {
         $reader = Reader::createFromPath($path, 'r');
         $encoder = (new CharsetConverter())->inputEncoding('utf-8');
         $reader->addFormatter($encoder);
-        $reader->setDelimiter($type_separateur);
+        $reader->setDelimiter($typeSeparateur);
 
         return $reader;
     }
 
 
     // Fonction permettant de récupérer les mappings existants d'un dossier
-    protected function processCsvRecords($records, $companyFolder,$index_rubrique,$colonne_matricule)
+    protected function processCsvRecords($records, $companyFolderId, $indexRubrique, $colonneMatricule)
     {
         $processedRecords = collect();
         $unmatchedRubriques = [];
         $results = [];
 
-        $containsDigit = ctype_digit($records[0][$colonne_matricule]);
+        $containsDigit = ctype_digit($records[0][$colonneMatricule]);
         if (($containsDigit) === false) {
             unset($records[0]);
         }
@@ -126,15 +115,15 @@ class MappingController extends Controller
         foreach ($records as $record) {
 
             // colonne à ne pas prendre en compte
-            if (!isset($record[$index_rubrique])) {
+            if (!isset($record[$indexRubrique])) {
                 continue;
             }
 
-            $inputRubrique = $record[$index_rubrique];
+            $inputRubrique = $record[$indexRubrique];
 
             if ($inputRubrique && !$processedRecords->contains($inputRubrique)) {
                 $processedRecords->push($inputRubrique);
-                $mappingResult = $this->findMapping($inputRubrique, $companyFolder);
+                $mappingResult = $this->findMapping($inputRubrique, $companyFolderId);
                 if ($mappingResult) {
                     $results[] = $mappingResult;
                 } else {
@@ -146,7 +135,7 @@ class MappingController extends Controller
                         'label' => null,
                         'is_mapped' => false,
                         'is_used' => false,
-                        'company_folder_id' => $companyFolder,
+                        'company_folder_id' => $companyFolderId,
                     ];
                 }
             }

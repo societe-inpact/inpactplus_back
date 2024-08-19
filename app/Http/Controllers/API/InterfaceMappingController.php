@@ -35,6 +35,7 @@ class InterfaceMappingController extends ConvertController
             'separateur' => 'nullable|string',
             'extension'=> 'required|string',
         ]);
+
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -63,8 +64,8 @@ class InterfaceMappingController extends ConvertController
             if ($interfaceMapping ){
                 $softwareId = $interfaceMapping->id;
             }
-            $softwares = InterfaceSoftware::create(['name'=> $softwareName, 'interface_mapping_id'=> $softwareId]);
-            return response()->json(['message' => 'Création de l\'interface réussie', 'software' =>  $softwares], 200);
+            $software = InterfaceSoftware::create(['name'=> $softwareName, 'interface_mapping_id'=> $softwareId]);
+            return response()->json(['message' => 'Création de l\'interface réussie', 'software' =>  $software], 200);
         }
 
         return response()->json(['error' => 'Une erreur est survenue lors de la création de l\'interface.'], 500);
@@ -102,7 +103,8 @@ class InterfaceMappingController extends ConvertController
             'extension'=> $request->extension,
         ];
 
-        if (InterfaceMapping::findOrFail($id)->update($data)){
+        $interface = InterfaceMapping::findOrFail($id);
+        if ($interface->update($data)){
             return response()->json(['message' => 'Mise à jour de l\'interface réussie'], 200);
         }
         return response()->json(['error' => 'Une erreur est survenue lors de la mise à jour de l\'interface'], 500);
@@ -111,8 +113,7 @@ class InterfaceMappingController extends ConvertController
     public function deleteInterfaceMapping($id){
 
         $interfaceMapping = InterfaceMapping::findOrFail($id);
-        if ($interfaceMapping){
-            $interfaceMapping->delete();
+        if ($interfaceMapping->delete()){
             return response()->json(['message' => 'L\'interface a été supprimée'], 200);
         }
         return response()->json(['message' => 'L\'interface n\'existe pas.'], 404);

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Validator;
 
 class InterfaceController extends Controller
 {
-    public function getInterface(){
+    public function getInterfaces(){
         $softwares = InterfaceSoftware::all();
         return response()->json($softwares, 200);
     }
@@ -25,22 +25,20 @@ class InterfaceController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        ;
+
         $software = InterfaceSoftware::findOrFail($id);
-        if ($software){
-            $software->update();
+
+        if ($software->update()){
             return response()->json(['message' => 'Le nom a été changé en '. $request->name], 200);
-        }
-        else{
-            return response()->json(['error' => 'Lors du changement de nom'], 500);
+        } else{
+            return response()->json(['error' => 'Erreur lors du changement de nom'], 500);
         }
     }
 
     public function deleteNameInterface($id){
         $software = InterfaceSoftware::findOrFail($id);
 
-        if ($software){
-            $software->delete();
+        if ($software->delete()){
             return response()->json(['message' => 'L\'interface a été supprimée'], 200);
         }
         else{

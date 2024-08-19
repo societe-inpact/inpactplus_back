@@ -18,8 +18,7 @@ class ConvertMEController extends ConvertController
 
     public function formatFilesMarathon()
     {
-        $formatMarathon = [ "format" => "csv" , "separateur" => ";" , "index_rubrique" => 3 ];
-        return $formatMarathon;
+        return [ "extension" => "csv" , "separateur" => ";" , "index_rubrique" => 3 ];
     }
 
     public function getMappingsFolder($folderId)
