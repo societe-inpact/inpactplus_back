@@ -34,20 +34,18 @@ Route::get('/password/reset/{token}', function ($token) {
 Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // ---------------------- ACCES AUX MODULES --------------------- //
-    Route::middleware(['company.module.access:convert'])->group(function () {
-        Route::middleware(['company_folder.module.access:convert'])->group(function () {
-            Route::middleware(['user.module.access:convert'])->group(function () {
-                Route::middleware(['user.module.access:convert'])->group(function () {
-                    Route::post("/import", [App\Http\Controllers\API\ConvertController::class, 'importFile']);
-                    Route::post("/convert", [App\Http\Controllers\API\ConvertController::class, 'convertFile']);
-                        Route::post("/mapping/{id}", [App\Http\Controllers\API\MappingController::class, 'getMapping']);
-                        Route::post("/mapping/store", [App\Http\Controllers\API\MappingController::class, 'storeMapping']);
-                        Route::patch("/mapping/update/{id}", [App\Http\Controllers\API\MappingController::class, 'updateMapping']);
-                        Route::delete("/mapping/delete/{id}", [App\Http\Controllers\API\MappingController::class, 'deleteMapping']);
-                        Route::delete("/mapping/deleteOneLine", [App\Http\Controllers\API\MappingController::class, 'deleteOneLineMappingData']);
-                });
-            });
-        });
+    Route::middleware([
+        'company.module.access:convert',
+        'company_folder.module.access:convert',
+        'user.module.access:convert'
+    ])->group(function () {
+        Route::post("/import", [App\Http\Controllers\API\ConvertController::class, 'importFile']);
+        Route::post("/convert", [App\Http\Controllers\API\ConvertController::class, 'convertFile']);
+        Route::post("/mapping/store", [App\Http\Controllers\API\MappingController::class, 'storeMapping']);
+        Route::post("/mapping/{id}", [App\Http\Controllers\API\MappingController::class, 'getMapping']);
+        Route::patch("/mapping/update/{id}", [App\Http\Controllers\API\MappingController::class, 'updateMapping']);
+        Route::delete("/mapping/delete/{id}", [App\Http\Controllers\API\MappingController::class, 'deleteMapping']);
+        Route::delete("/mapping/deleteOneLine", [App\Http\Controllers\API\MappingController::class, 'deleteOneLineMappingData']);
     });
 
     Route::middleware(['company.module.access:statistics'])->group(function () {

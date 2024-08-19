@@ -42,13 +42,13 @@ class VerifyUserModuleAccess
         if ($user->hasRole('inpact')) {
             return $next($request);
         }
-
-        $userIds = $user->pluck('id')->unique()->toArray();
+        $userIds = $user->pluck('id')->toArray();
         $companyFolderHasAccess = Module::where('name', $moduleName)
             ->whereHas('userAccess', function ($query) use ($userIds) {
                 $query->where('has_access', true)
                     ->whereIn('user_id', $userIds);
             })->exists();
+
 
         if (!$companyFolderHasAccess) {
             return response()->json(['error' => 'Vous n\'avez pas accès à ce module'], 401);

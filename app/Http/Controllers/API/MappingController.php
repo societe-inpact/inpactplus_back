@@ -223,7 +223,6 @@ class MappingController extends Controller
     public function updateMapping(Request $request, $id)
     {
         $validatedData = $this->validateMappingData($request);
-
         $companyFolder = $request->get('company_folder_id');
         if (!$companyFolder) {
             return response()->json("L'id du dossier est requis", 400);
@@ -333,7 +332,6 @@ class MappingController extends Controller
         $mappedRubriques = Mapping::where('company_folder_id', $companyFolder)->get();
 
         $validatedRequestData = $this->controleAbsenceHours($validatedRequestData);
-
         if ($validatedRequestData['name_rubrique'] !== null){
             $out = array("output_type"=>$this->tableNames[$validatedRequestData['name_rubrique']]);
             $validatedRequestData = array_replace($validatedRequestData,$out);
