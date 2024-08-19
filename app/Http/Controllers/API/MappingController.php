@@ -380,17 +380,6 @@ class MappingController extends Controller
         return collect($rubricRequest);
     }
 
-    private function getFormattedRubrique($rubriqueId): array
-    {
-        dd($rubriqueId);
-    }
-
-    private function getFormattedRubriques(): array
-    {
-        dd($this);
-    }
-
-
     // Fonction permettant d'enregistrer un nouveau mapping en BDD
     public function storeMapping(Request $request)
     {
@@ -398,11 +387,6 @@ class MappingController extends Controller
         $companyFolderId = $validatedRequestData['company_folder_id'];
         $mappedRubriques = Mapping::where('company_folder_id', $companyFolderId)->get();
         $validatedRequestData = $this->controleAbsenceHours($validatedRequestData, $companyFolderId);
-        if ($validatedRequestData['name_rubrique'] !== null) {
-            $out = array("output_type" => $this->tableNames[$validatedRequestData['name_rubrique']]);
-            $validatedRequestData = array_replace($validatedRequestData->toArray(), $out);
-        }
-
         foreach ($mappedRubriques as $mappedRubrique) {
             $allMappedRubriques = $mappedRubrique->data;
             foreach ($allMappedRubriques as $inputMappedRubrique) {
@@ -466,8 +450,7 @@ class MappingController extends Controller
             'is_used' => $validatedData['is_used']
         ];
 
-        $mapping = Mapping::where('company_folder_id', $companyFolder)->first();
-
+        $mapping = Mapping::where( 'company_folder_id', $companyFolder)->first();
         if ($mapping) {
             $existingData = $mapping->data;
             $existingData[] = $newMapping;
