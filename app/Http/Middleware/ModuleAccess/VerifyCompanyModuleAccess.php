@@ -1,9 +1,7 @@
 <?php
 
-namespace App\Http\Middleware;
+namespace App\Http\Middleware\ModuleAccess;
 
-use App\Models\Companies\CompanyFolder;
-use App\Models\Employees\EmployeeFolder;
 use App\Models\Misc\User;
 use App\Models\Modules\Module;
 use Closure;
@@ -25,36 +23,27 @@ class VerifyCompanyModuleAccess
     {
         $user = User::with([
             'folders.modules',
+            'folders.modules.companyAccess',
+            'folders.modules.companyFolderAccess',
+            'folders.modules.userAccess',
+            'folders.modules.userPermissions',
             'folders.company',
             'folders.mappings',
-            'folders.software',
+            'folders.interfaces',
             'folders.employees',
             'folders',
-            'roles',
+            'company'
         ])->find(Auth::id());
+
         if (!$user) {
             return response()->json(['error' => 'Vous n\'êtes pas connecté'], 401);
         }
 
-        // Si l'utilisateur est un utilisateur inpact, on passe
         if ($user->hasRole('inpact')) {
             return $next($request);
         }
 
-        $companyIds = $user->folders->pluck('company_id')->toArray();
-        $folderIds = $user->folders->pluck('id')->toArray();
-
-        // Vérification de l'accès au dossier pour l'utilisateur
-        $userFolderHasAccess = EmployeeFolder::where('user_id', $user->id)
-            ->whereIn('company_folder_id', $folderIds)
-            ->where('has_access', true)
-            ->exists();
-
-        if (!$userFolderHasAccess) {
-            return response()->json(['error' => 'Vous n\'avez pas accès à ce dossier'], 401);
-        }
-
-        // Vérification de l'accès au module via l'entreprise
+        $companyIds = $user->folders->pluck('company.id')->unique()->toArray();
         $companyHasAccess = Module::where('name', $moduleName)
             ->whereHas('companyAccess', function ($query) use ($companyIds) {
                 $query->where('has_access', true)
@@ -65,19 +54,6 @@ class VerifyCompanyModuleAccess
             return response()->json(['error' => 'Votre entreprise n\'a pas accès à ce module'], 401);
         }
 
-        // Vérification de l'accès au module via le dossier de l'entreprise
-        $userHasAccess = Module::where('name', $moduleName)
-            ->whereHas('companyFolderAccess', function ($query) use ($folderIds) {
-                $query->where('has_access', true)
-                    ->whereIn('company_folder_id', $folderIds);
-            })->exists();
-
-        if (!$userHasAccess) {
-            return response()->json(['error' => 'Votre dossier d\'entreprise n\'a pas accès à ce module'], 401);
-        }
-
         return $next($request);
     }
-
-
 }

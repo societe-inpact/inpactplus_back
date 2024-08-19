@@ -30,7 +30,7 @@ class ConvertMEController extends ConvertController
 
     public function indexColumn($nominterface)
     {
-        $controller = new InterfaceSoftwareController();
+        $controller = new InterfaceMappingController();
         return $controller->getInterfaceSoftware($nominterface);
     }
 

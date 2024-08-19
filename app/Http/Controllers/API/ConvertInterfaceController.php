@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\API\ConvertController2;
 use Illuminate\Http\Request;
 use App\Models\Mapping\Mapping;
-use App\Models\Misc\Software;
 use App\Models\Misc\InterfaceSoftware;
+use App\Models\Misc\InterfaceMapping;
 use Illuminate\Support\Facades\App;
 use League\Csv\CharsetConverter;
 use League\Csv\Exception;
@@ -26,7 +26,7 @@ class ConvertInterfaceController extends ConvertController
 
     public function indexColumn($nominterface)
     {
-        $controller = new InterfaceSoftwareController();
+        $controller = new InterfaceMappingController();
         return $controller->getInterfaceSoftware($nominterface);
     }
 
@@ -70,7 +70,7 @@ class ConvertInterfaceController extends ConvertController
     {
         $data = [];
         $unmapped = [];
-        
+
         $colonne_matricule = $columnindex->colonne_matricule -1;
         $colonne_rubrique = $columnindex->colonne_rubrique -1;
         $colonne_valeur = $columnindex->colonne_valeur -1;
@@ -80,7 +80,7 @@ class ConvertInterfaceController extends ConvertController
         $colonne_pourcentagetp = $columnindex->colonne_pourcentagetp -1;
 
 
-        // Vérification s'il y a une en-tête en fonction du matricule 
+        // Vérification s'il y a une en-tête en fonction du matricule
 
         $containsDigit = ctype_digit($records[0][$colonne_matricule]);
         if (($containsDigit) === false) {
@@ -90,9 +90,9 @@ class ConvertInterfaceController extends ConvertController
         // Création de la nouvelle table qui correspond à silae
 
         foreach ($records as $record) {
-            
+
             $codeSilae = $this->getSilaeCode($record[$colonne_rubrique], $folderId);
-            
+
             $matricule = $record[$colonne_matricule];
             $valeur = $record[$colonne_valeur];
 
@@ -132,8 +132,8 @@ class ConvertInterfaceController extends ConvertController
                     'Date debut' => $datedebut,
                     'Date fin' => $datefin,
                     'HJ' => $hj,
-                    'PctTP' => $pourcentagetp,                    
-                ]; 
+                    'PctTP' => $pourcentagetp,
+                ];
             }else{
                 $unmapped[] = [
                     'Matricule' => $matricule,
@@ -142,10 +142,10 @@ class ConvertInterfaceController extends ConvertController
                     'Date debut' => $datedebut,
                     'Date fin' => $datefin,
                     'HJ' => $hj,
-                    'PctTP' => $pourcentagetp,                    
-                ]; 
+                    'PctTP' => $pourcentagetp,
+                ];
             }
-        } 
+        }
         // dd($unmapped);
         return [$data, $unmapped];
     }
@@ -163,12 +163,12 @@ class ConvertInterfaceController extends ConvertController
         $folderId = $request->get('company_folder_id');
         $interface = $request->get('interface_id');
         $idsoftware = $request->get('interface_id');
-        
-        $softwareId = Software::findOrFail($idsoftware);
+
+        $softwareId = InterfaceSoftware::findOrFail($idsoftware);
         $columnindex = $this->indexColumn($softwareId->interface_software_id);
 
         $type_separateur = $columnindex->type_separateur;
-        $format = strtolower($columnindex->format); 
+        $format = strtolower($columnindex->format);
 
         switch ($format){
             case "csv":
@@ -178,8 +178,8 @@ class ConvertInterfaceController extends ConvertController
                 $request->validate([
                     'csv' => 'required|file|mimes:csv,txt',
                 ]);
-        
-                if ($request->hasFile('csv')) 
+
+                if ($request->hasFile('csv'))
                 {
                     $file = $request->file('csv');
                     $reader = Reader::createFromPath($file->getPathname(), 'r');
@@ -190,7 +190,7 @@ class ConvertInterfaceController extends ConvertController
                     $header = $reader->getHeader();
                     $records = iterator_to_array($reader->getRecords(), true);
                     $result = $this->convertInter($records, $folderId, $columnindex);
-                           
+
                     return $result;
 
                 }

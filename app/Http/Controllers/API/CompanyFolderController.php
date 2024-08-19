@@ -5,7 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Companies\CompanyFolder;
 use App\Models\Mapping\Mapping;
-use App\Models\Misc\InterfaceFolder;
+use App\Models\Misc\CompanyFolderInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -49,7 +49,7 @@ class CompanyFolderController extends Controller
 
             $folder = CompanyFolder::where('folder_number', $request->folder_number)->first();
 
-            InterfaceFolder::create([
+            CompanyFolderInterface::create([
                 'company_folder_id' => $folder->id,
                 'interface_folder_id' => $request->interface_id
             ]);

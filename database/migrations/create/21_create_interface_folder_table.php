@@ -12,13 +12,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('interface_folder', function (Blueprint $table) {
+        Schema::create('company_folder_interface', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_folder_id')->constrained('company_folders')->cascadeOnDelete();
-            $table->foreignId('interface_folder_id')->constrained('interfaces')->cascadeOnDelete();
+            $table->foreignId('interface_id')->constrained('interfaces')->cascadeOnDelete();
         });
 
-        DB::table('interface_folder')->insert([
+        DB::table('company_folder_interface')->insert([
             [
                 'id' => 1,
                 'company_folder_id' => 1,
@@ -37,6 +37,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('interface_entity');
+        Schema::dropIfExists('company_folder_interface');
     }
 };

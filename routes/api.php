@@ -13,11 +13,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// LOGIN AND REGISTER
+// --------------------------------------------------------- ROUTES PUBLIQUES --------------------------------------------------------- //
 Route::group(['middleware' => 'cors'], function () {
     Route::post('/login', [App\Http\Controllers\API\AuthController::class, 'login']);
-    Route::post('/register', [App\Http\Controllers\API\AuthController::class, 'register']);
-    Route::delete('/user/delete/{id}', [App\Http\Controllers\API\AuthController::class, 'deleteUser']);
+    Route::post('/register', [App\Http\Controllers\API\AuthController::class, 'register']); // Controle et actions à définir pour cette fonction
+    Route::delete('/user/delete/{id}', [App\Http\Controllers\API\AuthController::class, 'deleteUser']); // Controle et actions à définir pour cette fonction
 });
 
 Route::middleware('throttle:10,1')->group(function () {
@@ -29,21 +29,25 @@ Route::get('/password/reset/{token}', function ($token) {
     return view('auth.passwords.reset', ['token' => $token]);
 })->name('password.reset');
 
-// PROTECTED ROUTES
 
-
+// --------------------------------------------------------- ROUTES PROTEGEES - AUTHENTIFICATION OBLIGATOIRE --------------------------------------------------------- //
 Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // ---------------------- ACCES AUX MODULES --------------------- //
     Route::middleware(['company.module.access:convert'])->group(function () {
-        Route::post("/import", [App\Http\Controllers\API\ConvertController::class, 'importFile']);
-        Route::post("/convert", [App\Http\Controllers\API\ConvertController::class, 'convertFile']);
-
-        Route::post("/mapping", [App\Http\Controllers\API\MappingController::class, 'getMapping']);
-        Route::post("/mapping/store", [App\Http\Controllers\API\MappingController::class, 'storeMapping']);
-        Route::patch("/mapping/update/{id}", [App\Http\Controllers\API\MappingController::class, 'updateMapping']);
-        Route::delete("/mapping/delete/{id}", [App\Http\Controllers\API\MappingController::class, 'deleteMapping']);
-        Route::delete("/mapping/deleteOneLine", [App\Http\Controllers\API\MappingController::class, 'deleteOneLineMappingData']);
+        Route::middleware(['company_folder.module.access:convert'])->group(function () {
+            Route::middleware(['user.module.access:convert'])->group(function () {
+                Route::middleware(['user.module.access:convert'])->group(function () {
+                    Route::post("/import", [App\Http\Controllers\API\ConvertController::class, 'importFile']);
+                    Route::post("/convert", [App\Http\Controllers\API\ConvertController::class, 'convertFile']);
+                        Route::post("/mapping", [App\Http\Controllers\API\MappingController::class, 'getMapping']);
+                        Route::post("/mapping/store", [App\Http\Controllers\API\MappingController::class, 'storeMapping']);
+                        Route::patch("/mapping/update/{id}", [App\Http\Controllers\API\MappingController::class, 'updateMapping']);
+                        Route::delete("/mapping/delete/{id}", [App\Http\Controllers\API\MappingController::class, 'deleteMapping']);
+                        Route::delete("/mapping/deleteOneLine", [App\Http\Controllers\API\MappingController::class, 'deleteOneLineMappingData']);
+                });
+            });
+        });
     });
 
     Route::middleware(['company.module.access:statistics'])->group(function () {
@@ -59,6 +63,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     });
     // ---------------------- FIN ACCES AUX MODULES --------------------- //
 
+    // Middleware company
+    // Middleware folder
+    // Middleware user
 
 
     // ACCESS AND PERMISSIONS
@@ -68,7 +75,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // USERS
     Route::patch('/user/update/{id}', [App\Http\Controllers\API\AuthController::class, 'updateUser']);
     Route::patch('/user/update/{id}/password', [App\Http\Controllers\API\PasswordController::class, 'changePassword']);
-   
+
 
     // CUSTOM ABSENCES
     Route::get("/custom-absences", [App\Http\Controllers\API\AbsenceController::class, 'getCustomAbsences']);
@@ -107,33 +114,31 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::delete("/company/delete", [App\Http\Controllers\API\CompanyController::class, 'deleteCompany']);
 
     // FOLDER OF COMPANIES
-    Route::get("/company_folders", [App\Http\Controllers\API\CompanyFolderController::class, 'getCompanyFolders']);
-    Route::post("/company_folder/create", [App\Http\Controllers\API\CompanyFolderController::class, 'createCompanyFolder']);
-    Route::patch("/company_folder/update/{id}", [App\Http\Controllers\API\CompanyFolderController::class, 'updateCompanyFolder']);
-    Route::delete("/company_folder/delete", [App\Http\Controllers\API\CompanyFolderController::class, 'deleteCompanyFolder']);
+    Route::middleware(['user.folder.access'])->group(function () {
+        Route::get("/company_folders", [App\Http\Controllers\API\CompanyFolderController::class, 'getCompanyFolders']);
+        Route::post("/company_folder/create", [App\Http\Controllers\API\CompanyFolderController::class, 'createCompanyFolder']);
+        Route::patch("/company_folder/update/{id}", [App\Http\Controllers\API\CompanyFolderController::class, 'updateCompanyFolder']);
+        Route::delete("/company_folder/delete", [App\Http\Controllers\API\CompanyFolderController::class, 'deleteCompanyFolder']);
+        // CREATE/UPDATE NOTES FROM FOLDER
+        Route::post('company_folder/notes/create', [App\Http\Controllers\API\NoteController::class, 'createUpdateDeleteNote']);
+    });
 
     // SOFTWARE
-    Route::get("/software", [App\Http\Controllers\API\SoftwareController::class, 'getSoftware']);
-    Route::put("/software/update/{id}", [App\Http\Controllers\API\SoftwareController::class, 'updateNameSoftware']);
-    Route::delete("/software/delete/{id}", [App\Http\Controllers\API\SoftwareController::class, 'deleteNameSoftware']); // Supprime tout le software
+    Route::get("/interface", [App\Http\Controllers\API\InterfaceController::class, 'getInterface']);
+    Route::put("/interface/update/{id}", [App\Http\Controllers\API\InterfaceController::class, 'updateNameInterface']);
+    Route::delete("/interface/delete/{id}", [App\Http\Controllers\API\InterfaceController::class, 'deleteNameInterface']);
 
-    // INTERFACES SOFTWARE
-    Route::get("/interfacesoftware/info/{id}", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'getInterfaceSoftware']);
-    Route::post("/interfacesoftware/create", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'createInterfaceSoftware']);
-    Route::put("/interfacesoftware/update/{id}", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'updateInterfaceSoftware']);
-    Route::delete("/interfacesoftware/delete/{id}", [App\Http\Controllers\API\InterfaceSoftwareController::class, 'deleteInterfaceSoftware']); // Supprime le mapping du software
-
-    // TEST
+    // INTERFACES MAPPING
+    Route::get("/interface_mapping/{id}", [App\Http\Controllers\API\InterfaceMappingController::class, 'getInterfaceMapping']);
+    Route::post("/interface_mapping/create", [App\Http\Controllers\API\InterfaceMappingController::class, 'createInterfaceMapping']);
+    Route::put("/interface_mapping/update/{id}", [App\Http\Controllers\API\InterfaceMappingController::class, 'updateInterfaceMapping']);
+    Route::delete("/interface_mapping/delete/{id}", [App\Http\Controllers\API\InterfaceMappingController::class, 'deleteInterfaceMapping']); // Supprime le mapping du software
 
     // Route::get("/test", [App\Http\Controllers\API\ConvertController::class, 'indexColumn']);
     Route::get("/test/indexcolonne", [App\Http\Controllers\API\ConvertInterfaceController::class, 'indexColumn']);
     Route::post("/test/convert", [App\Http\Controllers\API\ConvertInterfaceController::class, 'convertinterface']);
     Route::post("/test/maraton", [App\Http\Controllers\API\ConvertMEController::class, 'marathonConvert']);
     Route::delete("/test//mapping/deleteOne", [App\Http\Controllers\API\MappingController::class, 'deleteOneMappingData']);
-
-    // NOTES FROM FOLDER OF COMPANIES
-
-    Route::post('company_folder/notes/create', [App\Http\Controllers\API\NoteController::class, 'createUpdateDeleteNote']);
 
     Route::post("/logout", [App\Http\Controllers\API\AuthController::class, 'logout']);
     Route::get("/user", [App\Http\Controllers\API\AuthController::class, 'getUser']);

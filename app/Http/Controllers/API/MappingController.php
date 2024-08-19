@@ -9,8 +9,8 @@ use App\Models\Hours\CustomHour;
 use App\Models\Hours\Hour;
 use App\Models\Mapping\Mapping;
 use App\Models\Companies\CompanyFolder;
+use App\Models\Misc\InterfaceMapping;
 use App\Models\Misc\InterfaceSoftware;
-use App\Models\Misc\Software;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use League\Csv\CharsetConverter;
@@ -45,7 +45,7 @@ class MappingController extends Controller
         $interface = $companyFolderInfo->interface_id;
 
 
-        $softwaresNames = Software::all()->where('id', $interface)->first();
+        $softwaresNames = InterfaceSoftware::all()->where('id', $interface)->first();
 
         if ($softwaresNames !== null){
             $idSoftware = $softwaresNames->interface_software_id;
@@ -54,7 +54,7 @@ class MappingController extends Controller
         }
 
         if ($idSoftware !== null){
-            $columnindex = InterfaceSoftware::all()->where('id',$idSoftware)->first();
+            $columnindex = InterfaceMapping::all()->where('id',$idSoftware)->first();
             $type_separateur = $columnindex->type_separateur;
             $format = $columnindex->format;
             $format = strtolower($format);

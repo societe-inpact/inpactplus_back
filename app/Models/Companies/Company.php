@@ -18,6 +18,7 @@ class Company extends Model
     public $timestamps = false;
 
     protected $table = "companies";
+    protected $hidden = ['id', 'referent_id'];
     protected $fillable = [
         "name",
         "description",
@@ -26,8 +27,7 @@ class Company extends Model
 
     public function modules()
     {
-        return $this->hasManyThrough(Module::class, CompanyModuleAccess::class, 'company_id', 'id', 'id', 'module_id')
-            ->select('modules.id', 'modules.name', 'company_module_access.has_access');
+        return $this->belongsToMany(Module::class, 'company_module_access', 'company_id')->where('has_access', true);
     }
 
     public function referent()
@@ -40,13 +40,8 @@ class Company extends Model
         return $this->hasMany(CompanyFolder::class, 'company_id');
     }
 
-    public function getEmployees()
+    public function employees()
     {
-        return DB::table('users')
-            ->join('employee_folder', 'users.id', '=', 'employee_folder.user_id')
-            ->join('company_folders', 'employee_folder.company_folder_id', '=', 'company_folders.id')
-            ->where('company_folders.company_id', $this->id)
-            ->select('users.*')
-            ->get();
+        return $this->hasMany(User::class, 'company_id');
     }
 }

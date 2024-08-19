@@ -7,7 +7,7 @@ use Illuminate\Routing\Controller as BaseController;
 use App\Http\Controllers\RuntimeException;
 use App\Http\Controllers\API\ConvertInterfaceController;
 use App\Models\Companies\CompanyFolder;
-use App\Models\Misc\Software;
+use App\Models\Misc\InterfaceSoftware;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Csv\CharsetConverter;
@@ -19,7 +19,7 @@ class ConvertController extends BaseController
 {
     public function indexColumn($nominterface)
     {
-        $controller = new InterfaceSoftwareController();
+        $controller = new InterfaceMappingController();
         return $controller->getInterfaceSoftware($nominterface);
     }
 
@@ -28,7 +28,7 @@ class ConvertController extends BaseController
         // reprise des différentes informations en fonction de l'interface
 
         $idInterface = $request->get('interface_id');
-        $softwaresNames = Software::all()->where('id',$idInterface)->first();
+        $softwaresNames = InterfaceSoftware::all()->where('id',$idInterface)->first();
         if ($softwaresNames !== null){
             $idSoftware = $softwaresNames->interface_software_id;
         }else{
@@ -36,7 +36,7 @@ class ConvertController extends BaseController
         }
 
         if ($idSoftware !== null){
-            $idsoftware = Software::findOrFail($idInterface);
+            $idsoftware = InterfaceSoftware::findOrFail($idInterface);
             $columnindex = $this->indexColumn($idsoftware->interface_software_id);
             $type_separateur = $columnindex->type_separateur;
             $format = $columnindex->format;
@@ -153,7 +153,7 @@ class ConvertController extends BaseController
         $data = [];
         $interface = $request->get('interface_id');
 
-        $softwaresNames = Software::all()->where('id',$interface)->first();
+        $softwaresNames = InterfaceSoftware::all()->where('id',$interface)->first();
         if ($softwaresNames !== null){
             $idSoftware = $softwaresNames->interface_software_id;
         }else{

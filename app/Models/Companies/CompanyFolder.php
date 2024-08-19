@@ -4,18 +4,19 @@ namespace App\Models\Companies;
 
 use App\Models\Employees\EmployeeFolder;
 use App\Models\Mapping\Mapping;
-use App\Models\Misc\InterfaceFolder;
-use App\Models\Misc\Software;
+use App\Models\Misc\CompanyFolderInterface;
+use App\Models\Misc\InterfaceSoftware;
 use App\Models\Misc\User;
 use App\Models\Modules\CompanyModuleAccess;
 use App\Models\Modules\Module;
+use App\Traits\ModuleRetrievingTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CompanyFolder extends Model
 {
-    use HasFactory;
+    use HasFactory, ModuleRetrievingTrait;
 
     public $timestamps = false;
 
@@ -32,11 +33,11 @@ class CompanyFolder extends Model
 
     public function company()
     {
-        return $this->belongsTo(Company::class, 'company_id', 'id');
+        return $this->belongsTo(Company::class, 'company_id');
     }
 
     //Ajout de companies pour le reprendre dans le get user
-    // Déjà présent au dessus ??
+    // Déjà présent au dessus
 //    public function companies()
 //    {
 //        return $this->belongsTo(Company::class, 'company_id', 'id');
@@ -44,7 +45,14 @@ class CompanyFolder extends Model
 
     public function interfaces()
     {
-        return $this->hasMany(InterfaceFolder::class, 'company_folder_id', 'id');
+        return $this->hasManyThrough(
+            InterfaceSoftware::class,
+            CompanyFolderInterface::class,
+            'company_folder_id',
+            'id',
+            'id',
+            'interface_id'
+        );
     }
 
     public function mappings()
@@ -54,7 +62,7 @@ class CompanyFolder extends Model
 
     public function employees()
     {
-        return $this->hasManyThrough(User::class, EmployeeFolder::class, 'company_folder_id', 'id', 'id', 'user_id')->with('modules');
+        return $this->belongsToMany(User::class, 'employee_folder', 'company_folder_id');
     }
 
     public function referent(){
@@ -63,9 +71,8 @@ class CompanyFolder extends Model
 
     public function modules()
     {
-        return $this->hasManyThrough(Module::class, CompanyFolderModuleAccess::class, 'company_folder_id', 'id', 'id', 'module_id')
-            ->where('company_folder_module_access.has_access', true)
-            ->select('modules.id', 'modules.name');
+        return $this->belongsToMany(Module::class, 'company_folder_module_access', 'company_folder_id')
+            ->where('has_access', true)->whereHas('companyAccess');
     }
 
 }

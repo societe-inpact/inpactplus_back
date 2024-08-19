@@ -2,7 +2,6 @@
 
 namespace App\Http;
 
-use App\Http\Middleware\Cors;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
@@ -71,6 +70,11 @@ class Kernel extends HttpKernel
 
     protected $routeMiddleware = [
         'cors' => \App\Http\Middleware\Cors::class,
-        'company.module.access' => \App\Http\Middleware\VerifyCompanyModuleAccess::class,
+
+        'company.module.access' => Middleware\ModuleAccess\VerifyCompanyModuleAccess::class,
+        'company_folder.module.access' => Middleware\ModuleAccess\VerifyCompanyFolderModuleAccess::class,
+        'user.module.access' => Middleware\ModuleAccess\VerifyUserModuleAccess::class,
+
+        'user.folder.access' => \App\Http\Middleware\VerifyUserFolderAccess::class,
     ];
 }

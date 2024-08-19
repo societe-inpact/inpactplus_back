@@ -2,7 +2,8 @@
 
 namespace App\Models\Misc;
 
-use App\Models\Misc\Software;
+use App\Models\Companies\CompanyFolder;
+use App\Models\Misc\InterfaceMapping;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -10,13 +11,20 @@ class InterfaceSoftware extends Model
 {
     use HasFactory;
 
+    protected $table = 'interfaces';
     public $timestamps = false;
+    protected $hidden = ["interface_mapping_id", "laravel_through_key"];
+    protected $fillable = [
+        "name", "interface_mapping_id"
+    ];
 
-    protected $table = 'interface_software';
-    protected $fillable = ['colonne_matricule', 'colonne_rubrique', 'colonne_valeur','colonne_datedeb', 'colonne_datefin', 'colonne_hj','colonne_pourcentagetp', 'colonne_periode', 'type_separateur','format'];
-
-    public function software(){
-        return $this->belongsTo(Software::class, 'interface_software_id');
+    public function companyFolders()
+    {
+        return $this->belongsToMany(CompanyFolder::class, 'company_folder_interface', 'interface_id');
     }
 
+    public function interfaces()
+    {
+        return $this->belongsTo(InterfaceMapping::class, 'interface_mapping_id');
+    }
 }

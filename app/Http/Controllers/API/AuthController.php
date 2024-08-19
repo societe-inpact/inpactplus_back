@@ -10,6 +10,7 @@ use App\Models\Misc\Role;
 use App\Models\Misc\User;
 use App\Models\Misc\UserModulePermission;
 use App\Models\Modules\Module;
+use App\Traits\ModuleRetrievingTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
@@ -19,70 +20,42 @@ use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
 class AuthController extends Controller
 {
+    use ModuleRetrievingTrait;
+
     public function getUser()
     {
         $user = User::with([
             'folders.modules',
-            'folders.company',
+            'folders.modules.companyAccess',
+            'folders.modules.companyFolderAccess',
+            'folders.modules.userAccess',
+            'folders.modules.userPermissions',
             'folders.company',
             'folders.mappings',
             'folders.interfaces',
             'folders.employees',
             'folders',
+            'company'
         ])->find(Auth::id());
-
         $folders = $user->folders;
-        $role = $user->getRoleNames()->first();
-
-        return match ($role) {
-            'client' => $this->getClientResponse($user, $folders, $role),
-            'inpact' => $this->getInpactResponse($user, $role),
-            default => response()->json(['erreur' => 'il manque le rôle', 'status' => 500]),
-        };
+        $roles = $user->roles->pluck('name')->toArray();
+        if (in_array('inpact', $roles)) {
+            return $this->getInpactResponse($user);
+        }
+        if (in_array('client', $roles)) {
+            return $this->getClientResponse($user, $folders, $roles);
+        }
+        if (in_array('referent', $roles)) {
+            return $this->getReferentResponse($user, $folders, $roles);
+        }
+        if (in_array('client', $roles) && in_array('referent', $roles)) {
+            return $this->getClientResponse($user, $folders, $roles);
+        }
     }
 
-    private function getClientResponse($user, $folders, $role)
+    private function getClientResponse($user, $folders, $roles)
     {
-
-        $companyOfFolder = $folders->first()->company;
-        $folderIds = $folders->pluck('id')->toArray();
-        $companyId = $companyOfFolder->pluck('id')->toArray();
-        $userModulesAccess = Module::whereIn('id', function ($query) use ($user, $folderIds, $companyId) {
-            $query->select('module_id')
-                ->from('user_module_permissions')
-                ->where('user_id', $user->id)
-                ->whereIn('module_id', function ($subQuery) use ($folderIds) {
-                    $subQuery->select('module_id')
-                        ->from('company_folder_module_access')
-                        ->whereIn('company_folder_id', $folderIds)
-                        ->where('has_access', true);
-                })
-                ->whereIn('module_id', function ($subQuery) use ($companyId) {
-                    $subQuery->select('module_id')
-                        ->from('company_module_access')
-                        ->whereIn('company_id', $companyId)
-                        ->where('has_access', true);
-                });
-        })->with(['permissions' => function($query) use ($user) {
-            $query->where('user_id', $user->id);
-        }])->get();
-
-        $modules = $userModulesAccess->map(function ($module) {
-            return [
-                'id' => $module->id,
-                'name' => $module->name,
-                'label' => $module->label,
-                'permissions' => $module->permissions->map(function ($permission) {
-                    return [
-                        'id' => $permission->permission_id,
-                        'name' => $permission->name,
-                        'label' => $permission->label,
-                        'company_folder_id' => $permission->company_folder_id,
-                    ];
-                }),
-            ];
-        });
-
+        $company = $user->company;
         return response()->json([
             'id' => $user->id,
             'email' => $user->email,
@@ -90,44 +63,39 @@ class AuthController extends Controller
             'lastname' => $user->lastname,
             'firstname' => $user->firstname,
             'telephone' => $user->telephone,
-            'roles' => $role,
-            'modules' => $modules,
-            'companies' => [
-                'id' => $companyOfFolder->id,
-                'name' => $companyOfFolder->name,
-                'description' => $companyOfFolder->description,
-                'referent' => $companyOfFolder->referent,
-                'employees' => $companyOfFolder->getEmployees(),
-                'modules' => $companyOfFolder->modules->where('has_access'),
-                'folders' => $folders->where('company_id', $companyOfFolder->id)->map(function ($folder) use ($companyOfFolder) {
+            'roles' => $roles,
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'description' => $company->description,
+                'referent' => $company->referent,
+                'folders' => $folders->map(function ($folder) use ($company) {
                     return [
                         'id' => $folder->id,
                         'folder_number' => $folder->folder_number,
                         'folder_name' => $folder->folder_name,
+                        'referent' => $folder->referent,
                         'siret' => $folder->siret,
                         'siren' => $folder->siren,
                         'notes' => $folder->notes,
-                        'software' => $folder->software,
-                        'referent' => $folder->referent,
-                        'modules' => $folder->modules->filter(function ($folderModule) use ($companyOfFolder) {
-                            $companyModule = $companyOfFolder->modules->firstWhere('id', $folderModule->id);
-                            return $folderModule && $companyModule && $companyModule->has_access;
-                        })->map(function ($filteredModule) {
+                        'interfaces' => $folder->interfaces,
+                        'mappings' => $folder->mappings,
+                        'modules_access' => $folder->modules->map(function ($module) {
                             return [
-                                'id' => $filteredModule->id,
-                                'name' => $filteredModule->name,
+                                'id' => $module->id,
+                                'name' => $module->name,
+                                'label' => $module->label,
                             ];
                         }),
-                        'mappings' => $folder->mappings,
                     ];
                 })
             ]
         ]);
     }
 
-    private function getInpactResponse($user, $role)
+    private function getReferentResponse($user, $folders)
     {
-        $companies = Company::with(['folders.software', 'folders.mappings', 'folders.employees.modules.permissions'])->get();
+        $company = $user->company;
         return response()->json([
             'id' => $user->id,
             'email' => $user->email,
@@ -135,257 +103,112 @@ class AuthController extends Controller
             'lastname' => $user->lastname,
             'firstname' => $user->firstname,
             'telephone' => $user->telephone,
-            'roles' => $role,
+            'access_modules' => $user->modules(),
+            'roles' => $user->roles->map(function ($role) {
+                return [
+                    'name' => $role->name,
+                    'permissions' => $role->permissions->map(function ($permission) {
+                        return [
+                            'name' => $permission->name,
+                            'label' => $permission->label,
+                        ];
+                    })
+                ];
+            }),
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'description' => $company->description,
+                'referent' => $company->referent,
+                'employees' => $company->employees,
+                'modules_access' => $company->modules,
+                'folders' => $folders->map(function ($folder) use ($company) {
+                    return [
+                        'id' => $folder->id,
+                        'folder_number' => $folder->folder_number,
+                        'folder_name' => $folder->folder_name,
+                        'referent' => $folder->referent,
+                        'siret' => $folder->siret,
+                        'siren' => $folder->siren,
+                        'notes' => $folder->notes,
+                        'employees' => $folder->employees,
+                        'interfaces' => $folder->interfaces,
+                        'mappings' => $folder->mappings,
+                        'modules_access' => $folder->modules->map(function ($module) {
+                            return [
+                                'id' => $module->id,
+                                'name' => $module->name,
+                                'label' => $module->label,
+                                'permissions' => $module->userPermissions->map(function ($permission) {
+                                    return [
+                                        'id' => $permission->id,
+                                        'folder' => $permission->folder,
+                                        'name' => $permission->name,
+                                        'label' => $permission->label,
+                                    ];
+                                })->toArray(),
+                            ];
+                        }),
+                    ];
+                })
+            ]
+        ]);
+    }
+
+    private function getInpactResponse($user)
+    {
+        $companies = Company::with(['folders', 'folders.interfaces', 'folders.mappings', 'folders.employees'])->get();
+        return response()->json([
+            'id' => $user->id,
+            'email' => $user->email,
+            'civility' => $user->civility,
+            'lastname' => $user->lastname,
+            'firstname' => $user->firstname,
+            'telephone' => $user->telephone,
+            'roles' => $user->roles->map(function ($role) {
+                return [
+                    'name' => $role->name,
+                    'permissions' => $role->permissions->map(function ($permission) {
+                        return [
+                            'name' => $permission->name,
+                            'label' => $permission->label,
+                        ];
+                    })
+                ];
+            }),
             'companies' => $companies->map(function ($company) {
                 return [
                     'id' => $company->id,
                     'name' => $company->name,
-                    'referent' => $company->referent,
                     'description' => $company->description,
-                    'folders' => $company->folders->map(function ($folder) {
+                    'referent' => $company->referent,
+                    'employees' => $company->employees,
+                    'modules_access' => $company->modules,
+                    'folders' => $company->folders->map(function ($folder) use ($company) {
                         return [
                             'id' => $folder->id,
                             'folder_number' => $folder->folder_number,
                             'folder_name' => $folder->folder_name,
+                            'referent' => $folder->referent,
                             'siret' => $folder->siret,
                             'siren' => $folder->siren,
-                            'mappings' => $folder->mappings,
                             'notes' => $folder->notes,
-                            'referent' => $folder->referent,
-                            'employees' => $folder->employees->map(function ($employee) {
+                            'interfaces' => $folder->interfaces,
+                            'employees' => $folder->employees,
+                            'modules_access' => $folder->modules->map(function ($module) {
                                 return [
-                                    "id" => $employee->id,
-                                    "email" => $employee->email,
-                                    "civility" => $employee->civility,
-                                    "lastname" => $employee->lastname,
-                                    "firstname" => $employee->firstname,
-                                    "telephone" => $employee->telephone,
-                                    "role" => $employee->getRoleNames()->first(),
-                                    'modules' => $employee->modules->map(function ($module) {
-                                        return [
-                                            'id' => $module->id,
-                                            'name' => $module->name,
-                                            'permissions' => $module->permissions->map(function ($permission) {
-                                                return [
-                                                    'id' => $permission->permission_id,
-                                                    'name' => $permission->name,
-                                                    'label' => $permission->label,
-                                                ];
-                                            }),
-                                        ];
-                                    }),
+                                    'id' => $module->id,
+                                    'name' => $module->name,
+                                    'label' => $module->label,
                                 ];
                             }),
-                            'software' => $folder->software,
+                            'mappings' => $folder->mappings,
                         ];
-                    }),
+                    })
                 ];
             }),
         ]);
     }
-
-
-//    public function getUser()
-//    {
-//        $user = Auth::user();
-//        $user->load([
-//            'folders.modules.module',
-//            'folders.companies',
-//            'folders.mappings',
-//            'folders.software',
-//            'folders.users',
-//        ]);
-//
-//        $folders = $user->folders;
-//        $roles = $user->getRoleNames();
-//
-//        // Inutile, il y a juste la relation du modèle à définir (cf: ligne 108)
-//
-//        // vérification s'il y a un referent_id dans le dossier si pas referent companies
-////        foreach ($folders as $folder) {
-////            $referent_id = $folder->referent_id;
-////
-////            if($referent_id) {
-////                $folder['referent_id'] = $referent_id ;
-////            } else {
-////                $folder['referent_id'] = $folder['companies']->referent_id ;
-////            }
-////        }
-//
-//        // $role = $roles[0]; // Création de la variable inutile - Utiliser la fonction first (convention Laravel) plutôt que l'index du tableau
-//        switch ($roles->first()) {
-//
-//            case 'client' :
-//                // reprendre la compagnie du premier dossier
-//                $companies = $folders[0]['companies'];
-//                // Ajoute has_access dans l'objet module
-//                $folders->each(function ($folder) {
-//                    $folder->modules->each(function ($folderModule) {
-//                        $folderModule->module->has_access = $folderModule->has_access;
-//                    });
-//                });
-//
-//                $folderIds = $folders->pluck('id')->toArray();
-//                $companyId = $companies->pluck('id')->toArray();
-//
-//                $modules = Module::whereIn('id', function ($query) use ($user, $folderIds, $companyId) {
-//                    $query->select('module_id')
-//                        ->from('user_module_permissions')
-//                        ->where('user_id', $user->id)
-//                        ->whereIn('module_id', function ($subQuery) use ($folderIds) {
-//                            $subQuery->select('module_id')
-//                                ->from('company_folder_module_access')
-//                                ->whereIn('company_folder_id', $folderIds)
-//                                ->where('has_access', true);
-//                        })
-//                        ->whereIn('module_id', function ($subQuery) use ($companyId) {
-//                            $subQuery->select('module_id')
-//                                ->from('company_module_access')
-//                                ->whereIn('company_id', $companyId)
-//                                ->where('has_access', true);
-//                        });
-//                })->with('permissions')->get();
-//                $modules = $modules->map(function ($module) {
-//                    return [
-//                        'id' => $module->id,
-//                        'name' => $module->name,
-//                        'permissions' => $module->permissions->map(function ($permission) {
-//                            return [
-//                                'id' => $permission->permission_id,
-//                                'name' => $permission->name,
-//                                'label' => $permission->label,
-//                                'company_folder_id' => $permission->company_folder_id
-//                            ];
-//                        }),
-//                    ];
-//                });
-//
-//                $userResponse = [
-//                    'id' => $user->id,
-//                    'email' => $user->email,
-//                    'civility' => $user->civility,
-//                    'lastname' => $user->lastname,
-//                    'firstname' => $user->firstname,
-//                    'telephone' => $user->telephone,
-//                    'companies' => [
-//                        // reprise des informations de la compagnie
-//                        'id' => $companies->id,
-//                        'name' => $companies->name,
-//                        'referent' => $companies->referent,
-//                        // reprise des informations des folders
-//                        'folders' => $folders->filter(function ($folder) use ($companies) {
-//                            return $folder->company_id === $companies->id;
-//                        })->map(function ($folder) {
-//                            return [
-//                                'id' => $folder->id,
-//                                'folder_number' => $folder->folder_number,
-//                                'folder_name' => $folder->folder_name,
-//                                'siret' => $folder->siret,
-//                                'siren' => $folder->siren,
-//                                'referent' => $folder->users->filter(function ($user) use ($folder) {
-//                                    return $user->id === $folder->referent_id;
-//                                })->map(function ($user) {
-//                                    return [
-//                                        'id' => $user->id,
-//                                        'lastname' => $user->lastname,
-//                                        'firstname' => $user->firstname,
-//                                        'telephone' => $user->telephone,
-//                                        'email' => $user->email,
-//                                    ];
-//                                }),
-//                                'modules' => $folder->modules->map(function ($folderModule) {
-//                                    return [
-//                                        'id' => $folderModule->module->id,
-//                                        'name' => $folderModule->module->name,
-//                                        'has_access' => $folderModule->has_access,
-//                                    ];
-//                                }),
-//                                'mappings' => $folder->mappings,
-//                                'software' => $folder->software,
-//                            ];
-//                        }),
-//                    ],
-//                    'modules' => $modules,
-//                    'roles' => $roles,
-//                ];
-//                break;
-//            case 'inpact' :
-//                $companies = Company::with(['folders.software', 'folders.mappings', 'folders.users', 'folders.users.modules.permissions'])->get();
-//
-//                $userResponse = [
-//                    'id' => $user->id,
-//                    'email' => $user->email,
-//                    'civility' => $user->civility,
-//                    'lastname' => $user->lastname,
-//                    'firstname' => $user->firstname,
-//                    'telephone' => $user->telephone,
-//                    'roles' => $roles,
-//                    'companies' => $companies->map(function ($company) {
-//                        return [
-//                            'referent' => $company->referent,
-//                            'id' => $company->id,
-//                            'name' => $company->name,
-//                            'description' => $company->description,
-//                            'folders' => $company->folders->map(function ($folder) {
-//                                return [
-//                                    'id' => $folder->id,
-//                                    'folder_number' => $folder->folder_number,
-//                                    'folder_name' => $folder->folder_name,
-//                                    'siret' => $folder->siret,
-//                                    'siren' => $folder->siren,
-//                                    'mappings' => $folder->mappings,
-//                                    'notes' => $folder->notes,
-//                                    'referent' => $folder->referent,
-////                                'referent' => $folder->users->filter(function($user) use($folder){
-////                                    return $user->id === $folder->referent_id;
-////                                })->map(function($user){
-////                                    return [
-////                                        'id'=> $user->id,
-////                                        'lastname' => $user->lastname,
-////                                        'firstname' => $user->firstname,
-////                                        'telephone' => $user->telephone,
-////                                        'email' => $user->email,
-////                                    ];
-////                                }),
-//                                    'employees' => $folder->users->map(function ($user) {
-//                                        return [
-//                                            "id" => $user->id,
-//                                            "email" => $user->email,
-//                                            "civility" => $user->civility,
-//                                            "lastname" => $user->lastname,
-//                                            "firstname" => $user->firstname,
-//                                            "telephone" => $user->telephone,
-//                                            'modules' => $user->modules->map(function ($module) {
-//                                                return [
-//                                                    'id' => $module->id,
-//                                                    'name' => $module->name,
-//                                                    'permissions' => $module->permissions->map(function ($permission) {
-//                                                        return [
-//                                                            'id' => $permission->permission_id,
-//                                                            'name' => $permission->name,
-//                                                            'label' => $permission->label,
-//                                                        ];
-//                                                    }),
-//                                                ];
-//                                            }),
-//                                        ];
-//                                    }),
-//                                    'software' => $folder->software,
-//                                ];
-//                            }),
-//                        ];
-//                    }),
-//                ];
-//
-//                break;
-//            default :
-//                $userResponse = ['erreur' => 'il manque le rôle', 'status' => 500];
-//
-//        }
-//        return response()->json($userResponse);
-//
-//    }
-
 
     public function login(Request $request)
     {

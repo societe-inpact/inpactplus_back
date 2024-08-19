@@ -6,14 +6,14 @@ use App\Models\Companies\CompanyFolder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class InterfaceFolder extends Model
+class CompanyFolderInterface extends Model
 {
     use HasFactory;
 
     public $timestamps = false;
 
-    protected $table = 'interface_folder';
-    protected $fillable = ["company_folder_id","interface_folder_id"];
+    protected $table = 'company_folder_interface';
+    protected $fillable = ["company_folder_id","company_folder_interface"];
 
     public function companyFolder()
     {
@@ -22,6 +22,6 @@ class InterfaceFolder extends Model
 
     public function software()
     {
-        return $this->belongsTo(Software::class, 'interface_folder_id');
+        return $this->belongsTo(InterfaceSoftware::class, 'interface_folder_id');
     }
 }
