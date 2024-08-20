@@ -379,6 +379,7 @@ class MappingController extends Controller
                 if ($absence !== null) {
                     $out = array("name_rubrique" => 'Heure', "output_rubrique_id" => ($absence->id));
                     $rubricRequest = array_replace($rubricRequest, $out);
+                    return collect($rubricRequest);
                 }
             }
             return $rubricRequest;
