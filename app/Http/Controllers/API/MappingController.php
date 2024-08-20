@@ -209,11 +209,25 @@ class MappingController extends Controller
     // Fonction permettant de récupérer le Model d'une rubrique
     protected function resolveOutputModel($outputType, $outputRubriqueId)
     {
-        if (!class_exists($outputType)) {
+        $modelsPath = [
+            'Absence' => 'Absences',
+            'CustomAbsence' => 'Absences',
+            'Hour' => 'Hours',
+            'CustomHour' => 'Hours',
+            'VariableElement' => 'VariablesElements',
+        ];
+
+        $folder = $modelsPath[$outputType] ?? null;
+
+        $namespacePrefix = 'App\Models\\';
+        $fullOutputType = $folder ? $namespacePrefix . $folder . '\\' . $outputType : $namespacePrefix . $outputType;
+        // Vérifier si la classe existe
+        if (!class_exists($fullOutputType)) {
             return null;
         }
 
-        $outputModelClass = App::make($outputType);
+        $outputModelClass = App::make($fullOutputType);
+
         return $outputModelClass->find($outputRubriqueId);
     }
 

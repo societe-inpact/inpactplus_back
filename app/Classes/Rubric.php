@@ -17,7 +17,6 @@ class Rubric
 
     public function __construct($data)
     {
-        var_dump($data);
         $this->is_used = $data['is_used'];
         $this->output_type = $data['output_type'];
         $this->name_rubrique = $data['name_rubrique'];
