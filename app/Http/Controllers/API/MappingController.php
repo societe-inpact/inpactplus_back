@@ -372,17 +372,17 @@ class MappingController extends Controller
 //            }
 //        }
 
-        if ($rubricRequest->output_type === "CustomAbsence") {;
+        if ($rubricRequest->output_type === "CustomAbsence") {
             $labelHourCust = CustomAbsence::where("id", $rubricRequest->output_rubrique_id)->where("company_folder_id", $companyFolderId)->first();
             if ($labelHourCust){
                 $absence = Absence::where("code", $labelHourCust->code)->first();
                 if ($absence !== null) {
                     $out = array("name_rubrique" => 'Heure', "output_rubrique_id" => ($absence->id));
-                    $rubricRequest = array_replace($rubricRequest, $out);
-                    return collect($rubricRequest);
+                    $rubricRequest = array_replace($rubricRequest->toArray(), $out);
                 }
+                return collect($rubricRequest);
             }
-            return $rubricRequest;
+            return collect($rubricRequest);
         }
 
 

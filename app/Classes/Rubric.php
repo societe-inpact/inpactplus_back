@@ -29,6 +29,8 @@ class Rubric
         preg_match('/[^\\\]+$/', $this->output_type, $matches);
         $outputType = $matches[0];
 
+        // Cas où !is_used
+
         switch ($outputType) {
             case 'CustomAbsence':
             {
