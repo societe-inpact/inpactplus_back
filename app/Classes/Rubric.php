@@ -44,8 +44,11 @@ class Rubric
             }
             case 'CustomHour':
             {
-                return CustomHour::find($this->output_rubrique_id)
-                    ->where('company_folder_id', '=', $companyFolderId);
+                $customHour = CustomHour::find($this->output_rubrique_id);
+                if (!$customHour && !$companyFolderId){
+                    return $customHour;
+                }
+                return $customHour->where('company_folder_id', '=', $companyFolderId);
             }
             case 'Absence':
             {

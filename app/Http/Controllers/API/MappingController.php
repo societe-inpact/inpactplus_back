@@ -281,10 +281,10 @@ class MappingController extends Controller
         $companyFolderId = $mapping->company_folder_id;
         // permet de modifier output_type en se basant sur le nom de la rubrique (si ce n'est pas null)
         $rubric = $this->controleAbsenceHours($rubricRequest, $companyFolderId);
-
         if ($rubric['name_rubrique'] !== null) {
-            $out = array("output_type" => $this->tableNames[$rubric['name_rubrique']]);
-            $rubric = array_replace($rubric, $out);
+            $out = array("name_rubrique" => $rubric['name_rubrique'], "output_type" => $rubric['output_type']);
+            $rubricRequest = collect($rubricRequest)->toArray();
+            $rubric = array_merge($rubricRequest, $out);
         }
 
         // permet d'enregister les modifications
@@ -387,14 +387,18 @@ class MappingController extends Controller
             return collect($rubricRequest);
         }
 
-
         if ($rubricRequest->output_type === "CustomHour") {
-            $labelHourCust = CustomHour::where("id", $rubricRequest['output_rubrique_id'])->where("company_folder_id", $companyFolderId)->first();
-            $hour = Hour::where("code", $labelHourCust->code)->first();
-            if ($hour !== null) {
-                $out = array("name_rubrique" => 'Heure', "output_rubrique_id" => ($hour->id));
-                $rubricRequest = array_replace($rubricRequest, $out);
+            $labelHourCust = CustomHour::where("id", $rubricRequest->output_rubrique_id)->where("company_folder_id", $companyFolderId)->first();
+            if ($labelHourCust){
+                $hour = Hour::where("code", $labelHourCust->code)->first();
+                if ($hour !== null) {
+                    $out = array("name_rubrique" => 'Heure', "output_rubrique_id" => $hour->id, "output_type" => 'Hour');
+                    $rubricRequest = collect($rubricRequest)->toArray();
+                    $rubricRequest = array_merge($rubricRequest, $out);
+                }
+                return $rubricRequest;
             }
+            return collect($rubricRequest);
         }
         return collect($rubricRequest);
     }
@@ -412,7 +416,6 @@ class MappingController extends Controller
             foreach ($allMappedRubriques as $inputMappedRubrique) {
                 $isUsed = filter_var($validatedRequestData['is_used'], FILTER_VALIDATE_BOOLEAN) || filter_var($inputMappedRubrique['is_used'], FILTER_VALIDATE_BOOLEAN);
                 if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData['input_rubrique']) {
-
                     if ($isUsed === false) {
                         return response()->json([
                             'error' => 'La rubrique d\'entrée ' . $validatedRequestData['input_rubrique'] . ' n\'est pas utilisée',
@@ -430,7 +433,18 @@ class MappingController extends Controller
 //                }
             }
         }
-        $this->saveMappingData($companyFolderId, $validatedRequestData);
+
+        if ($request->has('code')){
+            $requestNewCustomRubric = new Request([
+              "code" => $request->code,
+              "label" => $request->label,
+              "base_calcul" => $request->base_calcul ?? null,
+              "therapeutic_part_time" => $request->therapeutic_part_time ?? null,
+            ]);
+            $this->saveMappingData($companyFolderId, $validatedRequestData, $requestNewCustomRubric);
+        }else{
+            $this->saveMappingData($companyFolderId, $validatedRequestData);
+        }
         return response()->json(['success' => 'Mapping ajouté avec succès'], 201);
     }
 
@@ -460,17 +474,50 @@ class MappingController extends Controller
     }
 
     // Fonction permettant d'enregistrer un nouveau mapping en BDD
-    protected function saveMappingData($companyFolder, $validatedData)
+    protected function saveMappingData($companyFolder, $validatedData, ?Request $request = null)
     {
         $newMapping = [
             'input_rubrique' => $validatedData['input_rubrique'],
             'name_rubrique' => $validatedData['name_rubrique'],
             'output_rubrique_id' => $validatedData['output_rubrique_id'],
             'output_type' => $validatedData['output_type'],
-            'is_used' => $validatedData['is_used']
+            'is_used' => $validatedData['is_used'],
         ];
 
         $mapping = Mapping::where( 'company_folder_id', $companyFolder)->first();
+        switch ($validatedData['output_type']){
+            case 'CustomHour' : {
+                $existingCustomHour = CustomHour::all()->where('id', '=', $validatedData['output_rubrique_id']);
+                if ($existingCustomHour->isEmpty()){
+                    if ($request){
+                        $createNewCustomHourRequest = new Request([
+                            'code' => $request->code,
+                            'label' => $request->label,
+                            'company_folder_id' => $companyFolder,
+                        ]);
+                        $hourController = new HourController();
+                        $hourController->createCustomHour($createNewCustomHourRequest);
+                    }
+                }
+            }
+            case 'CustomAbsence' : {
+                $existingCustomAbsence = CustomAbsence::all()->where('id', '=', $validatedData['output_rubrique_id']);
+                if ($existingCustomAbsence->isEmpty()){
+                    if ($request){
+                        $createNewCustomAbsenceRequest = new Request([
+                            'code' => $request->code,
+                            'label' => $request->label,
+                            'base_calcul' => $request->base_calcul,
+                            'therapeutic_part_time' => $request->therapeutic_part_time ?? null,
+                            'company_folder_id' => $companyFolder,
+                        ]);
+                        $absenceController = new AbsenceController();
+                        $absenceController->createCustomAbsence($createNewCustomAbsenceRequest);
+                    }
+                }
+            }
+            default: '';
+        }
         if ($mapping) {
             $existingData = $mapping->data;
             $existingData[] = $newMapping;

@@ -42,10 +42,10 @@ class HourController extends Controller
      *
      * @return JsonResponse Réponse JSON indiquant le succès ou l'échec de la création.
      */
-    public function createCustomHour(){
+    public function createCustomHour(Request $request){
 
         // Validation des données
-        $validated = request()->validate([
+        $validated = $request->validate([
             'label' => 'required',
             'code' => ['required', new CustomRubricRule],
             'company_folder_id' => 'required|integer',
