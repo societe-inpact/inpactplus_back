@@ -19,16 +19,18 @@ class Rubric
     {
         $this->is_used = $data['is_used'];
         $this->output_type = $data['output_type'] ?? null;
-        $this->name_rubrique = $data['name_rubrique'];
+        $this->name_rubrique = $data['name_rubrique'] ?? null;
         $this->input_rubrique = $data['input_rubrique'];
-        $this->output_rubrique_id = $data['output_rubrique_id'];
+        $this->output_rubrique_id = $data['output_rubrique_id'] ?? null;
     }
 
     public function getSilaeRubric(?int $companyFolderId = null)
     {
+        if (!$this->is_used){
+            return collect($this);
+        }
         preg_match('/[^\\\]+$/', $this->output_type, $matches);
         $outputType = $matches[0];
-
         // Cas où !is_used
 
         switch ($outputType) {

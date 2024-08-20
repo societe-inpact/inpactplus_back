@@ -235,7 +235,7 @@ class MappingController extends Controller
     public function updateMapping(Request $request, $id)
     {
 
-        $validatedData = $this->validateMappingData($request);
+        $this->validateMappingData($request);
         $companyFolder = $request->get('company_folder_id');
         if (!$companyFolder) {
             return response()->json("L'id du dossier est requis", 400);
@@ -262,7 +262,7 @@ class MappingController extends Controller
     // Fonction permettant de valider les données d'enregistrement d'un mapping
     protected function validateMappingData(Request $request)
     {
-        $test = $request->validate([
+        return $request->validate([
             // 'input_rubrique' => 'required|string|regex:/^[A-Za-z0-9]{1,3}$/',
             'input_rubrique' => 'required|string|max:255',
             'name_rubrique' => 'nullable|string|max:255',
