@@ -377,10 +377,11 @@ class MappingController extends Controller
             if ($labelHourCust){
                 $absence = Absence::where("code", $labelHourCust->code)->first();
                 if ($absence !== null) {
-                    $out = array("name_rubrique" => 'Heure', "output_rubrique_id" => ($absence->id));
-                    $rubricRequest = array_replace($rubricRequest->toArray(), $out);
+                    $out = array("name_rubrique" => 'Absence', "output_rubrique_id" => $absence->id, "output_type" => 'Absence');
+                    $rubricRequest = collect($rubricRequest)->toArray();
+                    $rubricRequest = array_merge($rubricRequest, $out);
                 }
-                return collect($rubricRequest);
+                return $rubricRequest;
             }
             return collect($rubricRequest);
         }
