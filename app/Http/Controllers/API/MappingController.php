@@ -279,7 +279,6 @@ class MappingController extends Controller
         $dataBis = [];
         $companyFolderId = $mapping->company_folder_id;
         // permet de modifier output_type en se basant sur le nom de la rubrique (si ce n'est pas null)
-
         $rubric = $this->controleAbsenceHours($rubricRequest, $companyFolderId);
 
         if ($rubric['name_rubrique'] !== null) {
@@ -374,8 +373,8 @@ class MappingController extends Controller
 //        }
 
         if ($rubricRequest->output_type === "CustomAbsence") {;
-            $labelHourCust = CustomAbsence::where("id", $rubricRequest->output_rubrique_id)->where("company_folder_id", $companyFolderId)->get();
-            if ($labelHourCust->isNotEmpty()){
+            $labelHourCust = CustomAbsence::where("id", $rubricRequest->output_rubrique_id)->where("company_folder_id", $companyFolderId)->first();
+            if ($labelHourCust){
                 $absence = Absence::where("code", $labelHourCust->code)->first();
                 if ($absence !== null) {
                     $out = array("name_rubrique" => 'Heure', "output_rubrique_id" => ($absence->id));
