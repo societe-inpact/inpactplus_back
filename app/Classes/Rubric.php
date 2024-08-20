@@ -24,7 +24,7 @@ class Rubric
         $this->output_rubrique_id = $data['output_rubrique_id'];
     }
 
-    public function getFormattedRubric(?int $companyFolderId = null)
+    public function getSilaeRubric(?int $companyFolderId = null)
     {
         preg_match('/[^\\\]+$/', $this->output_type, $matches);
         $outputType = $matches[0];
