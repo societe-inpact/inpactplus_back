@@ -18,7 +18,7 @@ class ConvertMEController extends ConvertController
 
     public function formatFilesMarathon()
     {
-        return [ "extension" => "csv" , "separateur" => ";" , "index_rubrique" => 3 ];
+        return ["extension" => "csv", "separateur" => ";", "index_rubrique" => 3];
     }
 
     public function getMappingsFolder($folderId)
@@ -42,11 +42,24 @@ class ConvertMEController extends ConvertController
 
     protected function resolveOutputModel($outputType, $outputRubriqueId)
     {
-        if (!class_exists($outputType)) {
+        $modelFolders = [
+            'Absence' => 'Absences',
+            'CustomAbsence' => 'Absences',
+            'Hour' => 'Hours',
+            'CustomHour' => 'Hours',
+        ];
+
+        $folder = $modelFolders[$outputType] ?? null;
+
+        $namespacePrefix = 'App\Models\\';
+        $fullOutputType = $folder ? $namespacePrefix . $folder . '\\' . $outputType : $namespacePrefix . $outputType;
+
+        if (!class_exists($fullOutputType)) {
             return null;
         }
 
-        $outputModelClass = App::make($outputType);
+        $outputModelClass = App::make($fullOutputType);
+
         return $outputModelClass->find($outputRubriqueId);
     }
 
@@ -83,35 +96,22 @@ class ConvertMEController extends ConvertController
         $unmapped = [];
 
         // Vérification s'il y a une en-tête en fonction du matricule
-
         $containsDigit = ctype_digit($records[0][0]);
         if (($containsDigit) === false) {
             unset($records[0]);
         }
-
         // Création de la nouvelle table qui correspond à silae
-
         foreach ($records as $record) {
-
             $codeSilae = $this->getSilaeCode($record[3], $folderId);
             $matricule = $record[0];
             $valeur = $record[4];
-
             // création de la table data et non mappée
+            preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $valeur, $matches);
 
-            if ($codeSilae){
-
+            if ($codeSilae) {
                 if (str_starts_with($codeSilae->code, "AB-")) {
-                    preg_match_all('/(\d{8}J-\d{8}J-\d{3}-\d{2}:\d{2})/i', $valeur, $values);;
-                    foreach ($values[0] as $value){
-                        preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $value, $matches);
-                        $data = $this->processAbsenceRecord($data, $record, $codeSilae, $matches);
-                    }
-
-                } else {
-                    $data = $this->convertNegativeOrDotValue($data, $record, $codeSilae);
+                    $data = $this->processAbsenceRecord($data, $record, $codeSilae, $matches);
                 }
-
             }else{
                 $unmapped[] = [
                     'Matricule' => $matricule,
@@ -122,11 +122,11 @@ class ConvertMEController extends ConvertController
                 ];
             }
         }
-        // dd($unmapped);
         return [$data, $unmapped];
     }
 
-    private function processAbsenceRecord(array $data, array $record, $codeSilae, array $matches): array
+    private
+    function processAbsenceRecord(array $data, array $record, $codeSilae, array $matches): array
     {
         $value = $this->calculateAbsenceTypePeriod($codeSilae, $matches);
         $start_date = $matches[4] . "/" . $matches[3] . "/" . $matches[2];
@@ -213,9 +213,11 @@ class ConvertMEController extends ConvertController
         }
         return $data;
     }
+
 // TODO : ajouter une condition d'erreur
-    // Fonction permettant de convertir les valeurs negatives ou commençant par un point
-    private function convertNegativeOrDotValue(array $data, array $record, $codeSilae): array
+// Fonction permettant de convertir les valeurs negatives ou commençant par un point
+    private
+    function convertNegativeOrDotValue(array $data, array $record, $codeSilae): array
     {
         $value = $record[4];
 
@@ -235,8 +237,9 @@ class ConvertMEController extends ConvertController
         return $data;
     }
 
-    // Fonction déterminant si la valeur doit être calculée sur une base heures (H) ou jours (J)
-    private function calculateAbsenceTypePeriod($codeSilae, array $matches)
+// Fonction déterminant si la valeur doit être calculée sur une base heures (H) ou jours (J)
+    private
+    function calculateAbsenceTypePeriod($codeSilae, array $matches)
     {
         if ($codeSilae->base_calcul === 'H') {
             return intval($matches[13]);
@@ -244,8 +247,9 @@ class ConvertMEController extends ConvertController
         return self::CORRESPONDENCES['absences']['J'];
     }
 
-    // Fonction permettant d'ajouter la date de début et de fin
-    private function addDateRangeToRecords(array $data, string $matricule, $codeSilae, $value, int $start_date_formatted, int $end_date_formatted): array
+// Fonction permettant d'ajouter la date de début et de fin
+    private
+    function addDateRangeToRecords(array $data, string $matricule, $codeSilae, $value, int $start_date_formatted, int $end_date_formatted): array
     {
         while ($start_date_formatted <= $end_date_formatted) {
             $data[] = [
@@ -262,13 +266,14 @@ class ConvertMEController extends ConvertController
     }
 
 
-        /**
+    /**
      * Convertit un fichier CSV à l'aide de la méthode convert et écrit les résultats dans une table.
      *
      * @param Reader $file Objet Reader contenant les données du fichier CSV
      * @throws Exception
      */
-    public function marathonConvert(request $request)
+    public
+    function marathonConvert(request $request)
     {
         // reprise des différentes informations
 
@@ -282,8 +287,7 @@ class ConvertMEController extends ConvertController
             'csv' => 'required|file|mimes:csv,txt',
         ]);
 
-        if ($request->hasFile('csv'))
-        {
+        if ($request->hasFile('csv')) {
             $file = $request->file('csv');
             $reader = Reader::createFromPath($file->getPathname(), 'r');
             $reader->addFormatter($encoder);
@@ -293,7 +297,6 @@ class ConvertMEController extends ConvertController
             $header = $reader->getHeader();
             $records = iterator_to_array($reader->getRecords(), true);
             $result = $this->marathonInterface($records, $folderId);
-
             return $result;
         }
     }

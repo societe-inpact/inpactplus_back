@@ -112,6 +112,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::delete("/company/delete", [App\Http\Controllers\API\CompanyController::class, 'deleteCompany']);
 
     // FOLDER OF COMPANIES
+    // TODO : Controller le middleware
     Route::middleware(['user.folder.access'])->group(function () {
         Route::get("/company_folders", [App\Http\Controllers\API\CompanyFolderController::class, 'getCompanyFolders']);
         Route::post("/company_folder/create", [App\Http\Controllers\API\CompanyFolderController::class, 'createCompanyFolder']);

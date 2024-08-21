@@ -22,10 +22,10 @@ class MappingController extends Controller
 {
     protected $tableNames = [
         'Absence' => 'App\Models\Absences\Absence',
-        'Absence personnalisée' => 'App\Models\Absences\CustomAbsence',
-        'Heure' => 'App\Models\Hours\Hour',
-        'Heure personnalisée' => 'App\Models\Hours\CustomHour',
-        'Éléments variables' => 'App\Models\VariablesElements\VariableElement',
+        'CustomAbsence' => 'App\Models\Absences\CustomAbsence',
+        'Hour' => 'App\Models\Hours\Hour',
+        'CustomHour' => 'App\Models\Hours\CustomHour',
+        'VariableElement' => 'App\Models\VariablesElements\VariableElement',
     ];
 
     protected $tableNamesRevers = [
@@ -207,27 +207,32 @@ class MappingController extends Controller
     }
 
     // Fonction permettant de récupérer le Model d'une rubrique
-    protected function resolveOutputModel($outputType, $outputRubriqueId)
+    public function resolveOutputModel($outputType, $outputRubriqueId, $companyFolderId)
     {
-        $modelsPath = [
+        $modelFolders = [
             'Absence' => 'Absences',
             'CustomAbsence' => 'Absences',
             'Hour' => 'Hours',
             'CustomHour' => 'Hours',
-            'VariableElement' => 'VariablesElements',
+            // Ajoutez d'autres mappings ici si nécessaire
         ];
 
-        $folder = $modelsPath[$outputType] ?? null;
+        // Déterminer le sous-dossier du modèle
+        $folder = $modelFolders[$outputType] ?? null;
 
+        // Construire le chemin complet du modèle
         $namespacePrefix = 'App\Models\\';
         $fullOutputType = $folder ? $namespacePrefix . $folder . '\\' . $outputType : $namespacePrefix . $outputType;
+
         // Vérifier si la classe existe
         if (!class_exists($fullOutputType)) {
             return null;
         }
 
+        // Créer une instance du modèle
         $outputModelClass = App::make($fullOutputType);
 
+        // Retourner l'instance trouvée par l'ID
         return $outputModelClass->find($outputRubriqueId);
     }
 
@@ -250,8 +255,7 @@ class MappingController extends Controller
         }
 
         $updateResult = $this->updateMappingData($mapping, $request);
-
-        if ($updateResult === 'updated') {
+        if ($updateResult) {
             return response()->json(['message' => 'Mapping mis à jour avec succès']);
         } else {
             return response()->json(['error' => 'Rubrique introuvable'], 404);
@@ -280,20 +284,24 @@ class MappingController extends Controller
         $dataBis = [];
         $companyFolderId = $mapping->company_folder_id;
         // permet de modifier output_type en se basant sur le nom de la rubrique (si ce n'est pas null)
-        $rubric = $this->controleAbsenceHours($rubricRequest, $companyFolderId);
-        if ($rubric['name_rubrique'] !== null) {
-            $out = array("name_rubrique" => $rubric['name_rubrique'], "output_type" => $rubric['output_type']);
-            $rubricRequest = collect($rubricRequest)->toArray();
-            $rubric = array_merge($rubricRequest, $out);
+        $rubricRequest = $this->controleAbsenceHours($rubricRequest, $companyFolderId);
+        $rubricRequest = collect($rubricRequest);
+        if ($rubricRequest['name_rubrique'] !== null) {
+            $out = array("name_rubrique" => $rubricRequest['name_rubrique'], "output_type" => $this->tableNames[$rubricRequest['output_type']]);
+            $rubricRequest = $rubricRequest->toArray();
+            $data = array_merge($rubricRequest, $out);
+            $mapping->data = array_merge($mapping->data, $data);
+            dd($mapping->data);
+            return $mapping->save($data);
         }
 
         // permet d'enregister les modifications
         foreach ($data as $entry) {
-            if ($entry['input_rubrique'] === $rubric['input_rubrique']) {
-                $entry['name_rubrique'] = $rubric['name_rubrique'];
-                $entry['output_rubrique_id'] = $rubric['output_rubrique_id'];
-                $entry['output_type'] = $rubric['output_type'];
-                $entry['is_used'] = $rubric['is_used'];
+            if ($entry['input_rubrique'] === $rubricRequest['input_rubrique']) {
+                $entry['name_rubrique'] = $rubricRequest['name_rubrique'];
+                $entry['output_rubrique_id'] = $rubricRequest['output_rubrique_id'];
+                $entry['output_type'] = $this->tableNames[$rubricRequest['output_type']];
+                $entry['is_used'] = $rubricRequest['is_used'];
                 $dataBis[] = $entry;
             } else {
                 $dataBis[] = $entry;
@@ -315,64 +323,6 @@ class MappingController extends Controller
     {
         // On controle si dans le mapping du folder il existe déjà une absence avec le même code et le même output_rubric_id
         $rubricRequest = new Rubric($rubricRequest);
-        $formattedRubricRequest = $rubricRequest->getSilaeRubric();
-        $companyFolderMapping = Mapping::all()->where('company_folder_id', '=', $companyFolderId);
-//        foreach ($companyFolderMapping as $mapping) {
-//            $dataMapping = $mapping->data;
-//            foreach ($dataMapping as $mappedRubric) {
-//                if (str_ends_with($rubricRequest->output_type, "CustomAbsence")) {
-//                    $existingCustomAbsences = CustomAbsence::all()
-//                        ->where('company_folder_id', '=', $companyFolderId)
-//                        ->where('code', '=', $rubricRequest->input_rubrique);
-//                    if ($existingCustomAbsences) {
-//                        foreach ($existingCustomAbsences as $existingCustomAbsence) {
-//                            $out = array("name_rubrique" => 'Absence personnalisée', "output_rubrique_id" => ($existingCustomAbsence->id));
-//                            $rubricRequest = array_replace($rubricRequest, $out);
-//                        }
-//                    }
-//                    if (!$formattedRubricRequest){
-//                        return $rubricRequest;
-//                    }
-//                    $rubric = new Rubric($mappedRubric);
-//
-//                    return $rubric->getSilaeRubric();
-//                }
-//            }
-//        }
-//
-//        if (str_ends_with($rubricRequest->output_type, "Absence")) {
-//            $existingAbsences = Absence::all()
-//                ->where('code', '=', $rubricRequest->input_rubrique)
-//                ->where('id', '=', $rubricRequest->output_rubrique_id);
-//            dd($existingAbsences);
-//            if ($existingAbsences->isNotEmpty()) {
-//                dd($existingAbsences);
-//            }
-//            return collect($rubricRequest);
-//        }
-//
-//        // On recherche dans les mappings du dossier
-//        $companyFolderMapping = Mapping::all()->where('company_folder_id', '=', $companyFolderId);
-//        foreach ($companyFolderMapping as $mapping) {
-//            $dataMapping = $mapping->data;
-//            foreach ($dataMapping as $mappedRubric) {
-//                if ($rubricRequest['output_rubrique_id'] === $mappedRubric['output_rubrique_id']) {
-//                    $mappedRubric = new Rubric($mappedRubric);
-//                    $formattedRubricRequest = $mappedRubric->getSilaeRubric($mapping->company_folder_id)->first();
-//                    $existingCustomAbsences = CustomAbsence::all()
-//                        ->where('company_folder_id', '=', $rubricRequest['company_folder_id'])
-//                        ->where('id', '=', $mappedRubric->output_rubrique_id)
-//                        ->where('code', '=', $formattedRubricRequest->code);
-//                    if ($existingCustomAbsences) {
-//                        foreach ($existingCustomAbsences as $existingCustomAbsence) {
-//                            $out = array("name_rubrique" => 'Absence personnalisée', "output_rubrique_id" => ($existingCustomAbsence->id));
-//                            $rubricRequest = array_replace($rubricRequest, $out);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-
         if ($rubricRequest->output_type === "CustomAbsence") {
             $labelHourCust = CustomAbsence::where("id", $rubricRequest->output_rubrique_id)->where("company_folder_id", $companyFolderId)->first();
             if ($labelHourCust){

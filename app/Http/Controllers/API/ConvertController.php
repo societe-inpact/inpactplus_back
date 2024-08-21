@@ -166,7 +166,6 @@ class ConvertController extends BaseController
             $data =  $controller->convertinterface($request);
 
         }else{
-
             // interfaces spécifique
             $softwaresName = strtolower($softwaresNames["name"]);
             switch ($softwaresName){
@@ -174,29 +173,35 @@ class ConvertController extends BaseController
                     $controller = new ConvertMEController();
                     $data = $controller->marathonConvert($request);
                     break;
-
                 default:
                     return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]);
 
             }
         }
+        $mappedRubrics = $data[0];
+        $unmappedRubric = $data[1];
+
+        $collection = collect($unmappedRubric);
+        $uniqueUnmappedRubric = $collection->unique(function ($item) {
+            return $item['Code']    ;
+        })->values()->all();
 
         $header = ['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin'];
-        if (!empty($data[0])) {
+        if ($mappedRubrics && !$uniqueUnmappedRubric) {
             $csvConverted = $this->writeToFile($data, $date);
             return response()->json([
                 'success' => true,
                 'message' => 'Votre fichier a été converti',
                 'status' => 200,
                 'file' => $csvConverted,
-                'rows' => $data[0],
+                'rows' => $mappedRubrics,
                 'header' => $header
             ]);
         } else {
             return response()->json([
                 'success' => false,
                 'message' => 'Conversion impossible, les rubriques suivantes ne sont pas mappées : ',
-                'unmapped' => $data[1],
+                'unmapped' => $uniqueUnmappedRubric,
                 'status' => 400,
             ]);
         }

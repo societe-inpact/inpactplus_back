@@ -24,14 +24,13 @@ class Rubric
         $this->output_rubrique_id = $data['output_rubrique_id'] ?? null;
     }
 
-    public function getSilaeRubric(?int $companyFolderId = null)
+    public function getSilaeRubric(?int $companyFolderId = null, ?int $rubricId = null)
     {
         if (!$this->is_used){
             return collect($this);
         }
         preg_match('/[^\\\]+$/', $this->output_type, $matches);
         $outputType = $matches[0];
-        // Cas où !is_used
 
         switch ($outputType) {
             case 'CustomAbsence':
