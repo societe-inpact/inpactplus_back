@@ -20,8 +20,8 @@ class VerifyUserFolderAccess
     {
         $user = User::with([
             'folders.modules',
-            'folders.modules.companyAccess',
             'folders.modules.companyFolderAccess',
+            'folders.modules.companyAccess',
             'folders.modules.userAccess',
             'folders.modules.userPermissions',
             'folders.company',
@@ -44,6 +44,8 @@ class VerifyUserFolderAccess
 
         if (!$userFolderHasAccess) {
             return response()->json(['error' => 'Vous n\'avez pas accès à ce dossier'], 401);
+        }elseif ($user->hasRole('inpact')) {
+            return $next($request);
         }
         return $next($request);
     }

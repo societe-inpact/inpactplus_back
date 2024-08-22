@@ -16,11 +16,8 @@ class CompanyController extends Controller
             'folders.referent',
             'modules',
             'referent',
+            'employees'
         ])->get();
-
-        $companies->each(function ($company) {
-            $company->employees = $company->getEmployees();
-        });
 
         return response()->json($companies);
     }
