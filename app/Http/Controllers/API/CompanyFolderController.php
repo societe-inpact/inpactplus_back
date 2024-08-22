@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Companies\CompanyFolder;
 use App\Models\Mapping\Mapping;
 use App\Models\Misc\CompanyFolderInterface;
+use App\Models\Misc\InterfaceSoftware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -67,12 +68,12 @@ class CompanyFolderController extends Controller
     public function updateCompanyFolder(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'folder_number' => 'required|integer',
+            'folder_number' => 'required|string',
             'folder_name' => 'required|string',
             'siret' => 'required|string',
             'siren' => 'required|string',
-            'interface_id' => 'required|exists:interfaces,id',
-            'company_id' => 'exists:companies,id',
+            'referent' => 'nullable|exists:users,id',
+            'company_id' => 'nullable|exists:companies,id',
         ]);
 
         if ($validator->fails()) {
@@ -85,9 +86,18 @@ class CompanyFolderController extends Controller
                 'folder_name' => $request->folder_name,
                 'siret' => $request->siret,
                 'siren' => $request->siren,
-                'interface_id' => $request->interface_id,
+                'referent_id' => $request->referent_id,
                 'company_id' => $request->company_id,
             ];
+
+            if ($request->has('referent_id')) {
+                $data['referent_id'] = $request->referent_id;
+            }
+
+            if ($request->has('company_id')) {
+                $data['company_id'] = $request->company_id;
+            }
+
             CompanyFolder::where('id', $id)->update($data);
             return response()->json(['message' => 'Dossier modifié avec succès'], 200);
 
@@ -95,4 +105,75 @@ class CompanyFolderController extends Controller
             return response()->json(['error' => 'Une erreur est survenue lors de la modification du dossier.'], 500);
         }
     }
+
+    public function addInterfaceToCompanyFolder(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'interface_id' => 'required|exists:interfaces,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $data = [
+                'company_folder_id' => $id,
+                'interface_id' => $request->interface_id,
+            ];
+            $existingFolderInterface = CompanyFolderInterface::all()->where('interface_id', '==', $request->get('interface_id'))->first();
+            if ($existingFolderInterface){
+                $existingInterface = InterfaceSoftware::findOrFail($request->interface_id);
+                return response()->json(['message' => 'L\'interface ' . $existingInterface->name . ' est déjà associée au dossier']);
+            }
+            CompanyFolderInterface::create($data);
+            return response()->json(['message' => 'Interface ajoutée avec succès'], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Une erreur est survenue lors de l\'ajout de l\'interface'], 500);
+        }
+    }
+
+    public function updateInterfaceFromCompanyFolder(Request $request, $companyFolderId, $interfaceId)
+    {
+        // Valider que le nouveau 'interface_id' existe dans la table 'interfaces'
+        $validator = Validator::make($request->all(), [
+            'interface_id' => 'required|exists:interfaces,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            // Trouver l'association actuelle entre le 'company_folder' et l'interface actuelle
+            $companyFolderInterface = CompanyFolderInterface::where('company_folder_id', $companyFolderId)
+                ->where('interface_id', $interfaceId)
+                ->first();
+
+            if (!$companyFolderInterface) {
+                return response()->json(['message' => 'Aucune association trouvée pour cette interface et ce dossier'], 404);
+            }
+
+            // Vérifier si la nouvelle interface est déjà associée à ce dossier
+            $existingFolderInterface = CompanyFolderInterface::where('company_folder_id', $companyFolderId)
+                ->where('interface_id', $request->interface_id)
+                ->first();
+
+            if ($existingFolderInterface) {
+                return response()->json(['message' => 'La nouvelle interface est déjà associée à ce dossier'], 400);
+            }
+
+            // Mettre à jour l'interface_id avec le nouvel ID
+            $companyFolderInterface->interface_id = $request->interface_id;
+            $companyFolderInterface->save();
+
+            return response()->json(['message' => 'Interface mise à jour avec succès'], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Une erreur est survenue lors de la mise à jour de l\'interface'], 500);
+        }
+    }
+
+
 }
