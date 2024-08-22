@@ -13,15 +13,15 @@ class CompanyFolderInterface extends Model
     public $timestamps = false;
 
     protected $table = 'company_folder_interface';
-    protected $fillable = ["company_folder_id","company_folder_interface"];
+    protected $fillable = ["company_folder_id","interface_id"];
 
     public function companyFolder()
     {
         return $this->belongsTo(CompanyFolder::class, 'company_folder_id', 'id');
     }
 
-    public function software()
+    public function interfaces()
     {
-        return $this->belongsTo(InterfaceSoftware::class, 'interface_folder_id');
+        return $this->belongsTo(InterfaceSoftware::class, 'interface_id');
     }
 }

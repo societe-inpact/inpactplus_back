@@ -207,7 +207,7 @@ class MappingController extends Controller
     }
 
     // Fonction permettant de récupérer le Model d'une rubrique
-    public function resolveOutputModel($outputType, $outputRubriqueId, $companyFolderId)
+    public function resolveOutputModel($outputType, $outputRubriqueId)
     {
         $modelFolders = [
             'Absence' => 'Absences',
@@ -495,6 +495,7 @@ class MappingController extends Controller
     }
 
     // Fonction permettant de mettre à jour un mappings existant
+    // ????? C'est une fonction qui supprime ici, pourquoi l'avoir modifiée en update ?
     public function deleteOneLineMappingData(Request $request)
     {
         $validator = Validator::make($request->all(), [
