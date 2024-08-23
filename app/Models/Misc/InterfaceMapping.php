@@ -13,7 +13,7 @@ class InterfaceMapping extends Model
     public $timestamps = false;
 
     protected $table = 'interface_mapping';
-    protected $fillable = ['colonne_matricule', 'colonne_rubrique', 'colonne_valeur','colonne_datedeb', 'colonne_datefin', 'colonne_hj','colonne_pourcentagetp', 'colonne_periode', 'type_separateur','extension'];
+    protected $fillable = ['employee_number', 'rubric', 'value','start_date', 'end_date', 'hj','pourcentage_tp', 'period', 'separator_type', 'extension'];
 
     public function software(){
         return $this->belongsTo(InterfaceSoftware::class, 'interface_software_id');

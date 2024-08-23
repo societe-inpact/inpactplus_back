@@ -24,15 +24,15 @@ class InterfaceMappingController extends ConvertController
     public function createInterfaceMapping(Request $request){
 
         $validator = Validator::make($request->all(), [
-            'matricule' => 'required|integer',
-            'rubrique' => 'required|integer',
-            'valeur' => 'required|integer',
-            'datedeb' => 'nullable|integer',
-            'datefin'=> 'nullable|integer',
+            'employee_number' => 'required|integer',
+            'rubric' => 'required|integer',
+            'value' => 'required|integer',
+            'start_date' => 'nullable|integer',
+            'end_date'=> 'nullable|integer',
             'hj'=> 'nullable|integer',
-            'pourcentagetp'=> 'nullable|integer',
-            'periode' => 'nullable|integer',
-            'separateur' => 'nullable|string',
+            'percentage_tp'=> 'nullable|integer',
+            'period' => 'nullable|integer',
+            'separator_type' => 'nullable|string',
             'extension'=> 'required|string',
         ]);
 
@@ -42,15 +42,15 @@ class InterfaceMappingController extends ConvertController
 
         $data = [
             'software_name' => $request->software_name || null,
-            'colonne_matricule' => $request->matricule,
-            'colonne_rubrique' => $request->rubrique,
-            'colonne_valeur' => $request->valeur,
-            'colonne_datedeb' => $request->datedeb,
-            'colonne_datefin'=> $request->datefin,
-            'colonne_hj'=> $request->hj,
-            'colonne_pourcentagetp'=> $request->pourcentagetp,
-            'colonne_periode' => $request->periode,
-            'type_separateur' => $request->separateur,
+            'employee_number' => $request->employee_number,
+            'rubric' => $request->rubric,
+            'value' => $request->value,
+            'start_date' => $request->start_date,
+            'end_date'=> $request->end_date,
+            'hj'=> $request->hj,
+            'percentage_tp'=> $request->percentage_tp,
+            'period' => $request->period,
+            'separator_type' => $request->separator_type,
             'extension'=> $request->extension,
         ];
 
@@ -63,27 +63,25 @@ class InterfaceMappingController extends ConvertController
             $interfaceMapping = InterfaceMapping::create($data);
             if ($interfaceMapping ){
                 $softwareId = $interfaceMapping->id;
+                $software = InterfaceSoftware::create(['name'=> $softwareName, 'interface_mapping_id'=> $softwareId]);
+                return response()->json(['message' => 'Création de l\'interface réussie', 'data' =>  $software], 200);
             }
-            $software = InterfaceSoftware::create(['name'=> $softwareName, 'interface_mapping_id'=> $softwareId]);
-            return response()->json(['message' => 'Création de l\'interface réussie', 'software' =>  $software], 200);
         }
-
         return response()->json(['error' => 'Une erreur est survenue lors de la création de l\'interface.'], 500);
     }
 
     public function updateInterfaceMapping(Request $request, $id){
 
         $validator = Validator::make($request->all(), [
-            'title' => 'nullable|string',
-            'matricule' => 'required|integer',
-            'rubrique' => 'required|integer',
-            'valeur' => 'required|integer',
-            'datedeb' => 'nullable|integer',
-            'datefin'=> 'nullable|integer',
+            'employee_number' => 'required|integer',
+            'rubric' => 'required|integer',
+            'value' => 'required|integer',
+            'start_date' => 'nullable|integer',
+            'end_date'=> 'nullable|integer',
             'hj'=> 'nullable|integer',
-            'pourcentagetp'=> 'nullable|integer',
-            'periode' => 'nullable|integer',
-            'separateur' => 'nullable|string',
+            'percentage_tp'=> 'nullable|integer',
+            'period' => 'nullable|integer',
+            'separator_type' => 'nullable|string',
             'extension'=> 'required|string',
         ]);
         if ($validator->fails()) {
@@ -91,15 +89,15 @@ class InterfaceMappingController extends ConvertController
         }
 
         $data = [
-            'colonne_matricule' => $request->matricule,
-            'colonne_rubrique' => $request->rubrique,
-            'colonne_valeur' => $request->valeur,
-            'colonne_datedeb' => $request->datedeb,
-            'colonne_datefin'=> $request->datefin,
-            'colonne_hj'=> $request->hj,
-            'colonne_pourcentagetp'=> $request->pourcentagetp,
-            'colonne_periode' => $request->periode,
-            'type_separateur' => $request->separateur,
+            'employee_number' => $request->employee_number,
+            'rubric' => $request->rubric,
+            'value' => $request->value,
+            'start_date' => $request->start_date,
+            'end_date'=> $request->end_date,
+            'hj'=> $request->hj,
+            'percentage_tp'=> $request->percentage_tp,
+            'period' => $request->period,
+            'separator_type' => $request->separator_type,
             'extension'=> $request->extension,
         ];
 
