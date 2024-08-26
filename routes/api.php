@@ -113,7 +113,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // FOLDER OF COMPANIES
     // TODO : Controller le middleware
-    Route::middleware(['user.folder.access'])->group(function () {
+    // Route::middleware(['user.folder.access'])->group(function () {
         Route::get("/company_folders", [App\Http\Controllers\API\CompanyFolderController::class, 'getCompanyFolders'])
             ->middleware('can:read_company_folder,App\Models\Companies\CompanyFolder');
 
@@ -133,7 +133,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
         // CREATE-UPDATE NOTES FROM FOLDER
         Route::post('company_folder/notes/create', [App\Http\Controllers\API\NoteController::class, 'createUpdateDeleteNote']);
-    });
+    // });
 
     // SOFTWARE
     Route::get("/interfaces", [App\Http\Controllers\API\InterfaceController::class, 'getInterfaces']);

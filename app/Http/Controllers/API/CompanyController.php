@@ -5,7 +5,6 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Companies\Company;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class CompanyController extends Controller
@@ -26,6 +25,7 @@ class CompanyController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string',
             'description' => 'nullable|string',
+            'telephone' => 'nullable|string',  
             'referent_id' => 'exists:users,id',
         ]);
         if ($validator->fails()) {
@@ -35,11 +35,12 @@ class CompanyController extends Controller
             $data = [
                 'name' => $request->name,
                 'description' => $request->description,
+                'telephone' => $request->telephone,
                 'referent_id' => $request->referent_id,
             ];
 
             $company = Company::create($data);
-            return response()->json(['message' => 'Entreprise créée avec succès', 'company' => ['id' => $company->id]], 200);
+            return response()->json(['message' => 'Entreprise créée avec succès', 'data' => $company], 200);
 
         } catch (\Exception $e) {
             return response()->json(['error' => 'Une erreur est survenue lors de la création de l\'entreprise.'], 500);

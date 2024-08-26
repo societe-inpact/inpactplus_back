@@ -134,19 +134,10 @@ class CompanyFolderController extends Controller
         }
     }
 
-    public function updateInterfaceFromCompanyFolder(Request $request, $companyFolderId, $interfaceId)
+    public function deleteInterfaceFromCompanyFolder($companyFolderId, $interfaceId)
     {
-        // Valider que le nouveau 'interface_id' existe dans la table 'interfaces'
-        $validator = Validator::make($request->all(), [
-            'interface_id' => 'required|exists:interfaces,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
         try {
-            // Trouver l'association actuelle entre le 'company_folder' et l'interface actuelle
+            // Trouver l'association actuelle entre le 'company_folder' et l'interface
             $companyFolderInterface = CompanyFolderInterface::where('company_folder_id', $companyFolderId)
                 ->where('interface_id', $interfaceId)
                 ->first();
@@ -155,25 +146,13 @@ class CompanyFolderController extends Controller
                 return response()->json(['message' => 'Aucune association trouvée pour cette interface et ce dossier'], 404);
             }
 
-            // Vérifier si la nouvelle interface est déjà associée à ce dossier
-            $existingFolderInterface = CompanyFolderInterface::where('company_folder_id', $companyFolderId)
-                ->where('interface_id', $request->interface_id)
-                ->first();
+            // Supprimer l'association entre le dossier et l'interface
+            $companyFolderInterface->delete();
 
-            if ($existingFolderInterface) {
-                return response()->json(['message' => 'La nouvelle interface est déjà associée à ce dossier'], 400);
-            }
-
-            // Mettre à jour l'interface_id avec le nouvel ID
-            $companyFolderInterface->interface_id = $request->interface_id;
-            $companyFolderInterface->save();
-
-            return response()->json(['message' => 'Interface mise à jour avec succès'], 200);
+            return response()->json(['message' => 'Interface supprimée avec succès'], 200);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Une erreur est survenue lors de la mise à jour de l\'interface'], 500);
+            return response()->json(['error' => 'Une erreur est survenue lors de la suppression de l\'interface'], 500);
         }
     }
-
-
 }

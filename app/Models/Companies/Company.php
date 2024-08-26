@@ -2,14 +2,10 @@
 
 namespace App\Models\Companies;
 
-use App\Models\Employees\Employee;
-use App\Models\Employees\EmployeeFolder;
 use App\Models\Misc\User;
-use App\Models\Modules\CompanyModuleAccess;
 use App\Models\Modules\Module;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 
 class Company extends Model
 {
@@ -18,10 +14,10 @@ class Company extends Model
     public $timestamps = false;
 
     protected $table = "companies";
-    protected $hidden = ['id', 'referent_id'];
     protected $fillable = [
         "name",
         "description",
+        "telephone",
         "referent_id"
     ];
 

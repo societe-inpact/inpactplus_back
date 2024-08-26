@@ -46,7 +46,7 @@ class AuthController extends Controller
             return $this->getClientResponse($user, $folders, $roles);
         }
         if (in_array('referent', $roles)) {
-            return $this->getReferentResponse($user, $folders, $roles);
+            return $this->getReferentResponse($user, $folders);
         }
         if (in_array('client', $roles) && in_array('referent', $roles)) {
             return $this->getClientResponse($user, $folders, $roles);
@@ -65,7 +65,7 @@ class AuthController extends Controller
             'telephone' => $user->telephone,
             'roles' => $roles,
             'modules_access' => $user->modules(),
-            'company' => [
+            'companies' => [
                 'id' => $company->id,
                 'name' => $company->name,
                 'description' => $company->description,
@@ -229,7 +229,7 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        // Valider les données d'entrée
+        // valider les données d'entrée
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|unique:users',
             'password' => 'required|min:8',
@@ -238,22 +238,22 @@ class AuthController extends Controller
             'firstname' => 'required',
             'telephone' => 'nullable|string|min:10|max:10',
         ]);
-
+        
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
         try {
-            // Creation du nouvel utilisateur
+            // Création du nouvel utilisateur
             $user = User::create([
                 'email' => $request->email,
                 'password' => bcrypt($request->password),
                 'civility' => $request->civility,
                 'lastname' => $request->lastname,
                 'firstname' => $request->firstname,
-                'telephone' => $request->telephone
+                'telephone' => $request->telephone,
             ]);
-
+        
             // Assignation du rôle et des permissions
             if ($request->is_employee) {
                 if (!Role::where('name', 'client')->exists()) {
@@ -266,12 +266,14 @@ class AuthController extends Controller
                 }
                 $user->assignRole('inpact');
             }
-            return response()->json(['message' => 'Utilisateur créé avec succès', 'user' => $user], 200);
-
+        
+            return response()->json(['message' => 'Utilisateur créé avec succès', 'data' => $user], 200);
+        
         } catch (\Exception $e) {
-            // Gestion des erreurs
-            return response()->json(['error' => 'Une erreur est survenue lors de la création de l\'utilisateur.'], 500);
+            // Afficher le message d'erreur exact
+            return response()->json(['error' => 'Une erreur est survenue : ' . $e->getMessage()], 500);
         }
+        
     }
 
 
