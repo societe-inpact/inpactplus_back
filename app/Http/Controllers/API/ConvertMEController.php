@@ -81,11 +81,9 @@ class ConvertMEController extends ConvertController
             $codeSilae = $this->getSilaeCode($record[3], $folderId);
             $matricule = $record[0];
             $value = $record[4];
-
             if ($codeSilae) {
                 preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $value, $matches);
                 if (str_starts_with($codeSilae->code, "AB-")) {
-
                     // Cas où l'absence contient un montant en int comme valeur
                     if (is_numeric($value)) {
                         $mappedrubrics[] = [
@@ -269,7 +267,6 @@ class ConvertMEController extends ConvertController
     public function marathonConvert(request $request)
     {
         // reprise des différentes informations
-
         $folderId = $request->get('company_folder_id');
         // extraction en fonction du format => voir pour le sortir dans une autre fonction
 

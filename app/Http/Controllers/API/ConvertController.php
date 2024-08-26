@@ -14,6 +14,7 @@ use League\Csv\CharsetConverter;
 use League\Csv\Exception;
 use League\Csv\Reader;
 use League\Csv\Writer;
+use function Symfony\Component\String\s;
 
 class ConvertController extends BaseController
 {
@@ -147,10 +148,6 @@ class ConvertController extends BaseController
         $month = $request->get('month');
         $year = $request->get('year');
         $date = $folderNumber-> folder_number . '_' . $month . $year;
-
-        // executer le convert adéquat à l'interface
-
-        $data = [];
         $interface = $request->get('interface_id');
 
         $softwaresNames = InterfaceSoftware::all()->where('id', $interface)->first();
@@ -180,11 +177,12 @@ class ConvertController extends BaseController
         }
         $mappedRubrics = $data[0];
         $unmappedRubric = $data[1];
-
         $collection = collect($unmappedRubric);
-        $uniqueUnmappedRubric = $collection->unique(function ($item) {
-            return $item['Code']    ;
-        })->values()->all();
+        $uniqueUnmappedRubric = $collection->where('is_used', true)
+            ->unique(function ($item) {
+                return $item['Code'];
+            })->values()->all();
+
 
         $header = ['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin'];
         if ($mappedRubrics && !$uniqueUnmappedRubric) {

@@ -178,7 +178,7 @@ class MappingController extends Controller
         foreach ($mappings as $mapping) {
             foreach ($mapping->data as $data) {
                 $data = new Rubric($data);
-                if ($data->input_rubrique === $inputRubrique) {
+                if ($data->input_rubrique === $inputRubrique && $data->is_used) {
                     if ($data->output_type) {
                         return [
                             'input_rubrique' => $data->input_rubrique,
