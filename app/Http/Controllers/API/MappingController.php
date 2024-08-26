@@ -260,7 +260,7 @@ class MappingController extends Controller
         $mapping = Mapping::with('folder')
             ->where('company_folder_id', $companyFolder)
             ->findOrFail($id);
-        if ($mapping->company_folder_id !== intval($validatedData['company_folder_id'])) {
+        if ($mapping->company_folder_id !== intval($validatedData->company_folder_id)) {
             return response()->json(['error' => 'Le dossier de l\'entreprise ne correspond pas.'], 403);
         }
         $updateResult = $this->updateMappingData($mapping, $validatedData);
@@ -294,11 +294,11 @@ class MappingController extends Controller
     {
         $data = $mapping->data;
         foreach ($data as &$entry) {
-            if ($entry['input_rubrique'] === $rubricRequest['input_rubrique']) {
-                $entry['name_rubrique'] = $rubricRequest['name_rubrique'];
-                $entry['output_rubrique_id'] = $rubricRequest['output_rubrique_id'];
-                $entry['output_type'] = $rubricRequest['output_type'];
-                $entry['is_used'] = $rubricRequest['is_used'];
+            if ($entry['input_rubrique'] === $rubricRequest->input_rubrique) {
+                $entry['name_rubrique'] = $rubricRequest->name_rubrique;
+                $entry['output_rubrique_id'] = $rubricRequest->output_rubrique_id;
+                $entry['output_type'] = $rubricRequest->output_type;
+                $entry['is_used'] = $rubricRequest->is_used;
                 $mapping->data = $data;
                 $mapping->save();
                 return 'updated';
