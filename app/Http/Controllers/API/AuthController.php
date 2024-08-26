@@ -46,7 +46,7 @@ class AuthController extends Controller
             return $this->getClientResponse($user, $folders, $roles);
         }
         if (in_array('referent', $roles)) {
-            return $this->getReferentResponse($user, $folders, $roles);
+            return $this->getReferentResponse($user, $folders);
         }
         if (in_array('client', $roles) && in_array('referent', $roles)) {
             return $this->getClientResponse($user, $folders, $roles);
@@ -266,11 +266,11 @@ class AuthController extends Controller
                 }
                 $user->assignRole('inpact');
             }
-            return response()->json(['message' => 'Utilisateur créé avec succès', 'user' => $user], 200);
+            return response()->json(['message' => 'Utilisateur créé avec succès', 'data' => $user], 200);
 
         } catch (\Exception $e) {
             // Gestion des erreurs
-            return response()->json(['error' => 'Une erreur est survenue lors de la création de l\'utilisateur.'], 500);
+            return response()->json(['error' => 'Une erreur est survenue lors de la création de l\'utilisateur.', 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -302,7 +302,7 @@ class AuthController extends Controller
         }
 
         if ($user->update($updateData)) {
-            return response()->json(['user' => $user, 'status' => 204]);
+            return response()->json(['data' => $user, 'status' => 204]);
         } else {
             return response()->json(['message' => 'Erreur lors de la mise à jour']);
         }
