@@ -3,6 +3,11 @@
 namespace App\Providers;
 
 // use Illuminate\Support\Facades\Gate;
+use App\Http\Controllers\API\MappingController;
+use App\Models\Companies\CompanyFolder;
+use App\Models\Mapping\Mapping;
+use App\Policies\CompanyFolderPolicy;
+use App\Policies\Modules\MappingModulePolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -13,7 +18,8 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-        //
+        CompanyFolder::class => CompanyFolderPolicy::class,
+        Mapping::class => MappingModulePolicy::class
     ];
 
     /**
@@ -21,6 +27,6 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $this->registerPolicies();
     }
 }

@@ -65,7 +65,7 @@ class AuthController extends Controller
             'telephone' => $user->telephone,
             'roles' => $roles,
             'modules_access' => $user->modules(),
-            'company' => [
+            'companies' => [
                 'id' => $company->id,
                 'name' => $company->name,
                 'description' => $company->description,

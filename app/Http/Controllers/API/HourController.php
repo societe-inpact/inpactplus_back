@@ -63,7 +63,9 @@ class HourController extends Controller
         // Vérification si une heure avec ce code existe déjà
         $isHourExists = Hour::where('code', $validated['code'])->exists();
 
-        if($isCustomHourExists || $isHourExists){
+        if($isHourExists){
+            return response()->json(['message' => 'Heure déjà existante.'], 400);
+        }elseif($isCustomHourExists){
             return response()->json(['message' => 'Heure personnalisée déjà existante.'], 400);
         }
 

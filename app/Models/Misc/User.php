@@ -83,6 +83,24 @@ class User extends Authenticatable
         return $this->belongsToMany(Role::class, 'model_has_roles', 'model_id')->with('permissions');
     }
 
+    public function hasPermission($permissionName)
+    {
+        if ($this->permissions->contains('name', $permissionName)) {
+            return true;
+        }
+
+        // Vérifie les permissions des rôles de l'utilisateur
+        foreach ($this->roles as $role) {
+            foreach ($role->permissions as $permission) {
+                if ($permission->name === $permissionName) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     public function permissions(): BelongsToMany
     {
         $query = $this->belongsToMany(Permission::class, 'user_module_permissions', 'user_id')
@@ -90,11 +108,11 @@ class User extends Authenticatable
             ->distinct();
 
         // Appliquer des conditions supplémentaires basées sur les dossiers
-        if ($this->folders->isNotEmpty()) {
-            $query->withPivot('company_folder_id')
-                ->wherePivot('has_access', true)
-                ->wherePivot('company_folder_id', '=', $this->folders->first()->id);
-        }
+        // if ($this->folders->isNotEmpty()) {
+        //    $query->withPivot('company_folder_id')
+        //        ->wherePivot('has_access', true)
+        //        ->wherePivot('company_folder_id', '=', $this->folders->first()->id);
+        //}
 
         return $query->distinct();
     }

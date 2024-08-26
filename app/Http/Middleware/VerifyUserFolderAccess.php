@@ -36,6 +36,10 @@ class VerifyUserFolderAccess
             return response()->json(['error' => 'Vous n\'êtes pas connecté'], 401);
         }
 
+        if ($user->hasRole('inpact')) {
+            return $next($request);
+        }
+
         $companyFolderIds= $user->folders->pluck('id')->toArray();
         $userFolderHasAccess = EmployeeFolder::where('user_id', $user->id)
             ->whereIn('company_folder_id', $companyFolderIds)
@@ -44,9 +48,8 @@ class VerifyUserFolderAccess
 
         if (!$userFolderHasAccess) {
             return response()->json(['error' => 'Vous n\'avez pas accès à ce dossier'], 401);
-        }elseif ($user->hasRole('inpact')) {
-            return $next($request);
         }
+
         return $next($request);
     }
 }

@@ -13,11 +13,16 @@ use Illuminate\Support\Facades\Validator;
 class CompanyFolderController extends Controller
 {
     public function getCompanyFolders(){
-        $companyFolders = CompanyFolder::with('modules','company','software','mappings','employees', 'referent')->get();
+
+        $this->authorize('read_company_folder', CompanyFolder::class);
+
+        $companyFolders = CompanyFolder::with('modules','company','interfaces','mappings','employees', 'referent')->get();
         return response()->json($companyFolders);
     }
     public function createCompanyFolder(Request $request)
     {
+        $this->authorize('create_company_folder', CompanyFolder::class);
+
         $validator = Validator::make($request->all(), [
             'folder_number' => 'required|string',
             'folder_name' => 'required|string',
@@ -67,6 +72,8 @@ class CompanyFolderController extends Controller
 
     public function updateCompanyFolder(Request $request, $id)
     {
+        $this->authorize('update_company_folder', CompanyFolder::class);
+
         $validator = Validator::make($request->all(), [
             'folder_number' => 'required|string',
             'folder_name' => 'required|string',
