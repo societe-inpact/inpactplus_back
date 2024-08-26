@@ -351,7 +351,7 @@ class MappingController extends Controller
         foreach ($mappedRubriques as $mappedRubrique) {
             $allMappedRubriques = $mappedRubrique->data;
             foreach ($allMappedRubriques as $inputMappedRubrique) {
-                $isUsed = filter_var($validatedRequestData->is_used, FILTER_VALIDATE_BOOLEAN) || filter_var($inputMappedRubrique->is_used, FILTER_VALIDATE_BOOLEAN);
+                $isUsed = $validatedRequestData->is_used || $inputMappedRubrique['is_used'];
                 if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData->input_rubrique) {
                     if ($isUsed === false) {
                         return response()->json([
