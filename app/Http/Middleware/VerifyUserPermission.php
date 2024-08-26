@@ -16,7 +16,7 @@ class VerifyUserPermission
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, $permission): Response
     {
         $user = User::with([
             'folders.modules',
@@ -36,15 +36,10 @@ class VerifyUserPermission
             return response()->json(['error' => 'Vous n\'êtes pas connecté'], 401);
         }
 
-        $companyFolderIds= $user->folders->pluck('id')->toArray();
-        $userFolderHasAccess = EmployeeFolder::where('user_id', $user->id)
-            ->whereIn('company_folder_id', $companyFolderIds)
-            ->where('has_access', true)
-            ->exists();
-
-        if (!$userFolderHasAccess) {
-            return response()->json(['error' => 'Vous n\'avez pas accès à ce dossier'], 401);
+        if (!$user->hasPermission($permission)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
+
         return $next($request);
     }
 }

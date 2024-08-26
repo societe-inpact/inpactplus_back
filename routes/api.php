@@ -41,11 +41,21 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     ])->group(function () {
         Route::post("/import", [App\Http\Controllers\API\ConvertController::class, 'importFile']);
         Route::post("/convert", [App\Http\Controllers\API\ConvertController::class, 'convertFile']);
-        Route::post("/mapping/store", [App\Http\Controllers\API\MappingController::class, 'storeMapping']);
-        Route::post("/mapping/{id}", [App\Http\Controllers\API\MappingController::class, 'getMapping']);
-        Route::patch("/mapping/update/{id}", [App\Http\Controllers\API\MappingController::class, 'updateMapping']);
-        Route::delete("/mapping/delete/{id}", [App\Http\Controllers\API\MappingController::class, 'deleteMapping']);
-        Route::delete("/mapping/deleteOneLine", [App\Http\Controllers\API\MappingController::class, 'deleteOneLineMappingData']);
+
+        Route::post("/mapping/store", [App\Http\Controllers\API\MappingController::class, 'storeMapping'])
+            ->middleware('can:create_mapping,App\Models\Mapping\Mapping');
+
+        Route::post("/mapping/{id}", [App\Http\Controllers\API\MappingController::class, 'getMapping'])
+            ->middleware('can:read_mapping,App\Models\Mapping\Mapping');
+
+        Route::patch("/mapping/update/{id}", [App\Http\Controllers\API\MappingController::class, 'updateMapping'])
+            ->middleware('can:update_mapping,App\Models\Mapping\Mapping');
+
+        Route::delete("/mapping/delete/{id}", [App\Http\Controllers\API\MappingController::class, 'deleteMapping'])
+            ->middleware('can:delete_mapping,App\Models\Mapping\Mapping');
+
+        Route::delete("/mapping/deleteOneLine", [App\Http\Controllers\API\MappingController::class, 'deleteOneLineMappingData'])
+            ->middleware('can:delete_mapping,App\Models\Mapping\Mapping');
     });
 
     Route::middleware(['company.module.access:statistics'])->group(function () {
@@ -60,11 +70,6 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         // TODO : Routes et fonctions associées au module
     });
     // ---------------------- FIN ACCES AUX MODULES --------------------- //
-
-    // Middleware company
-    // Middleware folder
-    // Middleware user
-
 
     // ACCESS AND PERMISSIONS
     Route::post('/company_folder/add-user', [App\Http\Controllers\API\AccessController::class, 'addUserToCompanyFolder']);

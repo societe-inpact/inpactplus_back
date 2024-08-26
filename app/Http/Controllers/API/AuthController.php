@@ -266,12 +266,11 @@ class AuthController extends Controller
                 }
                 $user->assignRole('inpact');
             }
-        
             return response()->json(['message' => 'Utilisateur créé avec succès', 'data' => $user], 200);
-        
+
         } catch (\Exception $e) {
-            // Afficher le message d'erreur exact
-            return response()->json(['error' => 'Une erreur est survenue : ' . $e->getMessage()], 500);
+            // Gestion des erreurs
+            return response()->json(['error' => 'Une erreur est survenue lors de la création de l\'utilisateur.'], 500);
         }
         
     }
@@ -304,7 +303,7 @@ class AuthController extends Controller
         }
 
         if ($user->update($updateData)) {
-            return response()->json(['user' => $user, 'status' => 204]);
+            return response()->json(['data' => $user, 'status' => 204]);
         } else {
             return response()->json(['message' => 'Erreur lors de la mise à jour']);
         }

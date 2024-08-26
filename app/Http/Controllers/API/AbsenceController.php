@@ -57,6 +57,7 @@ class AbsenceController extends Controller
             ->where('base_calcul', $validated['base_calcul'])
             ->exists();
 
+
         if ($isCustomAbsenceExists || $isAbsenceExists) {
             return response()->json(['message' => 'Absence déjà existante.'], 400);
         }
@@ -112,7 +113,7 @@ class AbsenceController extends Controller
 
         if (str_starts_with($validated['code'], 'AB-')) {
             // Création de l'absence personnalisée
-            
+
             $customAbsence = CustomAbsence::where('id',$id)->update([
                 'label' => $validated['label'],
                 'code' => $validated['code'],

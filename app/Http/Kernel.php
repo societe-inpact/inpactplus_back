@@ -70,7 +70,7 @@ class Kernel extends HttpKernel
 
     protected $routeMiddleware = [
         'cors' => \App\Http\Middleware\Cors::class,
-
+        'user.permissions' => Middleware\VerifyUserPermission::class,
         'company.module.access' => Middleware\ModuleAccess\VerifyCompanyModuleAccess::class,
         'company_folder.module.access' => Middleware\ModuleAccess\VerifyCompanyFolderModuleAccess::class,
         'user.module.access' => Middleware\ModuleAccess\VerifyUserModuleAccess::class,
