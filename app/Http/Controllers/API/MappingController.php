@@ -233,7 +233,8 @@ class MappingController extends Controller
         return $fullOutputType;
     }
 
-    public function translateOutputModel($outputType){
+    public function translateOutputModel($outputType)
+    {
 
         preg_match('/[^\\\]+$/', $outputType, $matches);
         $outputType = $matches[0];
@@ -351,17 +352,10 @@ class MappingController extends Controller
         foreach ($mappedRubriques as $mappedRubrique) {
             $allMappedRubriques = $mappedRubrique->data;
             foreach ($allMappedRubriques as $inputMappedRubrique) {
-                $isUsed = $validatedRequestData->is_used || $inputMappedRubrique['is_used'];
-                if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData->input_rubrique) {
-                    if ($isUsed === false) {
-                        return response()->json([
-                            'error' => 'La rubrique d\'entrée ' . $validatedRequestData->input_rubrique . ' n\'est pas utilisée',
-                        ], 409);
-                    } else {
-                        return response()->json([
-                            'error' => 'La rubrique d\'entrée ' . $validatedRequestData->input_rubrique . ' est déjà associée à la rubrique ' . $validatedRequestData->getSilaeRubric()->code,
-                        ], 409);
-                    }
+                if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData->input_rubrique && $validatedRequestData->is_used) {
+                    return response()->json([
+                        'error' => 'La rubrique d\'entrée ' . $validatedRequestData->input_rubrique . ' est déjà associée à la rubrique ' . $validatedRequestData->getSilaeRubric()->code,
+                    ], 409);
                 }
             }
         }
@@ -383,6 +377,7 @@ class MappingController extends Controller
     // Fonction permettant d'enregistrer un nouveau mapping en BDD
     protected function saveMappingData($companyFolder, $validatedData, ?Request $request = null)
     {
+
         $newMapping = [
             'input_rubrique' => $validatedData->input_rubrique,
             'name_rubrique' => $validatedData->name_rubrique,
@@ -392,40 +387,42 @@ class MappingController extends Controller
         ];
 
         $mapping = Mapping::where('company_folder_id', $companyFolder)->first();
-        switch ($this->translateOutputModel($validatedData->output_type)) {
-            case 'CustomHour' :
-            {
-                $existingCustomHour = CustomHour::all()->where('id', '=', $validatedData->output_rubrique_id);
-                if ($existingCustomHour->isEmpty()) {
-                    if ($request) {
-                        $createNewCustomHourRequest = new Request([
-                            'code' => $request->code,
-                            'label' => $request->label,
-                            'company_folder_id' => $companyFolder,
-                        ]);
-                        $hourController = new HourController();
-                        $hourController->createCustomHour($createNewCustomHourRequest);
+        if ($validatedData->is_used) {
+            switch ($this->translateOutputModel($validatedData->output_type)) {
+                case 'CustomHour' :
+                {
+                    $existingCustomHour = CustomHour::all()->where('id', '=', $validatedData->output_rubrique_id);
+                    if ($existingCustomHour->isEmpty()) {
+                        if ($request) {
+                            $createNewCustomHourRequest = new Request([
+                                'code' => $request->code,
+                                'label' => $request->label,
+                                'company_folder_id' => $companyFolder,
+                            ]);
+                            $hourController = new HourController();
+                            $hourController->createCustomHour($createNewCustomHourRequest);
+                        }
                     }
                 }
-            }
-            case 'CustomAbsence' :
-            {
-                $existingCustomAbsence = CustomAbsence::all()->where('id', '=', $validatedData->output_rubrique_id);
-                if ($existingCustomAbsence->isEmpty()) {
-                    if ($request) {
-                        $createNewCustomAbsenceRequest = new Request([
-                            'code' => $request->code,
-                            'label' => $request->label,
-                            'base_calcul' => $request->base_calcul,
-                            'therapeutic_part_time' => $request->therapeutic_part_time ?? null,
-                            'company_folder_id' => $companyFolder,
-                        ]);
-                        $absenceController = new AbsenceController();
-                        $absenceController->createCustomAbsence($createNewCustomAbsenceRequest);
+                case 'CustomAbsence' :
+                {
+                    $existingCustomAbsence = CustomAbsence::all()->where('id', '=', $validatedData->output_rubrique_id);
+                    if ($existingCustomAbsence->isEmpty()) {
+                        if ($request) {
+                            $createNewCustomAbsenceRequest = new Request([
+                                'code' => $request->code,
+                                'label' => $request->label,
+                                'base_calcul' => $request->base_calcul,
+                                'therapeutic_part_time' => $request->therapeutic_part_time ?? null,
+                                'company_folder_id' => $companyFolder,
+                            ]);
+                            $absenceController = new AbsenceController();
+                            $absenceController->createCustomAbsence($createNewCustomAbsenceRequest);
+                        }
                     }
                 }
+                default:
             }
-            default:
         }
         if ($mapping) {
             $existingData = $mapping->data;
