@@ -68,7 +68,6 @@ class MappingController extends Controller
                 } else {
                     // interfaces spécifique
                     $interfaceNames = strtolower($interface->name);
-
                     switch ($interfaceNames) {
                         case "marathon":
                             $convertMEController = new ConvertMEController();
@@ -78,12 +77,14 @@ class MappingController extends Controller
                             $indexRubrique = $columnIndex["index_rubrique"];
                             $colonneMatricule = 0;
                             break;
-                        default:
+                        case "rhis":
                             return response()->json([
                                 'success' => false,
-                                'message' => 'Il manque le paramétrage spécifique de l\'interface',
-                                'status' => 400
+                                'message' => 'Algo de l\'interface à développer',
+                                'status' => 201
                             ]);
+                        default:
+                            return null;
                     }
                 }
 
