@@ -177,27 +177,27 @@ class MappingController extends Controller
 
         foreach ($mappings as $mapping) {
             foreach ($mapping->data as $data) {
-                if ($data['input_rubrique'] === $inputRubrique) {
-                    $output = $this->resolveOutputModel($data['output_type'], $data['output_rubrique_id']);
-                    if ($output) {
+                $data = new Rubric($data);
+                if ($data->input_rubrique === $inputRubrique) {
+                    if ($data->output_type) {
                         return [
-                            'input_rubrique' => $data['input_rubrique'],
-                            'type_rubrique' => $this->tableNamesRevers[$data['output_type']] ?? $data['output_type'],
-                            'output_rubrique' => $output->code,
-                            'base_calcul' => $output->base_calcul,
-                            'label' => $output->label,
-                            'is_used' => $data['is_used'],
+                            'input_rubrique' => $data->input_rubrique,
+                            'type_rubrique' => $this->translateOutputModel($data->output_type),
+                            'output_rubrique' => $data->getSilaeRubric()->code,
+                            'base_calcul' => $data->getSilaeRubric()->base_calcul,
+                            'label' => $data->getSilaeRubric()->label,
+                            'is_used' => $data->is_used,
                             'is_mapped' => true,
                             'company_folder_id' => $companyFolder,
                         ];
                     } else {
                         return [
-                            'input_rubrique' => $data['input_rubrique'],
-                            'type_rubrique' => $data['output_type'],
+                            'input_rubrique' => $data->input_rubrique,
+                            'type_rubrique' => $this->translateOutputModel($data->output_type),
                             'output_rubrique' => '',
                             'base_calcul' => '',
                             'label' => '',
-                            'is_used' => $data['is_used'],
+                            'is_used' => $data->is_used,
                             'is_mapped' => true,
                             'company_folder_id' => $companyFolder,
                         ];
@@ -205,7 +205,6 @@ class MappingController extends Controller
                 }
             }
         }
-
         return null;
     }
 
@@ -217,7 +216,6 @@ class MappingController extends Controller
             'CustomAbsence' => 'Absences',
             'Hour' => 'Hours',
             'CustomHour' => 'Hours',
-            // Ajoutez d'autres mappings ici si nécessaire
         ];
 
         // Déterminer le sous-dossier du modèle
@@ -233,6 +231,22 @@ class MappingController extends Controller
         }
 
         return $fullOutputType;
+    }
+
+    public function translateOutputModel($outputType){
+
+        preg_match('/[^\\\]+$/', $outputType, $matches);
+        $outputType = $matches[0];
+
+        $modelTranslation = [
+            'Absence' => 'Absence',
+            'CustomAbsence' => 'Absence personnalisée',
+            'Hour' => 'Heure',
+            'CustomHour' => 'Heure personnalisée',
+            'VariableElement' => 'Élément variable'
+        ];
+
+        return $modelTranslation[$outputType];
     }
 
     // Fonction permettant de mettre à jour un mapping existant
@@ -270,7 +284,9 @@ class MappingController extends Controller
             'output_type' => 'nullable|string',
             'is_used' => 'required|boolean',
         ]);
-        return new Rubric($rubric);
+        $rubric = new Rubric($rubric);
+        $rubric->output_type = $this->resolveOutputModel($rubric->output_type, $rubric->output_rubrique_id);
+        return $rubric;
     }
 
     // Fonction permettant de mettre à jour un mappings existant
@@ -294,9 +310,8 @@ class MappingController extends Controller
 
     private function checkExistingAbsence($rubricRequest, $companyFolderId)
     {
-        $mapping = Mapping::findOrFail($companyFolderId);
+        $mapping = Mapping::where('company_folder_id', $companyFolderId)->first();
         $mappingData = $mapping->data;
-
         if ($rubricRequest->output_type === "CustomAbsence") {
             $existingCustomAbsence = CustomAbsence::find($rubricRequest->output_rubrique_id);
 
@@ -365,20 +380,6 @@ class MappingController extends Controller
         return false;
     }
 
-    // Fonction permettant de récupérer la rubrique via son Model
-    protected function validateOutputClassAndRubrique($validatedData)
-    {
-        $outputClass = $validatedData['output_type'];
-
-        if (!class_exists($outputClass)) {
-            return false;
-        }
-
-        $outputRubrique = $outputClass::find($validatedData['output_rubrique_id']);
-
-        return $outputRubrique !== null;
-    }
-
     // Fonction permettant d'enregistrer un nouveau mapping en BDD
     protected function saveMappingData($companyFolder, $validatedData, ?Request $request = null)
     {
@@ -391,7 +392,7 @@ class MappingController extends Controller
         ];
 
         $mapping = Mapping::where('company_folder_id', $companyFolder)->first();
-        switch ($validatedData->output_type) {
+        switch ($this->translateOutputModel($validatedData->output_type)) {
             case 'CustomHour' :
             {
                 $existingCustomHour = CustomHour::all()->where('id', '=', $validatedData->output_rubrique_id);

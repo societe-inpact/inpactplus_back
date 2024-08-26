@@ -14,7 +14,7 @@ class MappingModulePolicy
      */
     public function read_mapping(User $user)
     {
-        return $user->hasPermission('read_mapping') || $user->hasPermission('crud_mapping');
+        return $user->hasPermission('read_mapping') || $user->hasPermission('crud_mapping') || $user->hasRole('inpact');
     }
 
     /**
@@ -25,7 +25,7 @@ class MappingModulePolicy
      */
     public function create_mapping(User $user)
     {
-        return $user->hasPermission('create_mapping')  || $user->hasPermission('crud_mapping');
+        return $user->hasPermission('create_mapping')  || $user->hasPermission('crud_mapping') || $user->hasRole('inpact');
     }
 
     /**
@@ -36,7 +36,7 @@ class MappingModulePolicy
      */
     public function update_mapping(User $user)
     {
-        return $user->hasPermission('update_mapping')  || $user->hasPermission('crud_mapping');
+        return $user->hasPermission('update_mapping')  || $user->hasPermission('crud_mapping') || $user->hasRole('inpact');
     }
 
     /**
@@ -47,6 +47,6 @@ class MappingModulePolicy
      */
     public function delete_mapping(User $user)
     {
-        return $user->hasPermission('delete_mapping')  || $user->hasPermission('crud_mapping');
+        return $user->hasPermission('delete_mapping')  || $user->hasPermission('crud_mapping') || $user->hasRole('inpact');
     }
 }

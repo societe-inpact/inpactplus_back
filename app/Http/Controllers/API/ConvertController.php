@@ -153,7 +153,7 @@ class ConvertController extends BaseController
         $data = [];
         $interface = $request->get('interface_id');
 
-        $softwaresNames = InterfaceSoftware::all()->where('id',$interface)->first();
+        $softwaresNames = InterfaceSoftware::all()->where('id', $interface)->first();
         if ($softwaresNames !== null){
             $idSoftware = $softwaresNames->interface_software_id;
         }else{
