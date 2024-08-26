@@ -178,7 +178,7 @@ class MappingController extends Controller
         foreach ($mappings as $mapping) {
             foreach ($mapping->data as $data) {
                 $data = new Rubric($data);
-                if ($data->input_rubrique === $inputRubrique && $data->is_used) {
+                if ($data->input_rubrique === $inputRubrique) {
                     if ($data->output_type) {
                         return [
                             'input_rubrique' => $data->input_rubrique,
@@ -235,19 +235,21 @@ class MappingController extends Controller
 
     public function translateOutputModel($outputType)
     {
+        if(isset($outputType)){
+            preg_match('/[^\\\]+$/', $outputType, $matches);
+            $outputType = $matches[0];
 
-        preg_match('/[^\\\]+$/', $outputType, $matches);
-        $outputType = $matches[0];
+            $modelTranslation = [
+                'Absence' => 'Absence',
+                'CustomAbsence' => 'Absence personnalisée',
+                'Hour' => 'Heure',
+                'CustomHour' => 'Heure personnalisée',
+                'VariableElement' => 'Élément variable'
+            ];
 
-        $modelTranslation = [
-            'Absence' => 'Absence',
-            'CustomAbsence' => 'Absence personnalisée',
-            'Hour' => 'Heure',
-            'CustomHour' => 'Heure personnalisée',
-            'VariableElement' => 'Élément variable'
-        ];
-
-        return $modelTranslation[$outputType];
+            return $modelTranslation[$outputType];
+        }
+        return null;
     }
 
     // Fonction permettant de mettre à jour un mapping existant
@@ -352,10 +354,17 @@ class MappingController extends Controller
         foreach ($mappedRubriques as $mappedRubrique) {
             $allMappedRubriques = $mappedRubrique->data;
             foreach ($allMappedRubriques as $inputMappedRubrique) {
-                if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData->input_rubrique && $validatedRequestData->is_used) {
-                    return response()->json([
-                        'error' => 'La rubrique d\'entrée ' . $validatedRequestData->input_rubrique . ' est déjà associée à la rubrique ' . $validatedRequestData->getSilaeRubric()->code,
-                    ], 409);
+                $isUsed = filter_var($validatedRequestData->is_used, FILTER_VALIDATE_BOOLEAN) || filter_var($inputMappedRubrique['is_used'], FILTER_VALIDATE_BOOLEAN);
+                if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData->input_rubrique) {
+                    if ($isUsed === false) {
+                        return response()->json([
+                            'error' => 'La rubrique d\'entrée ' . $validatedRequestData->input_rubrique . ' n\'est pas utilisée',
+                        ], 409);
+                    } else {
+                        return response()->json([
+                            'error' => 'La rubrique d\'entrée ' . $validatedRequestData->input_rubrique . ' est déjà associée à la rubrique ' . $validatedRequestData->getSilaeRubric()->code,
+                        ], 409);
+                    }
                 }
             }
         }
@@ -377,7 +386,6 @@ class MappingController extends Controller
     // Fonction permettant d'enregistrer un nouveau mapping en BDD
     protected function saveMappingData($companyFolder, $validatedData, ?Request $request = null)
     {
-
         $newMapping = [
             'input_rubrique' => $validatedData->input_rubrique,
             'name_rubrique' => $validatedData->name_rubrique,

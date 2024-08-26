@@ -185,7 +185,7 @@ class ConvertController extends BaseController
 
 
         $header = ['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin'];
-        if ($mappedRubrics && !$uniqueUnmappedRubric) {
+        if ($mappedRubrics && empty($uniqueUnmappedRubric)) {
             $csvConverted = $this->writeToFile($data, $date);
             return response()->json([
                 'success' => true,
