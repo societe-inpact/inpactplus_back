@@ -52,7 +52,7 @@ class ConvertMEController extends ConvertController
         foreach ($mappings as $mapping) {
             foreach ($mapping->data as $mappedRow) {
                 $mappedRubric = new Rubric($mappedRow);
-                if ($mappedRow['input_rubrique'] === $rubrique) {
+                if ($mappedRow['input_rubrique'] === $rubrique && $mappedRow['is_used']) {
                     return $mappedRubric->getSilaeRubric();
                 }
             }
