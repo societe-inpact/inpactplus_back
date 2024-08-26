@@ -14,7 +14,7 @@ class CompanyFolderPolicy
      */
     public function create_company_folder(User $user)
     {
-        return $user->hasPermission('create_company_folder') || $user->hasPermission('crud_company_folder');
+        return $user->hasPermission('create_company_folder') || $user->hasPermission('crud_company_folder') || $user->hasRole('inpact');
     }
 
     /**
@@ -25,7 +25,7 @@ class CompanyFolderPolicy
      */
     public function read_company_folder(User $user)
     {
-        return $user->hasPermission('read_company_folder') || $user->hasPermission('crud_company_folder');
+        return $user->hasPermission('read_company_folder') || $user->hasPermission('crud_company_folder') || $user->hasRole('inpact');
     }
 
     /**
@@ -49,6 +49,6 @@ class CompanyFolderPolicy
      */
     public function delete_company_folder(User $user)
     {
-        return $user->hasPermission('delete_company_folder') || $user->hasPermission('crud_company_folder');
+        return $user->hasPermission('delete_company_folder') || $user->hasPermission('crud_company_folder') || $user->hasRole('inpact');
     }
 }
