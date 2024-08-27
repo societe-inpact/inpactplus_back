@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Companies\Company;
 use App\Models\Companies\CompanyFolder;
 use App\Models\Mapping\Mapping;
 use App\Models\Misc\CompanyFolderInterface;
@@ -23,6 +24,10 @@ class CompanyFolderController extends Controller
     {
         $this->authorize('create_company_folder', CompanyFolder::class);
 
+        if (!$request->referent_id){
+            $request->merge(['referent_id' => Company::findOrFail($request->company_id)->referent_id]);
+        }
+
         $validator = Validator::make($request->all(), [
             'folder_number' => 'required|string',
             'folder_name' => 'required|string',
@@ -31,6 +36,7 @@ class CompanyFolderController extends Controller
             'telephone' => 'nullable|string',
             'company_id' => 'exists:companies,id',
             'interface_id' => 'exists:interfaces,id',
+            'referent_id' => 'exists:users,id',
             'notes' => 'nullable|string',
         ]);
 
@@ -47,9 +53,11 @@ class CompanyFolderController extends Controller
                 'telephone' => $request->telephone,
                 'company_id' => $request->company_id,
                 'interface_id' => $request->interface_id,
+                'referent_id' => $request->referent_id,
                 'notes' => $request->notes,
             ];
             $existingFolder = CompanyFolder::all()->where('folder_number', '==', $request->get('folder_number'))->first();
+
             if ($existingFolder){
                 return response()->json(['message' => 'Le numéro de dossier ' . $request->folder_number . ' est déjà associé à ' . $existingFolder->folder_name]);
             }

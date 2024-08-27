@@ -21,21 +21,6 @@ use Illuminate\Support\Facades\Validator;
 
 class MappingController extends Controller
 {
-    protected $tableNames = [
-        'Absence' => 'App\Models\Absences\Absence',
-        'CustomAbsence' => 'App\Models\Absences\CustomAbsence',
-        'Hour' => 'App\Models\Hours\Hour',
-        'CustomHour' => 'App\Models\Hours\CustomHour',
-        'VariableElement' => 'App\Models\VariablesElements\VariableElement',
-    ];
-
-    protected $tableNamesRevers = [
-        'App\Models\Absences\Absence' => 'Absence',
-        'App\Models\Absences\CustomAbsence' => 'Absence personnalisée',
-        'App\Models\Hours\Hour' => 'Heure',
-        'App\Models\Hours\CustomHour' => 'Heure personnalisée',
-        'App\Models\VariablesElements\VariableElement' => 'Éléments variables',
-    ];
 
     // Fonction permettant de récupérer les mappings existants d'un dossier
     public function getMapping(Request $request, $id)
@@ -58,23 +43,24 @@ class MappingController extends Controller
 
             if ($interface) {
                 $idInterfaceMapping = $interface->interface_mapping_id;
-
                 if ($idInterfaceMapping !== null) {
                     $columnIndex = InterfaceMapping::findOrFail($idInterfaceMapping);
-                    $typeSeparateur = $columnIndex->type_separateur;
+                    $separatorType = $columnIndex->separator_type;
                     $extension = strtolower($columnIndex->extension);
-                    $indexRubrique = $columnIndex->colonne_rubrique - 1;
-                    $colonneMatricule = $columnIndex->colonne_matricule - 1;
+                    $indexRubrique = $columnIndex->rubric - 1;
+                    $colonneMatricule = $columnIndex->employee_number - 1;
+
                 } else {
                     // interfaces spécifique
                     $interfaceNames = strtolower($interface->name);
                     switch ($interfaceNames) {
                         case "marathon":
+                        case "maratest":
                             $convertMEController = new ConvertMEController();
                             $columnIndex = $convertMEController->formatFilesMarathon();
-                            $typeSeparateur = $columnIndex["separateur"];
+                            $separatorType = $columnIndex["separator_type"];
                             $extension = $columnIndex["extension"];
-                            $indexRubrique = $columnIndex["index_rubrique"];
+                            $indexRubrique = $columnIndex["rubric"];
                             $colonneMatricule = 0;
                             break;
                         case "rhis":
@@ -88,7 +74,7 @@ class MappingController extends Controller
                     }
                 }
 
-                $reader = $this->prepareCsvReader($file->getPathname(), $typeSeparateur);
+                $reader = $this->prepareCsvReader($file->getPathname(), $separatorType);
                 $records = iterator_to_array($reader->getRecords(), true);
 
                 $companyFolderId = $companyFolder->id;
@@ -105,12 +91,12 @@ class MappingController extends Controller
 
 
     // Fonction permettant de configurer l'import du fichier
-    protected function prepareCsvReader($path, $typeSeparateur)
+    protected function prepareCsvReader($path, $separatorType)
     {
         $reader = Reader::createFromPath($path, 'r');
         $encoder = (new CharsetConverter())->inputEncoding('utf-8');
         $reader->addFormatter($encoder);
-        $reader->setDelimiter($typeSeparateur);
+        $reader->setDelimiter($separatorType);
 
         return $reader;
     }

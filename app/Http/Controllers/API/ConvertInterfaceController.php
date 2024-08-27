@@ -27,7 +27,7 @@ class ConvertInterfaceController extends ConvertController
     public function indexColumn($nominterface)
     {
         $controller = new InterfaceMappingController();
-        return $controller->getInterfaceSoftware($nominterface);
+        return $controller->getInterfaceMapping($nominterface);
     }
 
     /**
@@ -167,8 +167,8 @@ class ConvertInterfaceController extends ConvertController
         $softwareId = InterfaceSoftware::findOrFail($idsoftware);
         $columnindex = $this->indexColumn($softwareId->interface_software_id);
 
-        $type_separateur = $columnindex->type_separateur;
-        $format = strtolower($columnindex->format);
+        $type_separateur = $columnindex->separator_type;
+        $format = strtolower($columnindex->extension);
 
         switch ($format){
             case "csv":

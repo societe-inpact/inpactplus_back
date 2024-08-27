@@ -21,7 +21,7 @@ class ConvertController extends BaseController
     public function indexColumn($nominterface)
     {
         $controller = new InterfaceMappingController();
-        return $controller->getInterfaceSoftware($nominterface);
+        return $controller->getInterfaceMapping($nominterface);
     }
 
     public function importFile(Request $request): JsonResponse
@@ -39,16 +39,16 @@ class ConvertController extends BaseController
         if ($idSoftware !== null){
             $idsoftware = InterfaceSoftware::findOrFail($idInterface);
             $columnindex = $this->indexColumn($idsoftware->interface_software_id);
-            $type_separateur = $columnindex->type_separateur;
-            $format = $columnindex->format;
+            $type_separateur = $columnindex->separator_type;
+            $extension = $columnindex->extension;
         }else{
             $softwaresName = strtolower($softwaresNames["name"]);
             switch ($softwaresName){
                 case "marathon":
                     $controller = new ConvertMEController();
                     $columnindex = $controller->formatFilesMarathon();
-                    $type_separateur = $columnindex["separateur"];
-                    $format = $columnindex ["extension"];
+                    $type_separateur = $columnindex["separator_type"];
+                    $extension = $columnindex ["extension"];
                     break;
 
                 default:
@@ -58,11 +58,11 @@ class ConvertController extends BaseController
         }
 
         // extraction en fonction du format => voir pour le sortir dans une autre fonction
-        $format = strtolower($format);
-        switch ($format){
+        $extension = strtolower($extension);
+        switch ($extension){
             case "csv":
                 $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15');
-                $formatter = fn(array $row): array => array_map('strtoupper', $row);
+                $extensionter = fn(array $row): array => array_map('strtoupper', $row);
 
                 $request->validate([
                     'csv' => 'required|file|mimes:csv,txt',
@@ -73,7 +73,7 @@ class ConvertController extends BaseController
                     $reader = Reader::createFromPath($file->getPathname(), 'r');
                     $reader->addFormatter($encoder);
                     $reader->setDelimiter($type_separateur);
-                    $reader->addFormatter($formatter);
+                    $reader->addFormatter($extensionter);
                     $reader->setHeaderOffset(null);
                     $records = iterator_to_array($reader->getRecords(), true);
 
@@ -93,7 +93,7 @@ class ConvertController extends BaseController
                 break;
 
             default :
-                return response()->json(['message' => 'il manque le format suivant', 'format' => $format ,'status' => 400]);
+                return response()->json(['message' => 'il manque le format suivant', 'format' => $extension ,'status' => 400]);
         }
     }
 
@@ -166,6 +166,7 @@ class ConvertController extends BaseController
             // interfaces spécifique
             $softwaresName = strtolower($softwaresNames["name"]);
             switch ($softwaresName){
+                case "maratest":
                 case "marathon":
                     $controller = new ConvertMEController();
                     $data = $controller->marathonConvert($request);

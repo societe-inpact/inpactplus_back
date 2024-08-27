@@ -23,7 +23,7 @@ class ConvertMEController extends ConvertController
 
     public function formatFilesMarathon()
     {
-        return ["extension" => "csv", "separateur" => ";", "index_rubrique" => 3];
+        return ["extension" => "csv", "separator_type" => ";"];
     }
 
     public function getMappingsFolder($folderId)
@@ -35,7 +35,7 @@ class ConvertMEController extends ConvertController
     public function indexColumn($nominterface)
     {
         $controller = new InterfaceMappingController();
-        return $controller->getInterfaceSoftware($nominterface);
+        return $controller->getInterfaceMapping($nominterface);
     }
 
     /**
