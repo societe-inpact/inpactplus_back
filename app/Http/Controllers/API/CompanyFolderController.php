@@ -28,8 +28,9 @@ class CompanyFolderController extends Controller
             'folder_name' => 'required|string',
             'siret' => 'required|string',
             'siren' => 'required|string',
-            'interface_id' => 'required|exists:interfaces,id',
+            'telephone' => 'nullable|string',
             'company_id' => 'exists:companies,id',
+            'interface_id' => 'exists:interfaces,id',
             'notes' => 'nullable|string',
         ]);
 
@@ -43,21 +44,23 @@ class CompanyFolderController extends Controller
                 'folder_name' => $request->folder_name,
                 'siret' => $request->siret,
                 'siren' => $request->siren,
-                'interface_id' => $request->interface_id,
+                'telephone' => $request->telephone,
                 'company_id' => $request->company_id,
+                'interface_id' => $request->interface_id,
                 'notes' => $request->notes,
             ];
             $existingFolder = CompanyFolder::all()->where('folder_number', '==', $request->get('folder_number'))->first();
             if ($existingFolder){
                 return response()->json(['message' => 'Le numéro de dossier ' . $request->folder_number . ' est déjà associé à ' . $existingFolder->folder_name]);
             }
+
             CompanyFolder::create($data);
 
             $folder = CompanyFolder::where('folder_number', $request->folder_number)->first();
 
             CompanyFolderInterface::create([
                 'company_folder_id' => $folder->id,
-                'interface_folder_id' => $request->interface_id
+                'interface_id' => $request->interface_id
             ]);
             Mapping::create([
                 'company_folder_id' => $folder->id,

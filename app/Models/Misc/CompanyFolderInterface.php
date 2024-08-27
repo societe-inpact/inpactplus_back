@@ -13,7 +13,7 @@ class CompanyFolderInterface extends Model
     public $timestamps = false;
 
     protected $table = 'company_folder_interface';
-    protected $fillable = ["company_folder_id","interface_id"];
+    protected $fillable = ["company_folder_id", "interface_id"];
 
     public function companyFolder()
     {

@@ -170,6 +170,7 @@ class ConvertController extends BaseController
                     $controller = new ConvertMEController();
                     $data = $controller->marathonConvert($request);
                     break;
+                case "sirh":
                 case "rhis":
                     return response()->json(['success' => true, 'message' => 'Algo de l\'interface à développer pour permettre la conversion','status' => 200]);
                 default:
