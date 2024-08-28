@@ -142,13 +142,13 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // SOFTWARE
     Route::get("/interfaces", [App\Http\Controllers\API\InterfaceController::class, 'getInterfaces']);
-    Route::put("/interface/update/{interface_id}", [App\Http\Controllers\API\InterfaceController::class, 'updateNameInterface']);
+    Route::patch("/interface/update/{interface_id}", [App\Http\Controllers\API\InterfaceController::class, 'updateNameInterface']);
     Route::delete("/interface/delete/{interface_id}", [App\Http\Controllers\API\InterfaceController::class, 'deleteNameInterface']);
 
     // INTERFACES MAPPING
     Route::get("/interface_mapping/{interface_mapping_id}", [App\Http\Controllers\API\InterfaceMappingController::class, 'getInterfaceMapping']);
     Route::post("/interface_mapping/create", [App\Http\Controllers\API\InterfaceMappingController::class, 'createInterfaceMapping']);
-    Route::put("/interface_mapping/update/{interface_mapping_id}", [App\Http\Controllers\API\InterfaceMappingController::class, 'updateInterfaceMapping']);
+    Route::patch("/interface_mapping/update/{interface_mapping_id}", [App\Http\Controllers\API\InterfaceMappingController::class, 'updateInterfaceMapping']);
     Route::delete("/interface_mapping/delete/{interface_mapping_id}", [App\Http\Controllers\API\InterfaceMappingController::class, 'deleteInterfaceMapping']);
 
     // Route::get("/test", [App\Http\Controllers\API\ConvertController::class, 'indexColumn']);

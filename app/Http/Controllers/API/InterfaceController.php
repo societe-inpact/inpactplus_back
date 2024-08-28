@@ -15,9 +15,10 @@ class InterfaceController extends Controller
         return response()->json($softwares, 200);
     }
 
-    // Où est la création ? Crud incomplet ?
-
     public function updateNameInterface(Request $request, $id){
+        $software = InterfaceSoftware::findOrFail($id);
+        $software->name = $request->name;
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string',
         ]);
@@ -26,9 +27,7 @@ class InterfaceController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $software = InterfaceSoftware::findOrFail($id);
-
-        if ($software->update()){
+        if ($software->save()){
             return response()->json(['message' => 'Le nom a été changé en '. $request->name], 200);
         } else{
             return response()->json(['error' => 'Erreur lors du changement de nom'], 500);
