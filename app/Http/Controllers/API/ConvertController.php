@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Mapping\Mapping;
+use App\Traits\JSONResponseTrait;
 use Illuminate\Routing\Controller as BaseController;
 use App\Http\Controllers\RuntimeException;
 use App\Http\Controllers\API\ConvertInterfaceController;
@@ -18,6 +20,8 @@ use function Symfony\Component\String\s;
 
 class ConvertController extends BaseController
 {
+    use JSONResponseTrait;
+
     public function indexColumn($nominterface)
     {
         $controller = new InterfaceMappingController();
@@ -26,75 +30,67 @@ class ConvertController extends BaseController
 
     public function importFile(Request $request): JsonResponse
     {
-        // reprise des différentes informations en fonction de l'interface
-
+        // Récupération et validation de l'interface
         $idInterface = $request->get('interface_id');
-        $softwaresNames = InterfaceSoftware::all()->where('id',$idInterface)->first();
-        if ($softwaresNames !== null){
-            $idSoftware = $softwaresNames->interface_software_id;
-        }else{
-            return response()->json(['message' => 'L\'interface n\'existe pas','status' => 400]);
+        $interfaceSoftware = InterfaceSoftware::find($idInterface);
+
+        if ($interfaceSoftware === null) {
+            return $this->errorResponse('L\'interface n\'existe pas', 404);
         }
 
-        if ($idSoftware !== null){
-            $idsoftware = InterfaceSoftware::findOrFail($idInterface);
-            $columnindex = $this->indexColumn($idsoftware->interface_software_id);
-            $type_separateur = $columnindex->separator_type;
-            $extension = $columnindex->extension;
-        }else{
-            $softwaresName = strtolower($softwaresNames["name"]);
-            switch ($softwaresName){
-                case "marathon":
-                    $controller = new ConvertMEController();
-                    $columnindex = $controller->formatFilesMarathon();
-                    $type_separateur = $columnindex["separator_type"];
-                    $extension = $columnindex ["extension"];
-                    break;
+        $idSoftware = $interfaceSoftware->interface_software_id;
 
-                default:
-                    return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]);
-
+        if ($idSoftware === null) {
+            $softwaresName = strtolower($interfaceSoftware->name);
+            if ($softwaresName === 'marathon') {
+                $controller = new ConvertMEController();
+                $columnindex = $controller->formatFilesMarathon();
+            } else {
+                return $this->errorResponse('Paramétrage spécifique de l\'interface manquant', 404);
             }
+        } else {
+            $columnindex = $this->indexColumn($idSoftware);
         }
 
-        // extraction en fonction du format => voir pour le sortir dans une autre fonction
-        $extension = strtolower($extension);
-        switch ($extension){
-            case "csv":
-                $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15');
-                $extensionter = fn(array $row): array => array_map('strtoupper', $row);
+        $type_separateur = $columnindex['separator_type'] ?? ',';
+        $extension = strtolower($columnindex['extension'] ?? 'csv');
 
-                $request->validate([
-                    'csv' => 'required|file|mimes:csv,txt',
-                ]);
+        // Validation du fichier en fonction de l'extension
+        $request->validate([
+            'csv' => 'required|file|mimes:csv,txt',
+        ]);
 
-                if ($request->hasFile('csv')) {
-                    $file = $request->file('csv');
-                    $reader = Reader::createFromPath($file->getPathname(), 'r');
-                    $reader->addFormatter($encoder);
-                    $reader->setDelimiter($type_separateur);
-                    $reader->addFormatter($extensionter);
-                    $reader->setHeaderOffset(null);
-                    $records = iterator_to_array($reader->getRecords(), true);
-
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Votre fichier a été importé',
-                        'status' => 200,
-                        'rows' => $records
-                    ]);
-                } else {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Veuillez importer un fichier',
-                        'status' => 400
-                    ]);
-                }
-                break;
-
-            default :
-                return response()->json(['message' => 'il manque le format suivant', 'format' => $extension ,'status' => 400]);
+        if (!$request->hasFile('csv')) {
+            return $this->errorResponse('Veuillez importer un fichier', 400);
         }
+
+        $file = $request->file('csv');
+
+        return match ($extension) {
+            'csv' => $this->handleCsvFile($file, $type_separateur),
+            'xls' => $this->errorResponse('Le support XLS n\'est pas encore implémenté'),
+            default => $this->errorResponse('Le format de fichier' . $extension . 'n\'est pas supporté')
+        };
+    }
+
+    private function handleCsvFile($file, $delimiter): JsonResponse
+    {
+        $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15');
+        $extension = fn(array $row): array => array_map('strtoupper', $row);
+
+        $reader = Reader::createFromPath($file->getPathname(), 'r');
+        $reader->addFormatter($encoder);
+        $reader->setDelimiter($delimiter);
+        $reader->addFormatter($extension);
+        $reader->setHeaderOffset(null);
+
+        $records = iterator_to_array($reader->getRecords(), true);
+
+        if ($records) {
+            return $this->successResponse($records, 'Votre fichier a été importé');
+        }
+
+        return $this->errorResponse('Aucun enregistrement trouvé dans le fichier', 400);
     }
 
 
@@ -108,12 +104,13 @@ class ConvertController extends BaseController
      */
     private function writeToFile(array $data, $date)
     {
-        // dd($data);
+        // TODO : Récupérer l'instance du dossier et de l'utilisateur + path convert
+
         $filename = 'EVY_' . $date; // TODO : Modifier le nom du fichier
         $directory = storage_path('csv');
         $csvPath = $directory . '/' . $filename . '.csv';
 
-        // Create the directory if it doesn't exist
+        // Création du dossier s'il n'existe pas
         if (!is_dir($directory)) {
             mkdir($directory, 0777, true);
         }
@@ -122,12 +119,12 @@ class ConvertController extends BaseController
         $csv->setDelimiter(';');
 
         // Écriture de l'en-tête du fichier
-        $csv->insertOne(['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin' , 'H/J' , 'Pourcentage TP']);
+        $csv->insertOne(['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin', 'H/J', 'Pourcentage TP']);
 
         // Écriture des collections dans le fichier CSV
         $csv->insertAll($data[0]);
 
-        // Return the URL of the CSV file
+        // Retourne le chemin du fichier enregistré
         return str_replace('\\', '/', 'http://localhost/evypaie_back/storage/csv/' . $filename . '.csv');
         // return str_replace('\\', '/', 'http://evyplus.preprod.inpact.fr/evyplus/back/storage/csv/' . $filename . '.csv');
     }
@@ -143,70 +140,90 @@ class ConvertController extends BaseController
 
     public function convertFile(Request $request): JsonResponse
     {
+        // Récupération des paramètres de la requête
         $folderId = $request->get('company_folder_id');
-        $folderNumber = CompanyFolder::findOrFail($folderId);
         $month = $request->get('month');
         $year = $request->get('year');
-        $date = $folderNumber-> folder_number . '_' . $month . $year;
-        $interface = $request->get('interface_id');
+        $interfaceId = $request->get('interface_id');
 
-        $softwaresNames = InterfaceSoftware::all()->where('id', $interface)->first();
-        if ($softwaresNames !== null){
-            $idSoftware = $softwaresNames->interface_software_id;
-        }else{
-            return response()->json(['message' => 'L\'interface n\'existe pas','status' => 400]);
+        // Récupération du dossier de la compagnie
+        $folder = CompanyFolder::findOrFail($folderId);
+        $date = $folder->folder_number . '_' . $month . $year;
+
+        // Récupération de l'interface software
+        $interfaceSoftware = InterfaceSoftware::find($interfaceId);
+
+        if (!$interfaceSoftware) {
+            return $this->errorResponse('L\'interface n\'existe pas', 404);
         }
 
+        $idSoftware = $interfaceSoftware->interface_software_id;
+        $data = [];
 
-        if ($idSoftware !== null){
+        if ($idSoftware) {
+            // Conversion standard via ConvertInterfaceController
             $controller = new ConvertInterfaceController();
-            $data =  $controller->convertinterface($request);
-
-        }else{
-            // interfaces spécifique
-            $softwaresName = strtolower($softwaresNames["name"]);
-            switch ($softwaresName){
-                case "maratest":
-                case "marathon":
-                    $controller = new ConvertMEController();
-                    $data = $controller->marathonConvert($request);
-                    break;
-                case "sirh":
-                case "rhis":
-                    return response()->json(['success' => true, 'message' => 'Algo de l\'interface à développer pour permettre la conversion','status' => 200]);
-                default:
-                    return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]);
-
+            $data = $controller->convertInterface($request);
+        } else {
+            // Conversion spécifique en fonction du nom de l'interface
+            $softwareName = strtolower($interfaceSoftware->name);
+            $data = $this->handleSpecificInterfaceConversion($softwareName, $request);
+            if (!$data) {
+                return $this->errorResponse('Paramétrage spécifique de l\'interface manquant ou à développer', 400);
             }
         }
-        $mappedRubrics = $data[0];
-        $unmappedRubric = $data[1];
-        $collection = collect($unmappedRubric);
-        $uniqueUnmappedRubric = $collection->where('is_used', true)
-            ->unique(function ($item) {
-                return $item['Code'];
-            })->values()->all();
 
+        return $this->prepareResponse($data, $date, $folderId);
+    }
 
-        $header = ['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin'];
-        if ($mappedRubrics && empty($uniqueUnmappedRubric)) {
-            $csvConverted = $this->writeToFile($data, $date);
-            return response()->json([
-                'success' => true,
-                'message' => 'Votre fichier a été converti',
-                'status' => 200,
-                'file' => $csvConverted,
-                'rows' => $mappedRubrics,
-                'header' => $header
-            ]);
-        } else {
-            return response()->json([
-                'success' => false,
-                'message' => 'Conversion impossible, les rubriques suivantes ne sont pas mappées : ',
-                'unmapped' => $uniqueUnmappedRubric,
-                'status' => 400,
-            ]);
+    private function handleSpecificInterfaceConversion(string $softwareName, Request $request): ?array
+    {
+        switch ($softwareName) {
+            case 'marathon':
+                $controller = new ConvertMEController();
+                return $controller->marathonConvert($request);
+
+            default:
+                return null;
         }
     }
+
+    private function prepareResponse(array $data, string $date, int $folderId): JsonResponse
+    {
+        $mappedRubrics = $data[0];
+        $unmappedRubric = $data[1];
+
+        // Convertir les rubriques non mappées en une collection Laravel
+        $unmappedCollection = collect($unmappedRubric);
+
+        // Récupérer les rubriques mappées pour le dossier spécifique
+        $mappingRecords = Mapping::where('company_folder_id', $folderId)
+            ->get()
+            ->pluck('data')
+            ->flatten(1);
+
+        // Convertir les rubriques mappées en une collection Laravel
+        $mappingCollection = collect($mappingRecords);
+
+        // Extraire les codes des rubriques mappées
+        $mappedCodes = $mappingCollection->pluck('input_rubrique')->all();
+
+        // Trouver toutes les rubriques non mappées en évitant les doublons
+        $allUnmappedRubrics = $unmappedCollection->filter(function ($item) use ($mappedCodes) {
+            return !in_array($item['Code'], $mappedCodes);
+        })->unique('Code');
+
+        // Extraire uniquement les codes des rubriques non mappées
+        $unmappedCodes = $allUnmappedRubrics->pluck('Code')->all();
+
+        $header = ['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin'];
+
+        if ($unmappedCodes) {
+            return $this->errorConvertResponse('Conversion impossible, les rubriques suivantes ne sont pas mappées :', implode(', ', $unmappedCodes));
+        }
+        $csvConverted = $this->writeToFile($data, $date);
+        return $this->successConvertResponse($mappedRubrics, 'Votre fichier a été converti', $header, $csvConverted);
+    }
+
 
 }

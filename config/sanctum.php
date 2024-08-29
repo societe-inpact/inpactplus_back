@@ -46,7 +46,7 @@ return [
     |
     */
 
-    'expiration' => null,
+    'expiration' => env('SANCTUM_PERSONAL_ACCESS_TOKEN_EXPIRATION', 60 * 24), // 7 jours
 
     /*
     |--------------------------------------------------------------------------

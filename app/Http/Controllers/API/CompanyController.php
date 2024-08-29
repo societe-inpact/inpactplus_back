@@ -4,11 +4,14 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Companies\Company;
+use App\Traits\JSONResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class CompanyController extends Controller
 {
+    use JSONResponseTrait;
+
     public function getCompanies(){
         $companies = Company::with([
             'folders',
@@ -18,19 +21,25 @@ class CompanyController extends Controller
             'employees'
         ])->get();
 
-        return response()->json($companies);
+        if ($companies){
+            return $this->successResponse($companies, '');
+        }
+        return $this->errorResponse('Une erreur est survenue lors de la récupération de la liste des entreprises', 500);
     }
 
     public function createCompany(Request $request){
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string',
             'description' => 'nullable|string',
-            'telephone' => 'nullable|string',  
+            'telephone' => 'nullable|string',
             'referent_id' => 'exists:users,id',
         ]);
+
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return $this->errorResponse($validator->errors(), 422);
         }
+
         try {
             $data = [
                 'name' => $request->name,
@@ -40,10 +49,12 @@ class CompanyController extends Controller
             ];
 
             $company = Company::create($data);
-            return response()->json(['message' => 'Entreprise créée avec succès', 'data' => $company], 200);
+            if ($company){
+                return $this->successResponse($company, 'Entreprise créée avec succès',201);
+            }
 
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Une erreur est survenue lors de la création de l\'entreprise.'], 500);
+            return $this->errorResponse('Une erreur est survenue lors de la création de l\'entreprise', 500);
         }
     }
 }

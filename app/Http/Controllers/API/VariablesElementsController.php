@@ -5,11 +5,13 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\VariablesElements\VariableElement;
 use App\Rules\CustomRubricRule;
+use App\Traits\JSONResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class VariablesElementsController extends Controller
 {
+    use JSONResponseTrait;
 
     /**
      * Récupère tous les éléments variables dans la base de données.
@@ -124,7 +126,7 @@ class VariablesElementsController extends Controller
             "nameRubrique" => $nameRubrique,
             "input_rubrique" => ""
          ]);
- 
+
          $controller = new MappingController();
          $controller->deleteOneLineMappingData($deletMapping);
 

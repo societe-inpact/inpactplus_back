@@ -4,11 +4,14 @@ namespace App\Http\Controllers\API;
 
 use App\Models\Misc\InterfaceMapping;
 use App\Models\Misc\InterfaceSoftware;
+use App\Traits\JSONResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class InterfaceMappingController extends ConvertController
 {
+    use JSONResponseTrait;
+
     public function getInterfaceMapping($id){
         // récupère l'interface software
 

@@ -75,6 +75,6 @@ class Kernel extends HttpKernel
         'company_folder.module.access' => Middleware\ModuleAccess\VerifyCompanyFolderModuleAccess::class,
         'user.module.access' => Middleware\ModuleAccess\VerifyUserModuleAccess::class,
 
-        'user.folder.access' => \App\Http\Middleware\VerifyUserFolderAccess::class,
+        'user.folder.access' => Middleware\VerifyUserFolderAccess::class,
     ];
 }

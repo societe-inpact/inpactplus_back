@@ -2,6 +2,7 @@
 
 namespace App\Policies\Modules;
 
+use App\Exceptions\CustomUnauthorizedException;
 use App\Models\Misc\User;
 
 class MappingModulePolicy
@@ -11,10 +12,14 @@ class MappingModulePolicy
      *
      * @param User $user
      * @return bool
+     * @throws CustomUnauthorizedException
      */
     public function read_mapping(User $user)
     {
-        return $user->hasPermission('read_mapping') || $user->hasPermission('crud_mapping') || $user->hasRole('inpact');
+        if (!$user->hasPermission('read') && !$user->hasPermission('crud') && !$user->hasRole(['inpact'])) {
+            throw new CustomUnauthorizedException();
+        }
+        return true;
     }
 
     /**
@@ -22,10 +27,14 @@ class MappingModulePolicy
      *
      * @param User $user
      * @return bool
+     * @throws CustomUnauthorizedException
      */
     public function create_mapping(User $user)
     {
-        return $user->hasPermission('create_mapping')  || $user->hasPermission('crud_mapping') || $user->hasRole('inpact');
+        if (!$user->hasPermission('create') && !$user->hasPermission('crud') && !$user->hasRole(['inpact'])) {
+            throw new CustomUnauthorizedException();
+        }
+        return true;
     }
 
     /**
@@ -33,10 +42,14 @@ class MappingModulePolicy
      *
      * @param User $user
      * @return bool
+     * @throws CustomUnauthorizedException
      */
     public function update_mapping(User $user)
     {
-        return $user->hasPermission('update_mapping')  || $user->hasPermission('crud_mapping') || $user->hasRole('inpact');
+        if (!$user->hasPermission('update') && !$user->hasPermission('crud') && !$user->hasRole(['inpact'])) {
+            throw new CustomUnauthorizedException();
+        }
+        return true;
     }
 
     /**
@@ -44,9 +57,13 @@ class MappingModulePolicy
      *
      * @param User $user
      * @return bool
+     * @throws CustomUnauthorizedException
      */
     public function delete_mapping(User $user)
     {
-        return $user->hasPermission('delete_mapping')  || $user->hasPermission('crud_mapping') || $user->hasRole('inpact');
+        if (!$user->hasPermission('delete') && !$user->hasPermission('crud') && !$user->hasRole(['inpact'])) {
+            throw new CustomUnauthorizedException();
+        }
+        return true;
     }
 }

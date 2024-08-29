@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Classes\Rubric;
+use App\Traits\JSONResponseTrait;
 use Illuminate\Http\Request;
 use App\Models\Mapping\Mapping;
 use Illuminate\Support\Facades\App;
@@ -13,6 +14,8 @@ use League\Csv\Reader;
 
 class ConvertMEController extends ConvertController
 {
+    use JSONResponseTrait;
+
     const CORRESPONDENCES = [
         'absences' => [
             'J' => 0, // Correspond à une journée d'absence

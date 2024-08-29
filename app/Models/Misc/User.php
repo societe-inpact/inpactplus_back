@@ -12,6 +12,7 @@ use App\Traits\ModuleRetrievingTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Traits\HasRoles;
@@ -35,35 +36,9 @@ class User extends Authenticatable
 
     public function modules()
     {
-        $accessibleModules = Module::with('permissions')->whereIn('id', function ($query) {
-            $query->select('module_id')
-                ->from('user_module_permissions')
-                ->where('user_id', $this->id)
-                ->where('has_access', 1);
-        })->pluck('id');
-
-        $folders = $this->folders()->pluck('company_folders.id');
-
-        $folderModules = Module::with('permissions')->whereIn('id', function ($query) use ($folders) {
-            $query->select('module_id')
-                ->from('company_folder_module_access')
-                ->where('has_access', 1)
-                ->whereIn('company_folder_id', $folders);
-        })->pluck('id');
-
-        $company = $this->company()->pluck('id');
-        $companyModules = Module::with('permissions')->whereIn('id', function ($query) use ($company) {
-            $query->select('module_id')
-                ->from('company_module_access')
-                ->where('has_access', 1)
-                ->whereIn('company_id', $company);
-        })->pluck('id');
-
-        $accessibleModuleIds = $accessibleModules
-            ->intersect($folderModules)
-            ->intersect($companyModules);
-
-        return Module::whereIn('id', $accessibleModuleIds)->with('userPermissions')->get();
+        return $this->belongsToMany(Module::class, 'user_module_access', 'user_id', 'module_id')
+            ->withPivot('has_access')
+            ->wherePivot('has_access', true);
     }
 
 
@@ -103,18 +78,15 @@ class User extends Authenticatable
 
     public function permissions(): BelongsToMany
     {
-        $query = $this->belongsToMany(Permission::class, 'user_module_permissions', 'user_id')
-            ->select('name', 'label')
+        $userId = Auth::id();
+        return $this->belongsToMany(Permission::class, 'user_module_permissions', 'user_id')
+            ->join('user_module_access', function ($join) use ($userId) {
+                $join->on('user_module_access.module_id', '=', 'user_module_permissions.module_id')
+                    ->where('user_module_access.user_id', $userId);
+            })
+            ->select('permissions.name', 'permissions.label')
+            ->where('user_module_access.has_access', true)
             ->distinct();
-
-        // Appliquer des conditions supplémentaires basées sur les dossiers
-        // if ($this->folders->isNotEmpty()) {
-        //    $query->withPivot('company_folder_id')
-        //        ->wherePivot('has_access', true)
-        //        ->wherePivot('company_folder_id', '=', $this->folders->first()->id);
-        //}
-
-        return $query->distinct();
     }
 
     public function sendPasswordResetNotification($token)

@@ -28,17 +28,23 @@ class VerifyUserFolderAccess
             'folders.mappings',
             'folders.interfaces',
             'folders.employees',
+            'folders.referent',
             'folders',
             'company'
         ])->find(Auth::id());
+
 
         if (!$user) {
             return response()->json(['error' => 'Vous n\'êtes pas connecté'], 401);
         }
 
-        if ($user->hasRole('inpact')) {
-            return $next($request);
-        }
+        $folderId = $request->route('company_folder_id');
+
+        $userIsFolderReferent = $user->folders()->where('company_folders.id', $folderId) // Précisez la table
+        ->whereHas('referent', function ($query) use ($user) {
+            $query->where('id', $user->id); // Ajoutez également la spécification de la table ici si nécessaire
+        })->exists();
+
 
         $companyFolderIds= $user->folders->pluck('id')->toArray();
         $userFolderHasAccess = EmployeeFolder::where('user_id', $user->id)
@@ -46,10 +52,10 @@ class VerifyUserFolderAccess
             ->where('has_access', true)
             ->exists();
 
-        if (!$userFolderHasAccess) {
-            return response()->json(['error' => 'Vous n\'avez pas accès à ce dossier'], 401);
+        if ($user->hasRole('inpact') || $userFolderHasAccess || $userIsFolderReferent) {
+            return $next($request);
         }
 
-        return $next($request);
+        return response()->json(['error' => 'Vous n\'avez pas accès à ce dossier'], 403);
     }
 }

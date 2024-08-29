@@ -4,10 +4,13 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Companies\CompanyFolder;
+use App\Traits\JSONResponseTrait;
 use Illuminate\Http\Request;
 
 class NoteController extends Controller
 {
+    use JSONResponseTrait;
+
     public function createUpdateDeleteNote(Request $request){
         $companyFolderId = $request->get('company_folder_id');
         $companyFolder = CompanyFolder::findOrFail($companyFolderId);

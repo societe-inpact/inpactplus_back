@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\API\ConvertController2;
+use App\Traits\JSONResponseTrait;
 use Illuminate\Http\Request;
 use App\Models\Mapping\Mapping;
 use App\Models\Misc\InterfaceSoftware;
@@ -16,6 +17,9 @@ use League\Csv\Reader;
 
 class ConvertInterfaceController extends ConvertController
 {
+
+    use JSONResponseTrait;
+
     // importer les index des colonnes pour l'extraction
 
     public function getMappingsFolder($folderId)
@@ -161,7 +165,6 @@ class ConvertInterfaceController extends ConvertController
         // reprise des différentes informations
 
         $folderId = $request->get('company_folder_id');
-        $interface = $request->get('interface_id');
         $idsoftware = $request->get('interface_id');
 
         $softwareId = InterfaceSoftware::findOrFail($idsoftware);
@@ -187,11 +190,8 @@ class ConvertInterfaceController extends ConvertController
                     $reader->setDelimiter($type_separateur);
                     $reader->addFormatter($formatter);
                     $reader->setHeaderOffset(null);
-                    $header = $reader->getHeader();
                     $records = iterator_to_array($reader->getRecords(), true);
-                    $result = $this->convertInter($records, $folderId, $columnindex);
-
-                    return $result;
+                    return $this->convertInter($records, $folderId, $columnindex);
 
                 }
             default :

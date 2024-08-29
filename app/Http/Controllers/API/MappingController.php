@@ -12,6 +12,7 @@ use App\Models\Mapping\Mapping;
 use App\Models\Companies\CompanyFolder;
 use App\Models\Misc\InterfaceMapping;
 use App\Models\Misc\InterfaceSoftware;
+use App\Traits\JSONResponseTrait;
 use http\Client\Curl\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Validator;
 
 class MappingController extends Controller
 {
+    use JSONResponseTrait;
 
     // Fonction permettant de récupérer les mappings existants d'un dossier
     public function getMapping(Request $request, $id)
@@ -242,17 +244,20 @@ class MappingController extends Controller
     // Fonction permettant de mettre à jour un mapping existant
     public function updateMapping(Request $request, $id)
     {
-        $companyFolder = $request->get('company_folder_id');
+        $companyFolder = CompanyFolder::with('mappings')->findOrFail($id);
+
         if (!$companyFolder) {
             return response()->json("L'id du dossier est requis", 400);
         }
         $validatedData = $this->validateMappingData($request);
         $mapping = Mapping::with('folder')
-            ->where('company_folder_id', $companyFolder)
-            ->findOrFail($id);
+            ->where('company_folder_id', $companyFolder->id)
+            ->first();
+
         if ($mapping->company_folder_id !== intval($validatedData->company_folder_id)) {
             return response()->json(['error' => 'Le dossier de l\'entreprise ne correspond pas.'], 403);
         }
+
         $updateResult = $this->updateMappingData($mapping, $validatedData);
         if ($updateResult === 'updated') {
             return response()->json(['message' => 'Mapping mis à jour avec succès']);
@@ -266,7 +271,6 @@ class MappingController extends Controller
     protected function validateMappingData(Request $request)
     {
         $rubric = $request->validate([
-            // 'input_rubrique' => 'required|string|regex:/^[A-Za-z0-9]{1,3}$/',
             'input_rubrique' => 'required|string|max:255',
             'name_rubrique' => 'nullable|string|max:255',
             'output_rubrique_id' => 'nullable|integer',
@@ -302,19 +306,17 @@ class MappingController extends Controller
     {
         $mapping = Mapping::where('company_folder_id', $companyFolderId)->first();
         $mappingData = $mapping->data;
-        if ($rubricRequest->output_type === "CustomAbsence") {
+        if (str_contains($rubricRequest->output_type, 'CustomAbsence')) {
             $existingCustomAbsence = CustomAbsence::find($rubricRequest->output_rubrique_id);
-
             if ($existingCustomAbsence) {
                 $existingAbsence = Absence::where('code', $existingCustomAbsence->code)->first();
-
                 if ($existingAbsence) {
                     foreach ($mappingData as $key => $data) {
                         if ($data['name_rubrique'] === 'Absence' && $data['output_rubrique_id'] === $existingAbsence->id) {
                             $mappingData[$key] = [
                                 "input_rubrique" => $data['input_rubrique'],
                                 "is_used" => $data['is_used'],
-                                "output_type" => $this->resolveOutputModel($rubricRequest->output_type),
+                                "output_type" => $rubricRequest->output_type,
                                 "name_rubrique" => $rubricRequest->name_rubrique,
                                 "output_rubrique_id" => $existingCustomAbsence->id
                             ];

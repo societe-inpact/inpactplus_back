@@ -18,7 +18,7 @@ trait ModuleRetrievingTrait
     {
         $accessibleModules = Module::whereIn('id', function ($query) {
             $query->select('module_id')
-                ->from('user_module_permissions')
+                ->from('user_module_access')
                 ->where('user_id', $this->id)
                 ->where('has_access', 1);
         })->pluck('id');

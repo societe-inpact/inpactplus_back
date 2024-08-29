@@ -8,20 +8,38 @@ use App\Models\Companies\CompanyFolder;
 use App\Models\Mapping\Mapping;
 use App\Models\Misc\CompanyFolderInterface;
 use App\Models\Misc\InterfaceSoftware;
+use App\Traits\JSONResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class CompanyFolderController extends Controller
 {
+
+    use JSONResponseTrait;
+
     public function getCompanyFolders(){
 
         $this->authorize('read_company_folder', CompanyFolder::class);
 
         $companyFolders = CompanyFolder::with('modules','company','interfaces','mappings','employees', 'referent')->get();
-        return response()->json($companyFolders);
+        if ($companyFolders){
+            return $this->successResponse($companyFolders, '');
+        }
+        return $this->errorResponse('Une erreur est survenue lors de la récupération de la liste des dossiers d\'entreprise', 500);
     }
-    public function createCompanyFolder(Request $request)
-    {
+
+    public function getCompanyFolder($id){
+        $this->authorize('read_company_folder', CompanyFolder::class);
+
+        $companyFolder = CompanyFolder::with('modules','company','interfaces','mappings','employees', 'referent')->findOrFail($id);
+        if ($companyFolder){
+            return $this->successResponse($companyFolder, '');
+        }
+        return $this->errorResponse('Une erreur est survenue lors de la récupération du dossier de l\'entreprise', 500);
+    }
+
+    public function createCompanyFolder(Request $request){
+
         $this->authorize('create_company_folder', CompanyFolder::class);
 
         if (!$request->referent_id){
@@ -41,7 +59,7 @@ class CompanyFolderController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return $this->errorResponse($validator->errors(), 422);
         }
 
         try {
@@ -56,28 +74,30 @@ class CompanyFolderController extends Controller
                 'referent_id' => $request->referent_id,
                 'notes' => $request->notes,
             ];
-            $existingFolder = CompanyFolder::all()->where('folder_number', '==', $request->get('folder_number'))->first();
 
+            $existingFolder = CompanyFolder::all()->where('folder_number', '==', $request->get('folder_number'))->first();
             if ($existingFolder){
-                return response()->json(['message' => 'Le numéro de dossier ' . $request->folder_number . ' est déjà associé à ' . $existingFolder->folder_name]);
+                return $this->errorResponse('Le numéro de dossier ' . $request->folder_number . ' est déjà associé au dossier ' . $existingFolder->folder_name, 409);
             }
 
-            CompanyFolder::create($data);
+            $companyFolder = CompanyFolder::create($data);
+            if ($companyFolder){
+                $companyFolder = CompanyFolder::where('folder_number', $request->folder_number)->first();
 
-            $folder = CompanyFolder::where('folder_number', $request->folder_number)->first();
-
-            CompanyFolderInterface::create([
-                'company_folder_id' => $folder->id,
-                'interface_id' => $request->interface_id
-            ]);
-            Mapping::create([
-                'company_folder_id' => $folder->id,
-                'data' => [],
-            ]);
-            return response()->json(['message' => 'Dossier créé avec succès'], 200);
-
+                if ($companyFolder){
+                    CompanyFolderInterface::create([
+                        'company_folder_id' => $companyFolder->id,
+                        'interface_id' => $request->interface_id
+                    ]);
+                    Mapping::create([
+                        'company_folder_id' => $companyFolder->id,
+                        'data' => [],
+                    ]);
+                    return $this->successResponse('', 'Dossier créé avec succès', 201);
+                }
+            }
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Une erreur est survenue lors de la création du dossier.'], 500);
+            return $this->errorResponse('Une erreur est survenue lors de la création du dossier',500);
         }
     }
 
@@ -95,7 +115,7 @@ class CompanyFolderController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return $this->errorResponse($validator->errors(), 422);
         }
 
         try {
@@ -116,11 +136,13 @@ class CompanyFolderController extends Controller
                 $data['company_id'] = $request->company_id;
             }
 
-            CompanyFolder::where('id', $id)->update($data);
-            return response()->json(['message' => 'Dossier modifié avec succès'], 200);
+            $companyFolderUpdate = CompanyFolder::where('id', $id)->update($data);
+            if ($companyFolderUpdate){
+                return $this->successResponse('', 'Dossier mis à jour avec succès', 201);
+            }
 
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Une erreur est survenue lors de la modification du dossier.'], 500);
+            return $this->errorResponse('Une erreur est survenue lors de la mise à jour du dossier', 500);
         }
     }
 
@@ -131,7 +153,7 @@ class CompanyFolderController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return $this->errorResponse($validator->errors(), 422);
         }
 
         try {
@@ -142,35 +164,37 @@ class CompanyFolderController extends Controller
             $existingFolderInterface = CompanyFolderInterface::all()->where('interface_id', '==', $request->get('interface_id'))->first();
             if ($existingFolderInterface){
                 $existingInterface = InterfaceSoftware::findOrFail($request->interface_id);
-                return response()->json(['message' => 'L\'interface ' . $existingInterface->name . ' est déjà associée au dossier']);
+                return $this->errorResponse('L\'interface ' . $existingInterface->name . ' est déjà associée au dossier', 409);
             }
-            CompanyFolderInterface::create($data);
-            return response()->json(['message' => 'Interface ajoutée avec succès'], 200);
+
+            $createCompanyFolderInterface = CompanyFolderInterface::create($data);
+            if ($createCompanyFolderInterface){
+                return $this->successResponse('', 'Interface ajoutée au dossier avec succès', 201);
+            }
 
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Une erreur est survenue lors de l\'ajout de l\'interface'], 500);
+            return $this->errorResponse('Une erreur est survenue lors de l\'ajout de l\'interface', 500);
         }
     }
 
     public function deleteInterfaceFromCompanyFolder($companyFolderId, $interfaceId)
     {
         try {
-            // Trouver l'association actuelle entre le 'company_folder' et l'interface
+            // Trouve l'association actuelle entre le 'company_folder' et l'interface
             $companyFolderInterface = CompanyFolderInterface::where('company_folder_id', $companyFolderId)
                 ->where('interface_id', $interfaceId)
                 ->first();
 
-            if (!$companyFolderInterface) {
-                return response()->json(['message' => 'Aucune association trouvée pour cette interface et ce dossier'], 404);
+            if ($companyFolderInterface){
+                // Supprime l'association entre le dossier et l'interface
+                $deleteCompanyFolderInterface = $companyFolderInterface->delete();
+                if ($deleteCompanyFolderInterface){
+                    return $this->successResponse('', 'Interface supprimée du dossier avec succès', 201);
+                }
             }
 
-            // Supprimer l'association entre le dossier et l'interface
-            $companyFolderInterface->delete();
-
-            return response()->json(['message' => 'Interface supprimée avec succès'], 200);
-
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Une erreur est survenue lors de la suppression de l\'interface'], 500);
+            return $this->errorResponse('Une erreur est survenue lors de la suppression de l\'interface', 500);
         }
     }
 }
