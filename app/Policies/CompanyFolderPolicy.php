@@ -68,7 +68,7 @@ class CompanyFolderPolicy
     }
 
     /**
-     * Determine si l'utilisateur peut créer un nouveau dossier.
+     * Determine si l'utilisateur peut ajouter un utilisateur à un dossier.
      *
      * @param User $user
      * @return bool
@@ -83,11 +83,24 @@ class CompanyFolderPolicy
     }
 
     /**
+     * Determine si l'utilisateur peut supprimer un utilisateur d'un dossier.
      * @throws CustomUnauthorizedException
      */
     public function delete_user_from_company_folder(User $user)
     {
         if (!$user->hasPermission('delete') && !$user->hasPermission('crud') && !$user->hasRole(['inpact'])) {
+            throw new CustomUnauthorizedException();
+        }
+        return true;
+    }
+
+    /**
+     * Determine si l'utilisateur peut créer, mettre à jour ou supprimer les notes d'un dossier.
+     * @throws CustomUnauthorizedException
+     */
+    public function create_note_company_folder(User $user)
+    {
+        if (!$user->hasPermission('create') && !$user->hasPermission('crud') && !$user->hasRole(['inpact'])) {
             throw new CustomUnauthorizedException();
         }
         return true;
