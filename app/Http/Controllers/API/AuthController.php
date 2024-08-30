@@ -50,12 +50,21 @@ class AuthController extends Controller
 
         $roles = $user->roles->pluck('name')->toArray();
 
-        return match (true) {
+        $response = match (true) {
             in_array('client', $roles) => new ClientResource($user),
             in_array('referent', $roles) => new ReferentResource($user),
             in_array('inpact', $roles) => new InpactResource($user),
-            default => $this->errorResponse('Vous n\'êtes pas autorisé', 403),
+            default => null,
         };
+
+        if ($response) {
+            return $response->additional([
+                'message' => 'L\'utilisateur a été chargé avec succès',
+                'status' => 200
+            ]);
+        }
+
+        return $this->errorResponse('Vous n\'êtes pas autorisé', 403);
     }
 
     public function login(Request $request)

@@ -47,12 +47,6 @@ class User extends Authenticatable
         return $this->belongsToMany(CompanyFolder::class, 'employee_folder', 'user_id', 'company_folder_id')->withPivot('id');
     }
 
-    // TODO il faudrait corriger companies par companyFolder
-    // Déjà existant au dessus
-//    public function companies(){
-//       return $this->belongsToMany(CompanyFolder::class, 'employee_folder', 'user_id', 'company_folder_id');
-//   }
-
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'model_has_roles', 'model_id')->with('permissions');
