@@ -16,7 +16,7 @@ class CustomAbsenceController extends Controller
     public function getCustomAbsences()
     {
         $customAbsences = CustomAbsence::all();
-        return response()->json($customAbsences, 200);
+        return $this->successResponse($customAbsences);
     }
 
     public function createCustomAbsence(Request $request)
@@ -48,7 +48,7 @@ class CustomAbsenceController extends Controller
 
 
         if ($isCustomAbsenceExists || $isAbsenceExists) {
-            return response()->json(['message' => 'Absence déjà existante.'], 400);
+            return $this->errorResponse('Absence déjà existante', 403);
         }
 
         if (str_starts_with($validated['code'], 'AB-')) {
@@ -61,13 +61,12 @@ class CustomAbsenceController extends Controller
                 'therapeutic_part_time' => $request->input('therapeutic_part_time', null),
             ]);
             if ($customAbsence) {
-                return response()->json(['message' => 'Absence personnalisée créée', "data" => $customAbsence], 201);
+                return $this->successResponse($customAbsence, 'Absence personnalisée créée avec succès', 201);
             }
         } else {
-            return response()->json(['message' => 'Le code rubrique doit commencer par AB-'], 400);
+            return $this->errorResponse('Le code rubrique doit commencer par AB-');
         }
-
-        return response()->json(['message' => 'Impossible de créer la rubrique personnalisée'], 400);
+        return $this->errorResponse('Impossible de créer la rubrique personnalisée', 500);
     }
 
     public function updateCustomAbsence(Request $request, $id)
@@ -97,7 +96,7 @@ class CustomAbsenceController extends Controller
             ->exists();
 
         if ($isCustomAbsenceExists || $isAbsenceExists) {
-            return response()->json(['message' => 'Absence déjà existante.'], 400);
+            return $this->errorResponse('Absence déjà existante', 403);
         }
 
         if (str_starts_with($validated['code'], 'AB-')) {
@@ -108,13 +107,12 @@ class CustomAbsenceController extends Controller
                 'therapeutic_part_time' => $request->input('therapeutic_part_time', null),
             ]);
             if ($customAbsence) {
-                return response()->json(['message' => 'Absence personnalisée modifiée', "id" => $id], 201);
+                return $this->successResponse('', 'L\'absence personnalisée a été mis à jour avec succès');
             }
         } else {
-            return response()->json(['message' => 'Le code rubrique doit commencer par AB-'], 400);
+            return $this->errorResponse('Le code rubrique doit commencer par AB-');
         }
-
-        return response()->json(['message' => 'Impossible de modifier la rubrique personnalisée'], 400);
+        return $this->errorResponse('Impossible de modifier la rubrique personnalisée', 500);
     }
 
     public function deleteCustomAbsence($id)
@@ -137,9 +135,9 @@ class CustomAbsenceController extends Controller
         // supprime l'absence custom
         $deleteCustomAbsence = CustomAbsence::find($id)->delete();
         if ($deleteCustomAbsence) {
-            return response()->json(['message' => 'l\'absence custom a été supprimé'], 200);
+            return $this->successResponse('', 'L\'absence personnalisée a été supprimé avec succès');
         } else {
-            return response()->json(['message' => 'L\'absence custom n\'existe pas.'], 404);
+            return $this->errorResponse('L\'absence personnalisée n\'existe pas', 404);
         }
     }
 }

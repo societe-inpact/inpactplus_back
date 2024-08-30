@@ -36,7 +36,7 @@ class VerifyUserModuleAccess
         ])->find(Auth::id());
 
         if (!$user) {
-            return response()->json(['error' => 'Vous n\'êtes pas connecté'], 401);
+            return $this->errorResponse('Vous n\'êtes pas connecté', 401);
         }
 
         if ($user->hasRole('inpact')) {
@@ -50,7 +50,7 @@ class VerifyUserModuleAccess
             })->exists();
 
         if (!$userHasAccess) {
-            return response()->json(['error' => 'Vous n\'avez pas accès à ce module'], 401);
+            return $this->errorResponse('Vous n\'avez pas accès à ce module', 401);
         }
 
         return $next($request);

@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Hours\CustomHour;
 use App\Models\Hours\Hour;
 use App\Rules\CustomRubricRule;
+use App\Traits\JSONResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CustomHourController extends Controller
 {
+    use JSONResponseTrait;
     /**
      * Récupère toutes les heures personnalisées dans la base de données.
      *
@@ -18,7 +20,7 @@ class CustomHourController extends Controller
      */
     public function getCustomHours(){
         $customHours = CustomHour::all();
-        return response()->json($customHours);
+        return $this->successResponse($customHours);
     }
 
     /**
@@ -53,9 +55,9 @@ class CustomHourController extends Controller
         $isHourExists = Hour::where('code', $validated['code'])->exists();
 
         if($isHourExists){
-            return response()->json(['message' => 'Heure déjà existante.'], 400);
+            return $this->errorResponse('Heure déjà existante', 403);
         }elseif($isCustomHourExists){
-            return response()->json(['message' => 'Heure personnalisée déjà existante.'], 400);
+            return $this->errorResponse('Heure personnalisée déjà existante', 403);
         }
 
         if (str_starts_with($validated['code'], 'HS-')) {
@@ -66,13 +68,12 @@ class CustomHourController extends Controller
                 'company_folder_id' => $validated['company_folder_id'],
             ]);
             if ($customHour) {
-                return response()->json(['message' => 'Heure personnalisée créée', "data" => $customHour], 201);
+                return $this->successResponse($customHour, 'Heure personnalisée créée avec succès', 201);
             }
         }else{
-            return response()->json(['message' => 'Le code rubrique doit commencer par HS-'], 400);
+            return $this->errorResponse('Le code rubrique doit commencer par HS-');
         }
-
-        return response()->json(['message' => 'Impossible de créer la rubrique personnalisée'], 400);
+        return $this->errorResponse('Impossible de créer la rubrique personnalisée', 500);
     }
 
     public function updateCustomHour(Request $request, $id)
@@ -97,7 +98,7 @@ class CustomHourController extends Controller
         $isHourExists = Hour::where('code', $validated['code'])->exists();
 
         if($isCustomHourExists || $isHourExists){
-            return response()->json(['message' => 'Heure personnalisée déjà existante.'], 400);
+            return $this->errorResponse('Heure personnalisée déjà existante', 403);
         }
 
         if (str_starts_with($validated['code'], 'HS-')) {
@@ -107,13 +108,12 @@ class CustomHourController extends Controller
                 'code' => $validated['code'],
             ]);
             if ($customHour) {
-                return response()->json(['message' => 'Heure personnalisée modifiée', "id" => $id], 201);
+                return $this->successResponse('', 'Heure personnalisée mise à jour avec succès');
             }
         }else{
-            return response()->json(['message' => 'Le code rubrique doit commencer par HS-'], 400);
+            return $this->errorResponse('Le code rubrique doit commencer par HS-');
         }
-
-        return response()->json(['message' => 'Impossible de modifier la rubrique personnalisée'], 400);
+        return $this->errorResponse('Impossible de modifier la rubrique personnalisée', 500);
     }
 
     public function deleteCustomHour($id)
@@ -136,10 +136,10 @@ class CustomHourController extends Controller
         // supprime la customhour
         $deleteCustomHour = CustomHour::find($id)->delete();
         if ($deleteCustomHour){
-            return response()->json(['message' => 'l\'heure custom a été supprimé'], 200);
+            return $this->successResponse('', 'L\'heure personnalisée a été supprimé avec succès');
         }
         else{
-            return response()->json(['message' => 'L\'heure custom n\'existe pas.'], 404);
+            return $this->errorResponse('L\'heure personnalisée n\'existe pas', 404);
         }
     }
 }

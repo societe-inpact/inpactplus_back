@@ -33,11 +33,11 @@ class MappingController extends Controller
         $companyFolder = CompanyFolder::with('interfaces')->findOrFail($id);
 
         if (!$companyFolder) {
-            return response()->json("L'id du dossier est requis", 400);
+            return $this->errorResponse('L\'id du dossier est requis');
         }
 
         if (!$file) {
-            return response()->json('Aucun fichier importé', 400);
+            return $this->errorResponse('Aucun fichier importé');
         }
 
         foreach ($companyFolder->interfaces as $interface) {
@@ -57,7 +57,6 @@ class MappingController extends Controller
                     $interfaceNames = strtolower($interface->name);
                     switch ($interfaceNames) {
                         case "marathon":
-                        case "maratest":
                             $convertMEController = new ConvertMEController();
                             $columnIndex = $convertMEController->formatFilesMarathon();
                             $separatorType = $columnIndex["separator_type"];
@@ -66,11 +65,7 @@ class MappingController extends Controller
                             $colonneMatricule = 0;
                             break;
                         case "rhis":
-                            return response()->json([
-                                'success' => false,
-                                'message' => 'Algo de l\'interface à développer',
-                                'status' => 201
-                            ]);
+                            return $this->errorResponse('Algo de l\'interface à développer');
                         default:
                             return null;
                     }
@@ -82,13 +77,12 @@ class MappingController extends Controller
                 $companyFolderId = $companyFolder->id;
                 $results = $this->processCsvRecords($records, $companyFolderId, $indexRubrique, $colonneMatricule);
 
-                return response()->json($results);
+                return $this->successResponse($results);
             } else {
-                return response()->json(['message' => 'L\'interface n\'existe pas', 'status' => 400]);
+                return $this->errorResponse('L\'interface n\'existe pas', 404);
             }
         }
-
-        return response()->json(['message' => 'Aucune interface à traiter', 'status' => 400]);
+        return $this->errorResponse('Aucune interface à traiter', 500);
     }
 
 
@@ -247,7 +241,7 @@ class MappingController extends Controller
         $companyFolder = CompanyFolder::with('mappings')->findOrFail($id);
 
         if (!$companyFolder) {
-            return response()->json("L'id du dossier est requis", 400);
+            return $this->errorResponse('L\'id du dossier est requis', 400);
         }
         $validatedData = $this->validateMappingData($request);
         $mapping = Mapping::with('folder')
@@ -255,14 +249,14 @@ class MappingController extends Controller
             ->first();
 
         if ($mapping->company_folder_id !== intval($validatedData->company_folder_id)) {
-            return response()->json(['error' => 'Le dossier de l\'entreprise ne correspond pas.'], 403);
+            return $this->errorResponse('Le dossier de l\'entreprise ne correspond pas', 403);
         }
 
         $updateResult = $this->updateMappingData($mapping, $validatedData);
         if ($updateResult === 'updated') {
-            return response()->json(['message' => 'Mapping mis à jour avec succès']);
+            return $this->successResponse('', 'Mapping mis à jour avec succès');
         } else {
-            return response()->json(['error' => 'Rubrique introuvable'], 404);
+            return $this->errorResponse('La rubrique est introuvable', 404);
         }
     }
 
@@ -346,19 +340,15 @@ class MappingController extends Controller
                 $isUsed = filter_var($validatedRequestData->is_used, FILTER_VALIDATE_BOOLEAN) || filter_var($inputMappedRubrique['is_used'], FILTER_VALIDATE_BOOLEAN);
                 if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData->input_rubrique) {
                     if ($isUsed === false) {
-                        return response()->json([
-                            'error' => 'La rubrique d\'entrée ' . $validatedRequestData->input_rubrique . ' n\'est pas utilisée',
-                        ], 409);
+                        return $this->errorResponse('La rubrique d\'entrée ' . $validatedRequestData->input_rubrique . ' n\'est pas utilisée', 409);
                     } else {
-                        return response()->json([
-                            'error' => 'La rubrique d\'entrée ' . $validatedRequestData->input_rubrique . ' est déjà associée à la rubrique ' . $validatedRequestData->getSilaeRubric()->code,
-                        ], 409);
+                        return $this->errorResponse('La rubrique d\'entrée ' . $validatedRequestData->input_rubrique . ' est déjà associée à la rubrique ' . $validatedRequestData->getSilaeRubric()->code, 409);
                     }
                 }
             }
         }
         $this->saveMappingData($companyFolderId, $validatedRequestData);
-        return response()->json(['success' => 'Mapping ajouté avec succès'], 201);
+        return $this->successResponse('', 'Mapping ajouté avec succès', 201);
     }
 
     // Fonction permettant de transformer la rubrique d'entrée mappée en rubrique de sortie SILAE
@@ -440,15 +430,12 @@ class MappingController extends Controller
         $mappingCompagny = Mapping::where("id", $id)->first();
         $dataBis = [];
         $mappingCompagny->data = $dataBis;
-        $mappingCompagny->save();
-        if ($mappingCompagny) {
-            return response()->json(['message' => 'Mapping supprimé du dossier avec succès']);
+        if ($mappingCompagny->save()) {
+            return $this->successResponse('', 'Mapping supprimé du dossier avec succès');
         }
-        return response()->json(['message' => 'Erreur lors de la suppression du mapping']);
+        return $this->errorResponse('Erreur lors de la suppression du mapping', 500);
     }
 
-    // Fonction permettant de mettre à jour un mappings existant
-    // ????? C'est une fonction qui supprime ici, pourquoi l'avoir modifiée en update ?
     public function deleteOneLineMappingData(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -459,7 +446,7 @@ class MappingController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return $this->errorResponse($validator->errors(), 422);
         }
 
         $companyFolderId = $request ["companyFolderId"];
@@ -498,9 +485,9 @@ class MappingController extends Controller
         if ($data !== $dataBis) {
             $mappingCompagny->data = $dataBis;
             $mappingCompagny->save();
-            return response()->json(['message' => 'updated']);
+            return $this->successResponse('', 'Ligne de mapping supprimée du dossier avec succès');
         } else {
-            return response()->json(['message' => 'nomodif']);
+            return $this->successResponse('', 'Ligne de mapping non modifiée');
         }
     }
 }

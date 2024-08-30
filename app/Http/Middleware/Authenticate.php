@@ -2,12 +2,14 @@
 
 namespace App\Http\Middleware;
 
+use App\Traits\JSONResponseTrait;
 use Closure;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Middleware\Authenticate as Middleware;
 
 class Authenticate extends Middleware
 {
+    use JSONResponseTrait;
     /**
      * Get the path the user should be redirected to when they are not authenticated.
      * @throws AuthenticationException
@@ -15,7 +17,7 @@ class Authenticate extends Middleware
     protected function redirectTo($request)
     {
         if (!$request->expectsJson()) {
-            return response()->json(['message' => 'Vous n\'êtes pas connecté'], 401);
+            return $this->errorResponse('Vous n\'êtes pas connecté', 401);
         }
     }
 

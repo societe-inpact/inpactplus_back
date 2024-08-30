@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use App\Traits\JSONResponseTrait;
 use Exception;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 class CustomUnauthorizedException extends Exception
 {
@@ -23,8 +24,8 @@ class CustomUnauthorizedException extends Exception
     /**
      * Render the exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @param  Request  $request
+     * @return Response
      */
     public function render($request)
     {

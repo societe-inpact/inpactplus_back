@@ -195,7 +195,7 @@ class ConvertInterfaceController extends ConvertController
 
                 }
             default :
-                return response()->json(['message' => 'Conversion impossible, format non pris en compte ','status' => 400,]);
+                return $this->errorResponse('Conversion impossible, le format n\'est pas pris en charge', 400);
         }
     }
 }

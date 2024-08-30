@@ -18,9 +18,10 @@ class VariablesElementsController extends Controller
      *
      * @return JsonResponse Réponse JSON indiquant le succès ou l'échec de la récupération.
      */
-    public function getVariablesElements(){
+    public function getVariablesElements()
+    {
         $variablesElements = VariableElement::all();
-        return response()->json($variablesElements, 200);
+        return $this->successResponse($variablesElements);
     }
 
     /**
@@ -33,7 +34,8 @@ class VariablesElementsController extends Controller
      *
      * @return JsonResponse Réponse JSON indiquant le succès ou l'échec de la création.
      */
-    public function createVariableElement(Request $request){
+    public function createVariableElement(Request $request)
+    {
 
         // Validation des données
         $validated = $request->validate([
@@ -52,28 +54,27 @@ class VariablesElementsController extends Controller
             ->exists();
 
         if ($isVariableElementExist) {
-            return response()->json(['message' => 'Élément variable déjà existant.'], 400);
+            return $this->errorResponse('Élément variable déjà existant', 403);
         }
 
 
         // Création de l'élément variable si le code rubrique commence par EV-
-        if (str_starts_with($validated['code'], 'EV-')){
+        if (str_starts_with($validated['code'], 'EV-')) {
             $variableElement = VariableElement::create([
                 'label' => $validated['label'],
                 'code' => $validated['code'],
                 'company_folder_id' => $validated['company_folder_id'],
             ]);
             if ($variableElement) {
-                return response()->json(['message' => 'Élément variable créée', "data" => $variableElement], 201);
+                return $this->successResponse($variableElement, 'Élément variable créé avec succès', 201);
             }
-        }else{
-            return response()->json(['message' => 'Le code rubrique doit commencer par EV-'], 400);
+        } else {
+            return $this->errorResponse('Le code rubrique doit commencer par EV-');
         }
-
-        return response()->json(['message' => 'Impossible de créer la rubrique personnalisée'], 400);
+        return $this->errorResponse('Impossible de créer la rubrique personnalisée', 500);
     }
 
-    public function updateVariableElement(Request $request,$id)
+    public function updateVariableElement(Request $request, $id)
     {
         // Validation des données
         $validated = $request->validate([
@@ -92,25 +93,24 @@ class VariablesElementsController extends Controller
             ->exists();
 
         if ($isVariableElementExist) {
-            return response()->json(['message' => 'Élément variable déjà existant.'], 400);
+            return $this->errorResponse('Élément variable déjà existant', 403);
         }
 
 
         // Création de l'élément variable si le code rubrique commence par EV-
-        if (str_starts_with($validated['code'], 'EV-')){
+        if (str_starts_with($validated['code'], 'EV-')) {
 
-            $variableElement = VariableElement::where('id',$id)->update([
+            $variableElement = VariableElement::where('id', $id)->update([
                 'label' => $validated['label'],
                 'code' => $validated['code'],
             ]);
             if ($variableElement) {
-                return response()->json(['message' => 'Élément variable a été modifié', "id" => $id], 201);
+                return $this->successResponse($variableElement, 'L\'élément variable a été mis à jour avec succès');
             }
-        }else{
-            return response()->json(['message' => 'Le code rubrique doit commencer par EV-'], 400);
+        } else {
+            return $this->errorResponse('Le code rubrique doit commencer par EV-');
         }
-
-        return response()->json(['message' => 'Impossible de modifier la rubrique personnalisée'], 400);
+        return $this->errorResponse('Impossible de modifier la rubrique personnalisée', 500);
     }
 
     public function deleteVariableElement($id)
@@ -120,24 +120,23 @@ class VariablesElementsController extends Controller
         $companyFolderId = $companyFolder->company_folder_id;
         $nameRubrique = "Éléments variables";
 
-        $deletMapping =new Request([
+        $deletMapping = new Request([
             "companyFolderId" => $companyFolderId,
             "output_rubrique_id" => $id,
             "nameRubrique" => $nameRubrique,
             "input_rubrique" => ""
-         ]);
+        ]);
 
-         $controller = new MappingController();
-         $controller->deleteOneLineMappingData($deletMapping);
+        $controller = new MappingController();
+        $controller->deleteOneLineMappingData($deletMapping);
 
         // supprime l'élément variable
 
         $deleteVariableElement = VariableElement::find($id)->delete();
-        if ($deleteVariableElement){
-            return response()->json(['message' => 'l\'élément variable a été supprimé'], 200);
-        }
-        else{
-            return response()->json(['message' => 'L\'élément variable n\'existe pas.'], 404);
+        if ($deleteVariableElement) {
+            return $this->successResponse('', 'L\'élément variable a été supprimé avec succès');
+        } else {
+            return $this->errorResponse('L\'élément variable n\'existe pas', 404);
         }
     }
 

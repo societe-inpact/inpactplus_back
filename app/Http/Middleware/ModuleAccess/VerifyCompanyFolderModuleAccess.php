@@ -4,6 +4,7 @@ namespace App\Http\Middleware\ModuleAccess;
 
 use App\Models\Misc\User;
 use App\Models\Modules\Module;
+use App\Traits\JSONResponseTrait;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,11 +12,12 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VerifyCompanyFolderModuleAccess
 {
+    use JSONResponseTrait;
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
+     * @param Request $request
+     * @param Closure $next
      * @param string $moduleName
      * @return mixed
      */
@@ -36,7 +38,7 @@ class VerifyCompanyFolderModuleAccess
         ])->find(Auth::id());
 
         if (!$user) {
-            return response()->json(['error' => 'Vous n\'êtes pas connecté'], 401);
+            return $this->errorResponse('Vous n\'êtes pas connecté', 401);
         }
 
         if ($user->hasRole('inpact')) {
@@ -51,7 +53,7 @@ class VerifyCompanyFolderModuleAccess
             })->exists();
 
         if (!$companyFolderHasAccess) {
-            return response()->json(['error' => 'Votre dossier d\'entreprise n\'a pas accès à ce module'], 401);
+            return $this->errorResponse('Votre dossier d\'entreprise n\'a pas accès à ce module', 401);
         }
 
         return $next($request);

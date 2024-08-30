@@ -20,7 +20,7 @@ class InterfaceMappingController extends ConvertController
             return InterfaceMapping::findOrFail($id);
         }
         else{
-            return response()->json(['message'=>'il n\'y pas d\'interface', $InterfaceMappingId], 400);
+            return $this->errorResponse('Il n\'y pas d\'interface', 404);
         }
     }
 
@@ -40,7 +40,7 @@ class InterfaceMappingController extends ConvertController
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return $this->errorResponse($validator->errors(), 422);
         }
 
         $data = [
@@ -61,16 +61,16 @@ class InterfaceMappingController extends ConvertController
         $softwareNamesExisting = InterfaceSoftware::all()->where('name', '=', $softwareName);
 
         if ($softwareNamesExisting->isNotEmpty()){
-            return response()->json(['error' => 'Le nom de l\'interface existe déjà'], 500);
+            return $this->errorResponse('Le nom de l\'interface existe déjà', 403);
         }else{
             $interfaceMapping = InterfaceMapping::create($data);
             if ($interfaceMapping ){
                 $softwareId = $interfaceMapping->id;
                 $software = InterfaceSoftware::create(['name'=> $softwareName, 'interface_mapping_id'=> $softwareId]);
-                return response()->json(['message' => 'Création de l\'interface réussie', 'data' =>  $software], 200);
+                return $this->successResponse($software, 'L\'interface a été créée avec succès', 201);
             }
         }
-        return response()->json(['error' => 'Une erreur est survenue lors de la création de l\'interface.'], 500);
+        return $this->errorResponse('Une erreur est survenue lors de la création de l\'interface.', 500);
     }
 
     public function updateInterfaceMapping(Request $request, $id){
@@ -88,7 +88,7 @@ class InterfaceMappingController extends ConvertController
             'extension'=> 'required|string',
         ]);
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return $this->errorResponse($validator->errors(), 422);
         }
 
         $data = [
@@ -106,17 +106,17 @@ class InterfaceMappingController extends ConvertController
 
         $interface = InterfaceMapping::findOrFail($id);
         if ($interface->update($data)){
-            return response()->json(['message' => 'Mise à jour de l\'interface réussie'], 200);
+            return $this->successResponse('', 'L\'interface a été mise à jour avec succès');
         }
-        return response()->json(['error' => 'Une erreur est survenue lors de la mise à jour de l\'interface'], 500);
+        return $this->errorResponse('Une erreur est survenue lors de la mise à jour de l\'interface', 500);
     }
 
     public function deleteInterfaceMapping($id){
 
         $interfaceMapping = InterfaceMapping::findOrFail($id);
         if ($interfaceMapping->delete()){
-            return response()->json(['message' => 'L\'interface a été supprimée'], 200);
+            return $this->successResponse('', 'L\'interface a été supprimée avec succès');
         }
-        return response()->json(['message' => 'L\'interface n\'existe pas.'], 404);
+        return $this->errorResponse('L\'interface n\'existe pas.', 404);
     }
 }

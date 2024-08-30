@@ -45,7 +45,7 @@ class AuthController extends Controller
         ])->find(Auth::id());
 
         if (!$user) {
-            return $this->errorResponse('Vous n\'êtes pas connecté', 404);
+            return $this->errorResponse('Vous n\'êtes pas connecté', 401);
         }
 
         $roles = $user->roles->pluck('name')->toArray();

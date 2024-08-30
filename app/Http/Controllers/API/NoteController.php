@@ -19,22 +19,22 @@ class NoteController extends Controller
         ]);
 
         if ($validatedData){
+            if ($companyFolder->notes === null){
+                if ($companyFolder->update(['notes' => $validatedData['notes']])){
+                    return $this->successResponse('', 'Note du dossier créée');
+                }
+            }
             if (isset($validatedData['notes']) && $companyFolder->notes !== null){
                 if ($companyFolder->update(['notes' => $validatedData['notes']])){
-                    return response()->json(['message' => 'Note du dossier mise à jour']);
+                    return $this->successResponse('', 'Note du dossier mise à jour avec succès');
                 }
             }
             if ($validatedData['notes'] === null){
                 if ($companyFolder->update(['notes' => $validatedData['notes']])){
-                    return response()->json(['message' => 'Note du dossier supprimée']);
-                }
-            }
-            if ($companyFolder->notes === null){
-                if ($companyFolder->update(['notes' => $validatedData['notes']])){
-                    return response()->json(['message' => 'Note du dossier créée']);
+                    return $this->successResponse('', 'Note du dossier supprimée avec succès');
                 }
             }
         }
-        return response()->json(['message' => 'Erreur lors de la création de la note']);
+        return $this->errorResponse('Erreur lors de la création de la note', 500);
     }
 }

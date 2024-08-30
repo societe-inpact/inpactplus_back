@@ -36,7 +36,7 @@ class VerifyCompanyModuleAccess
         ])->find(Auth::id());
 
         if (!$user) {
-            return response()->json(['error' => 'Vous n\'êtes pas connecté'], 401);
+            return $this->errorResponse('Vous n\'êtes pas connecté', 401);
         }
 
         if ($user->hasRole('inpact')) {
@@ -51,7 +51,7 @@ class VerifyCompanyModuleAccess
             })->exists();
 
         if (!$companyHasAccess) {
-            return response()->json(['error' => 'Votre entreprise n\'a pas accès à ce module'], 401);
+            return $this->errorResponse('Votre entreprise n\'a pas accès à ce module', 401);
         }
 
         return $next($request);

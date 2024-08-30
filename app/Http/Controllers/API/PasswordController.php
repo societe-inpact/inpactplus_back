@@ -23,8 +23,8 @@ class PasswordController extends Controller
         );
 
         return $status === Password::RESET_LINK_SENT
-            ? response()->json(['message' => __($status)], 200)
-            : response()->json(['message' => __($status)], 400);
+            ? $this->successResponse('', __($status))
+            : $this->errorResponse(__($status));
     }
 
     public function reset(Request $request)
@@ -44,45 +44,36 @@ class PasswordController extends Controller
         );
 
         if ($status == Password::PASSWORD_RESET) {
-            return response()->json(['message' => __($status)], 200);
+            return $this->successResponse('', __($status));
         }
-
-        return response()->json(['message' => __($status)], 400);
+        return $this->errorResponse(__($status));
     }
 
     // Fonction permettant la mise à jour du mot de passe lorsque l'utilisateur est connecté
-    public function changePassword(Request $request, $id){
-
+    public function changePassword(Request $request, $id)
+    {
         $validator = Validator::make($request->all(), [
             'actual_password' => 'required',
             'new_password' => 'required|min:8|confirmed',
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors(),
-            ], 422);
+            return $this->errorResponse($validator->errors(), 422);
         }
+
         $user = User::findOrFail($id);
 
         if (!Hash::check($request->actual_password, $user->password)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'L\'ancien mot de passe est incorrect.',
-            ], 401);
+            return $this->errorResponse('L\'ancien mot de passe est incorrect', 401);
         }
 
-
         $user->password = Hash::make($request->new_password);
-        $user->save();
 
-        // Retourner une réponse de succès en JSON
-        return response()->json([
-            'success' => true,
-            'message' => 'Mot de passe changé avec succès.',
-        ]);
+        if ($user->save()) {
+            return $this->successResponse('', 'Mot de passe changé avec succès');
+        } else {
+            return $this->errorResponse('Impossible de changer votre mot de passe', 500);
+        }
     }
 
 }

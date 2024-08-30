@@ -2,8 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Exceptions\CustomUnauthorizedException;
 use App\Models\Employees\EmployeeFolder;
 use App\Models\Misc\User;
+use App\Traits\JSONResponseTrait;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,10 +13,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VerifyUserPermission
 {
+    use JSONResponseTrait;
+
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param Closure(Request): (Response) $next
+     * @throws CustomUnauthorizedException
      */
     public function handle(Request $request, Closure $next, $permission): Response
     {
@@ -33,11 +38,11 @@ class VerifyUserPermission
         ])->find(Auth::id());
 
         if (!$user) {
-            return response()->json(['error' => 'Vous n\'êtes pas connecté'], 401);
+            return $this->errorResponse('Vous n\'êtes pas connecté', 401);
         }
 
         if (!$user->hasPermission($permission)) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+            throw new CustomUnauthorizedException();
         }
 
         return $next($request);

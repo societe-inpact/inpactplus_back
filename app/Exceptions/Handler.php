@@ -33,7 +33,7 @@ class Handler extends ExceptionHandler
 
     protected function unauthenticated($request, AuthenticationException $exception)
     {
-        return response()->json(['message' => 'Vous n\'êtes pas connecté'], 401);
+        return $this->errorResponse('Vous n\'êtes pas connecté', 401);
     }
 
 }

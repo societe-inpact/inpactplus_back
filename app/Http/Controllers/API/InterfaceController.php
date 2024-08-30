@@ -15,12 +15,14 @@ class InterfaceController extends Controller
 {
     use JSONResponseTrait;
 
-    public function getInterfaces(){
+    public function getInterfaces()
+    {
         $softwares = InterfaceSoftware::all();
-        return response()->json($softwares, 200);
+        return $this->successResponse($softwares);
     }
 
-    public function createInterface(Request $request){
+    public function createInterface(Request $request)
+    {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'interface_mapping_id' => 'nullable|exists:interface_mapping.id',
@@ -37,12 +39,13 @@ class InterfaceController extends Controller
             'interface_mapping_id' => $request->input('interface_mapping_id', null),
         ]);
         if ($interface) {
-            return $this->successResponse($interface, 'Interface créée', 201);
+            return $this->successResponse($interface, 'Interface créée avec succès', 201);
         }
         return $this->errorResponse('Impossible de créer l\'interface', 500);
     }
 
-    public function updateInterface(Request $request, $id){
+    public function updateInterface(Request $request, $id)
+    {
         $software = InterfaceSoftware::findOrFail($id);
         $software->name = $request->name;
 
@@ -51,24 +54,24 @@ class InterfaceController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return $this->errorResponse($validator->errors(), 422);
         }
 
-        if ($software->save()){
-            return response()->json(['message' => 'Le nom a été changé en '. $request->name], 200);
-        } else{
-            return response()->json(['error' => 'Erreur lors du changement de nom'], 500);
+        if ($software->save()) {
+            return $this->successResponse('', 'Le nom a été changé en ' . $request->name);
+        } else {
+            return $this->errorResponse('Erreur lors du changement de nom', 500);
         }
     }
 
-    public function deleteInterface($id){
+    public function deleteInterface($id)
+    {
         $software = InterfaceSoftware::findOrFail($id);
 
-        if ($software->delete()){
-            return response()->json(['message' => 'L\'interface a été supprimée'], 200);
-        }
-        else{
-            return response()->json(['error' => 'L\'interface n\'existe pas'], 500);
+        if ($software->delete()) {
+            return $this->successResponse('', 'L\'interface a été supprimée avec succès');
+        } else {
+            return $this->errorResponse('L\'interface n\'existe pas', 404);
         }
     }
 }

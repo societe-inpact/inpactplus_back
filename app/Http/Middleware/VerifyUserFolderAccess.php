@@ -35,7 +35,7 @@ class VerifyUserFolderAccess
 
 
         if (!$user) {
-            return response()->json(['error' => 'Vous n\'êtes pas connecté'], 401);
+            return $this->errorResponse('Vous n\'êtes pas connecté', 401);
         }
 
         $folderId = $request->route('company_folder_id');
@@ -55,7 +55,6 @@ class VerifyUserFolderAccess
         if ($user->hasRole('inpact') || $userFolderHasAccess || $userIsFolderReferent) {
             return $next($request);
         }
-
-        return response()->json(['error' => 'Vous n\'avez pas accès à ce dossier'], 403);
+        return $this->errorResponse('Vous n\'avez pas accès à ce dossier', 401);
     }
 }

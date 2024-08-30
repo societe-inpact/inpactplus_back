@@ -21,7 +21,7 @@ class HourController extends Controller
      */
     public function getHours(){
         $hours = Hour::all();
-        return response()->json($hours);
+        return $this->successResponse($hours);
     }
 
     public function createHour(Request $request){
@@ -37,7 +37,7 @@ class HourController extends Controller
         $isHourExists = Hour::where('code', $validated['code'])->exists();
 
         if ($isHourExists) {
-            return response()->json(['message' => 'Heure déjà existante.'], 400);
+            return $this->errorResponse('Heure déjà existante', 403);
         }
 
         if (str_starts_with($validated['code'], 'HS-')) {
@@ -47,13 +47,12 @@ class HourController extends Controller
                 'code' => $validated['code'],
             ]);
             if ($absence) {
-                return response()->json(['message' => 'Heure générique créée'], 201);
+                return $this->successResponse('', 'Heure générique créée avec succès', 201);
             }
         }else{
-            return response()->json(['message' => 'Le code rubrique doit commencer par HS-'], 400);
+            return $this->errorResponse('Le code rubrique doit commencer par HS-');
         }
-
-        return response()->json(['message' => 'Impossible de créer la rubrique'], 400);
+        return $this->errorResponse('Impossible de créer la rubrique', 500);
     }
 
     public function updateHour()
