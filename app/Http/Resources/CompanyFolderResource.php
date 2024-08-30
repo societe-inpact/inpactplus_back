@@ -16,6 +16,7 @@ class CompanyFolderResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'company_id' => $this->company_id,
             'folder_number' => $this->folder_number,
             'folder_name' => $this->folder_name,
             'referent' => new UserResource($this->referent),
