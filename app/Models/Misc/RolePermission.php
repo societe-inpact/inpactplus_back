@@ -12,6 +12,6 @@ class RolePermission extends Model
     protected $table = 'role_has_permissions';
     protected $hidden = ['id'];
 
-    protected $fillable = ['permission_id', 'role_id'];
+    protected $fillable = ['role_id', 'permission_id'];
 
 }

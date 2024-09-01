@@ -8,6 +8,7 @@ use App\Models\Misc\User;
 use App\Models\Misc\UserModulePermission;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Permission;
 
@@ -16,6 +17,7 @@ class Module extends Model
     use HasFactory;
 
     protected $table = 'modules';
+    public $timestamps = false;
     protected $hidden = ['id', 'laravel_through_key', 'pivot'];
     protected $fillable = [
         'name',
@@ -45,21 +47,32 @@ class Module extends Model
 
     public function userPermissions()
     {
-        return $this->hasMany(UserModulePermission::class, 'module_id')
-            ->join('permissions', 'permissions.id', '=', 'user_module_permissions.permission_id')
-            ->join('company_folders', 'company_folders.id', '=', 'user_module_permissions.company_folder_id')
+
+        return $this->belongsToMany(Permission::class, 'user_module_permissions', 'module_id', 'permission_id')
             ->join('user_module_access', function ($join) {
                 $join->on('user_module_access.module_id', '=', 'user_module_permissions.module_id')
-                    ->where('user_module_access.user_id', Auth::id()); // Assurer que l'utilisateur est connecté
+                    ->where('user_module_access.user_id', Auth::id());
             })
-            ->select([
-                'user_module_permissions.id',
-                'user_module_permissions.module_id',
-                'company_folders.folder_name as folder',
-                'permissions.name',
-                'permissions.label'
-            ])
-            ->where('user_module_access.has_access', true) // Filtrer par has_access de user_module_access
+            ->join('company_folders', 'company_folders.id', '=', 'user_module_permissions.company_folder_id')
+            ->whereIn('company_folders.id', function ($query) {
+                $query->select('company_folder_id')
+                    ->from('user_company_folder')
+                    ->where('user_id', Auth::id());
+            })
+            ->select('permissions.id', 'permissions.name', 'permissions.label')
+            ->distinct();
+    }
+
+    public function userPermissionsForFolder($folderId): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class, 'user_module_permissions', 'module_id', 'permission_id')
+            ->join('user_module_access', function ($join) {
+                $join->on('user_module_access.module_id', '=', 'user_module_permissions.module_id')
+                    ->where('user_module_access.user_id', Auth::id());
+            })
+            ->join('company_folders', 'company_folders.id', '=', 'user_module_permissions.company_folder_id')
+            ->where('company_folders.id', $folderId)
+            ->select('permissions.id', 'permissions.name', 'permissions.label')
             ->distinct();
     }
 

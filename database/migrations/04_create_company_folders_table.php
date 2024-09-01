@@ -16,6 +16,7 @@ return new class extends Migration
             $table->id();
             $table->string('folder_number');
             $table->string('folder_name');
+            $table->string('email')->nullable(); // Adresse email informative, non utilisée pour la connexion
             $table->string('siret', 14);
             $table->string('siren', 9);
             $table->string('notes', 255)->nullable()->default('Ajouter une note...');

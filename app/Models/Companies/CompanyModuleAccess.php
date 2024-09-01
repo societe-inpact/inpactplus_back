@@ -11,6 +11,7 @@ class CompanyModuleAccess extends Model
     use HasFactory;
 
     protected $table = 'company_module_access';
+    public $timestamps = false;
     protected $fillable = ["company_id", "module_id", "has_access"];
 
     public function company()

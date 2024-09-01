@@ -14,13 +14,11 @@ class ModuleResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $userPermissionsAvailable = $this->whenLoaded('userPermissions') && $this->userPermissions->isNotEmpty();
-
         return [
             'id' => $this->id,
             'name' => $this->name,
             'label' => $this->label,
-            'user_permissions' => $userPermissionsAvailable ? PermissionResource::collection($this->userPermissions) : [],
+            'user_permissions' => PermissionResource::collection($this->whenLoaded('userPermissions')),
         ];
     }
 }

@@ -14,6 +14,7 @@ class CompanyFolderResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $folderId = $this->id;
         return [
             'id' => $this->id,
             'company_id' => $this->company_id,
@@ -26,7 +27,11 @@ class CompanyFolderResource extends JsonResource
             'interfaces' => $this->interfaces,
             'mappings' => $this->mappings,
             'employees' => EmployeeResource::collection($this->employees),
-            'modules' => ModuleResource::collection($this->modules),
+            'modules' => ModuleResource::collection($this->modules->map(function ($module) use ($folderId) {
+                $permissions = $module->userPermissionsForFolder($folderId)->get();
+                $module->setRelation('userPermissions', $permissions);
+                return $module;
+            })),
         ];
     }
 }

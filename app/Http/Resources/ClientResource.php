@@ -21,15 +21,18 @@ class ClientResource extends JsonResource
             'lastname' => $this->lastname,
             'firstname' => $this->firstname,
             'telephone' => $this->telephone,
-            'roles' => $this->roles->pluck('name')->toArray(),
-            'modules_access' => $this->modules(),
-            'companies' => [
-                'id' => $this->company->id,
-                'name' => $this->company->name,
-                'description' => $this->company->description,
-                'referent' => $this->company->referent,
-                'folders' => CompanyFolderResource::collection($this->folders),
-            ],
+            'roles' => $this->roles->map(function ($role) {
+                return [
+                    'name' => $role->name,
+                    'permissions' => $role->permissions->map(function ($permission) {
+                        return [
+                            'name' => $permission->name,
+                            'label' => $permission->label,
+                        ];
+                    }),
+                ];
+            }),
+            'company' => new CompanyResource($this->company),
         ];
     }
 }

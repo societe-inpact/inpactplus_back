@@ -71,11 +71,16 @@ class User extends Authenticatable
 
     public function permissions(): BelongsToMany
     {
-        $userId = Auth::id();
         return $this->belongsToMany(Permission::class, 'user_module_permissions', 'user_id')
-            ->join('user_module_access', function ($join) use ($userId) {
+            ->join('user_module_access', function ($join) {
                 $join->on('user_module_access.module_id', '=', 'user_module_permissions.module_id')
-                    ->where('user_module_access.user_id', $userId);
+                    ->where('user_module_access.user_id', Auth::id());
+            })
+            ->join('company_folders', 'company_folders.id', '=', 'user_module_permissions.company_folder_id')
+            ->whereIn('company_folders.id', function ($query) {
+                $query->select('company_folder_id')
+                    ->from('user_company_folder')
+                    ->where('user_id', Auth::id());
             })
             ->select('permissions.name', 'permissions.label')
             ->where('user_module_access.has_access', true)

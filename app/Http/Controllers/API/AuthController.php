@@ -30,23 +30,30 @@ class AuthController extends Controller
 
     public function getUser()
     {
+        // Charge les relations nécessaires sans les permissions spécifiques au dossier
         $user = User::with([
             'folders.modules',
-            'folders.modules.companyAccess',
-            'folders.modules.companyFolderAccess',
-            'folders.modules.userAccess',
-            'folders.modules.userPermissions',
             'folders.company',
             'folders.mappings',
             'folders.interfaces',
             'folders.employees',
             'folders.referent',
+            'permissions',
             'company'
         ])->find(Auth::id());
 
         if (!$user) {
             return $this->errorResponse('Vous n\'êtes pas connecté', 401);
         }
+
+        // Ajout des permissions pour chaque module dans chaque dossier
+        $user->folders->each(function ($folder) {
+            $folder->modules->each(function ($module) use ($folder) {
+                // Chargement des permissions du user pour chaque module et son dossier
+                $permissions = $module->userPermissionsForFolder($folder->id)->get();
+                $module->setRelation('userPermissions', $permissions);
+            });
+        });
 
         $roles = $user->roles->pluck('name')->toArray();
 
@@ -66,6 +73,7 @@ class AuthController extends Controller
 
         return $this->errorResponse('Vous n\'êtes pas autorisé', 403);
     }
+
 
     public function login(Request $request)
     {

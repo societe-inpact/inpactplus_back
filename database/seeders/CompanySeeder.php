@@ -21,10 +21,10 @@ class CompanySeeder extends Seeder
 
         $companies = [
             ['name' => 'Vapiano', 'description' => 'Description pour Vapiano', 'telephone' => '0101010101', 'notes' => 'Notes pour Vapiano', 'referent_id' => $users[0]->id],
-            ['name' => 'McDonald\'s', 'description' => 'Description pour McDonald\'s', 'telephone' => '0101010101', 'notes' => 'Notes pour McDonald\'s', 'referent_id' => $users[1]->id],
+            ['name' => 'Groupe Garnier', 'description' => 'Description pour Groupe Garnier', 'telephone' => '0101010101', 'notes' => 'Notes pour Groupe Garnier', 'referent_id' => $users[1]->id],
             ['name' => 'Burger King', 'description' => 'Description pour Burger King', 'telephone' => '0101010101', 'notes' => 'Notes pour Burger King', 'referent_id' => $users[2]->id],
             ['name' => 'Lavorel Hotels', 'description' => 'Description pour Lavorel Hotels', 'telephone' => '0101010101', 'notes' => 'Notes pour Lavorel Hotels', 'referent_id' => $users[3]->id],
-            ['name' => 'Lefevre Guillot SAS', 'description' => 'Description pour Lefevre Guillot SAS', 'telephone' => '0505050505', 'notes' => 'Notes pour Lefevre Guillot SAS', 'referent_id' => $users[4]->id],
+            ['name' => 'Groupe GSDI', 'description' => 'Description pour Groupe GSDI', 'telephone' => '0101010101', 'notes' => 'Notes pour Groupe GSDI', 'referent_id' => $users[4]->id],
         ];
 
         foreach ($companies as $index => $company) {
