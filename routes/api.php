@@ -82,10 +82,10 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // ADD AND DELETE USER FROM COMPANY FOLDER
     Route::post('/company_folder/add-user', [App\Http\Controllers\API\AccessController::class, 'addUserToCompanyFolder'])
-        ->middleware('can:add_user_to_company_folder,App\Models\Employees\EmployeeFolder');
+        ->middleware('can:add_user_to_company_folder,App\Models\Employees\UserCompanyFolder');
 
     Route::post('/company_folder/delete-user', [App\Http\Controllers\API\AccessController::class, 'deleteUserFromCompanyFolder'])
-        ->middleware('can:delete_user_to_company_folder,App\Models\Employees\EmployeeFolder');
+        ->middleware('can:delete_user_to_company_folder,App\Models\Employees\UserCompanyFolder');
 
 
     // CUSTOM ABSENCES
@@ -160,16 +160,16 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // COMPANIES
     Route::get("/companies", [App\Http\Controllers\API\CompanyController::class, 'getCompanies'])
-        ->middleware('can:read_companies,App\Models\VariablesElements\VariableElement');
+        ->middleware('can:read_companies,App\Models\Companies\Company');
 
     Route::post("/company/create", [App\Http\Controllers\API\CompanyController::class, 'createCompany'])
-        ->middleware('can:create_company,App\Models\VariablesElements\VariableElement');
+        ->middleware('can:create_company,App\Models\Companies\Company');
 
     Route::post("/company/update/{company_id}", [App\Http\Controllers\API\CompanyController::class, 'updateCompany'])
-        ->middleware('can:update_company,App\Models\VariablesElements\VariableElement');
+        ->middleware('can:update_company,App\Models\Companies\Company');
 
     Route::delete("/company/delete/{company_id}", [App\Http\Controllers\API\CompanyController::class, 'deleteCompany'])
-        ->middleware('can:delete_company,App\Models\VariablesElements\VariableElement');
+        ->middleware('can:delete_company,App\Models\Companies\Company');
 
 
     // FOLDER OF COMPANIES
@@ -192,10 +192,10 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
         // ADD-UPDATE-DELETE INTERFACES FROM FOLDER
         Route::post('company_folder/{company_folder_id}/interface/add', [App\Http\Controllers\API\CompanyFolderController::class, 'addInterfaceToCompanyFolder'])
-            ->middleware('can:create_interface_company_folder,App\Models\Companies\CompanyFolder');
+            ->middleware('can:create_interface_company_folder,App\Models\Misc\InterfaceSoftware');
 
         Route::delete('company_folder/{company_folder_id}/interface/delete/{interface_id}', [App\Http\Controllers\API\CompanyFolderController::class, 'deleteInterfaceFromCompanyFolder'])
-            ->middleware('can:delete_interface_company_folder,App\Models\Companies\CompanyFolder');
+            ->middleware('can:delete_interface_company_folder,App\Models\Misc\InterfaceSoftware');
 
 
         // CREATE-AND-UPDATE NOTES FROM FOLDER

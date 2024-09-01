@@ -16,17 +16,9 @@ return new class extends Migration
             $table->foreignId('company_folder_id')->constrained('company_folders')->cascadeOnDelete();
             $table->json('data');
             $table->timestamps();
-        });
 
-        DB::table('mapping')->insert([
-            [
-                'id' => 1,
-                'company_folder_id' => 3,
-                'data' => [],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]
-        ]);
+            $table->index('company_folder_id');
+        });
     }
 
     /**

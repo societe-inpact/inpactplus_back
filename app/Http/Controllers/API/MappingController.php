@@ -199,6 +199,7 @@ class MappingController extends Controller
             'CustomAbsence' => 'Absences',
             'Hour' => 'Hours',
             'CustomHour' => 'Hours',
+            'VariableElement' => 'VariablesElements',
         ];
 
         // Déterminer le sous-dossier du modèle

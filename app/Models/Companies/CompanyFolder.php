@@ -2,7 +2,7 @@
 
 namespace App\Models\Companies;
 
-use App\Models\Employees\EmployeeFolder;
+use App\Models\Employees\UserCompanyFolder;
 use App\Models\Mapping\Mapping;
 use App\Models\Misc\CompanyFolderInterface;
 use App\Models\Misc\InterfaceSoftware;
@@ -54,7 +54,7 @@ class CompanyFolder extends Model
 
     public function employees()
     {
-        return $this->belongsToMany(User::class, 'employee_folder', 'company_folder_id');
+        return $this->belongsToMany(User::class, 'user_company_folder', 'company_folder_id');
     }
 
     public function referent(){

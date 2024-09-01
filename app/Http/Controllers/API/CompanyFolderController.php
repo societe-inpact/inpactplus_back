@@ -148,6 +148,8 @@ class CompanyFolderController extends Controller
 
     public function addInterfaceToCompanyFolder(Request $request, $id)
     {
+        $this->authorize('create_interface_company_folder', InterfaceSoftware::class);
+
         $validator = Validator::make($request->all(), [
             'interface_id' => 'required|exists:interfaces,id',
         ]);
@@ -179,6 +181,8 @@ class CompanyFolderController extends Controller
 
     public function deleteInterfaceFromCompanyFolder($companyFolderId, $interfaceId)
     {
+        $this->authorize('create_interface_company_folder', InterfaceSoftware::class);
+
         try {
             // Trouve l'association actuelle entre le 'company_folder' et l'interface
             $companyFolderInterface = CompanyFolderInterface::where('company_folder_id', $companyFolderId)

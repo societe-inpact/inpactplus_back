@@ -66,4 +66,26 @@ class InterfacePolicy
         }
         return true;
     }
+
+    /**
+     * @throws CustomUnauthorizedException
+     */
+    public function create_interface_company_folder(User $user)
+    {
+        if (!$user->hasPermission('create') && !$user->hasPermission('crud') && !$user->hasRole(['inpact'])) {
+            throw new CustomUnauthorizedException();
+        }
+        return true;
+    }
+
+    /**
+     * @throws CustomUnauthorizedException
+     */
+    public function delete_interface_company_folder(User $user)
+    {
+        if (!$user->hasPermission('delete') && !$user->hasPermission('crud') && !$user->hasRole(['inpact'])) {
+            throw new CustomUnauthorizedException();
+        }
+        return true;
+    }
 }

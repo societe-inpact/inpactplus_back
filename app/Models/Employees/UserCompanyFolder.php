@@ -8,13 +8,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Misc\User;
 
-class EmployeeFolder extends Model
+class UserCompanyFolder extends Model
 {
     use HasFactory;
 
-    protected $table = 'employee_folder';
+    protected $table = 'user_company_folder';
     public $timestamps = false;
-    protected $fillable = ['user_id', 'company_folder_id', 'has_access', 'is_referent'];
+    protected $fillable = ['user_id', 'company_folder_id', 'has_access'];
 
 
     public function company(){

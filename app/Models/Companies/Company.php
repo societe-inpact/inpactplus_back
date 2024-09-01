@@ -18,6 +18,7 @@ class Company extends Model
         "name",
         "description",
         "telephone",
+        "notes",
         "referent_id"
     ];
 

@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -12,10 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('company_folder_interface', function (Blueprint $table) {
+        Schema::create('hours', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('company_folder_id')->constrained('company_folders')->cascadeOnDelete();
-            $table->foreignId('interface_id')->constrained('interfaces')->cascadeOnDelete();
+            $table->string('code', 50);
+            $table->string('label', 255);
         });
     }
 
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('company_folder_interface');
+        Schema::dropIfExists('hours');
     }
 };

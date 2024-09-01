@@ -52,8 +52,8 @@ class ConvertController extends BaseController
             $columnindex = $this->indexColumn($idSoftware);
         }
 
-        $type_separateur = $columnindex['separator_type'] ?? ',';
-        $extension = strtolower($columnindex['extension'] ?? 'csv');
+        $type_separateur = $columnindex['separator_type'];
+        $extension = strtolower($columnindex['extension']);
 
         // Validation du fichier en fonction de l'extension
         $request->validate([

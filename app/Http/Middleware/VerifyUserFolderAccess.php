@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Employees\EmployeeFolder;
+use App\Models\Employees\UserCompanyFolder;
 use App\Models\Misc\User;
 use Closure;
 use Illuminate\Http\Request;
@@ -47,7 +47,7 @@ class VerifyUserFolderAccess
 
 
         $companyFolderIds= $user->folders->pluck('id')->toArray();
-        $userFolderHasAccess = EmployeeFolder::where('user_id', $user->id)
+        $userFolderHasAccess = UserCompanyFolder::where('user_id', $user->id)
             ->whereIn('company_folder_id', $companyFolderIds)
             ->where('has_access', true)
             ->exists();

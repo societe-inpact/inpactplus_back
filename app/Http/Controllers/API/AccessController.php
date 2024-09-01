@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Employees\EmployeeFolder;
+use App\Models\Employees\UserCompanyFolder;
 use App\Traits\JSONResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -26,7 +26,7 @@ class AccessController extends Controller
         }
 
         try {
-            $employeeFolder = EmployeeFolder::create([
+            $employeeFolder = UserCompanyFolder::create([
                 'is_referent' => $request->is_referent,
                 'has_access' => $request->has_access,
                 'user_id' => $request->user_id,
@@ -44,7 +44,7 @@ class AccessController extends Controller
         $request->validate([
             'user_id' => 'required|integer',
         ]);
-        $userToDelete = EmployeeFolder::where('user_id', intval($request->user_id))->delete();
+        $userToDelete = UserCompanyFolder::where('user_id', intval($request->user_id))->delete();
         if ($userToDelete) {
             return $this->successResponse('', 'Utilisateur supprimé du dossier avec succès');
         }

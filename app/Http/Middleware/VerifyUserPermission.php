@@ -3,7 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Exceptions\CustomUnauthorizedException;
-use App\Models\Employees\EmployeeFolder;
+use App\Models\Employees\UserCompanyFolder;
 use App\Models\Misc\User;
 use App\Traits\JSONResponseTrait;
 use Closure;

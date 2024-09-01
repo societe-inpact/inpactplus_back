@@ -5,7 +5,6 @@ namespace App\Models\Misc;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Companies\Company;
 use App\Models\Companies\CompanyFolder;
-use App\Models\Employees\EmployeeFolder;
 use App\Models\Modules\Module;
 use App\Notifications\ResetPasswordNotification;
 use App\Traits\ModuleRetrievingTrait;
@@ -44,7 +43,7 @@ class User extends Authenticatable
 
     public function folders()
     {
-        return $this->belongsToMany(CompanyFolder::class, 'employee_folder', 'user_id', 'company_folder_id')->withPivot('id');
+        return $this->belongsToMany(CompanyFolder::class, 'user_company_folder', 'user_id', 'company_folder_id')->withPivot('id');
     }
 
     public function roles(): BelongsToMany
