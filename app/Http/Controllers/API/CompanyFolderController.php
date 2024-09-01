@@ -163,7 +163,10 @@ class CompanyFolderController extends Controller
                 'company_folder_id' => $id,
                 'interface_id' => $request->interface_id,
             ];
-            $existingFolderInterface = CompanyFolderInterface::all()->where('interface_id', '==', $request->get('interface_id'))->first();
+
+            $existingFolderInterface = CompanyFolderInterface::where('interface_id', $request->get('interface_id'))
+                ->where('company_folder_id', $id)
+                ->first();
             if ($existingFolderInterface){
                 $existingInterface = InterfaceSoftware::findOrFail($request->interface_id);
                 return $this->errorResponse('L\'interface ' . $existingInterface->name . ' est déjà associée au dossier', 409);
