@@ -239,7 +239,7 @@ class MappingController extends Controller
     // Fonction permettant de mettre à jour un mapping existant
     public function updateMapping(Request $request, $id)
     {
-        $companyFolder = CompanyFolder::with('mappings')->findOrFail($id);
+        $companyFolder = CompanyFolder::with('mappings')->findOrFail($request->company_folder_id);
 
         if (!$companyFolder) {
             return $this->errorResponse('L\'id du dossier est requis', 400);
@@ -247,13 +247,15 @@ class MappingController extends Controller
         $validatedData = $this->validateMappingData($request);
         $mapping = Mapping::with('folder')
             ->where('company_folder_id', $companyFolder->id)
-            ->first();
+            ->findOrFail($id);
+
 
         if ($mapping->company_folder_id !== intval($validatedData->company_folder_id)) {
             return $this->errorResponse('Le dossier de l\'entreprise ne correspond pas', 403);
         }
 
         $updateResult = $this->updateMappingData($mapping, $validatedData);
+
         if ($updateResult === 'updated') {
             return $this->successResponse('', 'Mapping mis à jour avec succès');
         } else {
