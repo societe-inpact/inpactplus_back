@@ -100,6 +100,8 @@ class ConvertMEController extends ConvertController
                         // Cas où l'absence contient une date comme valeur
                         $mappedrubrics = $this->processAbsenceRecord($mappedrubrics, $record, $codeSilae, $value);
                     }
+                } elseif (str_starts_with($codeSilae->code, "EV-") || str_starts_with($codeSilae->code, "HS-")) {
+                    $mappedrubrics = $this->convertNegativeOrDotValue($mappedrubrics, $record, $codeSilae);
                 }
             } else {
                 $unmappedRubrics[] = [
