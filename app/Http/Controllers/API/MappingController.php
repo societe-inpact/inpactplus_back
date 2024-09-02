@@ -61,7 +61,7 @@ class MappingController extends Controller
                             $columnIndex = $convertMEController->formatFilesMarathon();
                             $separatorType = $columnIndex["separator_type"];
                             $extension = $columnIndex["extension"];
-                            $indexRubrique = $columnIndex["rubric"];
+                            $indexRubrique = $columnIndex["index_rubrique"];
                             $colonneMatricule = 0;
                             break;
                         case "rhis":
