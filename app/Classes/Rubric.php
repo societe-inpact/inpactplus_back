@@ -6,6 +6,7 @@ use App\Models\Absences\Absence;
 use App\Models\Absences\CustomAbsence;
 use App\Models\Hours\CustomHour;
 use App\Models\Hours\Hour;
+use App\Models\VariablesElements\VariableElement;
 
 class Rubric
 {
@@ -72,6 +73,11 @@ class Rubric
                     return null; // ou gérer le cas où l'absence n'est pas trouvée
                 }
                 return $customHour;
+            }
+            case 'VariableElement':
+            {
+                return VariableElement::find($this->output_rubrique_id);
+
             }
             case 'Absence':
             {
