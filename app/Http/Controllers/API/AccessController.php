@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employees\UserCompanyFolder;
+use App\Models\Mapping\Mapping;
 use App\Traits\JSONResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -14,6 +15,8 @@ class AccessController extends Controller
 
     public function addUserToCompanyFolder(Request $request)
     {
+        $this->authorize('add_user_to_company_folder', UserCompanyFolder::class);
+
         $validator = Validator::make($request->all(), [
             'is_referent' => 'required|boolean',
             'has_access' => 'required|boolean',
@@ -41,6 +44,8 @@ class AccessController extends Controller
 
     public function deleteUserFromCompanyFolder(Request $request)
     {
+        $this->authorize('delete_user_to_company_folder', UserCompanyFolder::class);
+
         $request->validate([
             'user_id' => 'required|integer',
         ]);
