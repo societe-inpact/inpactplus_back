@@ -133,6 +133,7 @@ class AuthController extends Controller
             return $this->successResponse($user, 'Utilisateur créé avec succès', 201);
 
         } catch (\Exception $e) {
+            dd($e);
             return $this->errorResponse('Une erreur est survenue lors de la création de l\'utilisateur.', 500);
         }
     }
