@@ -166,7 +166,7 @@ class AuthController extends Controller
         }
 
         if ($user->update($updateData)) {
-            return $this->successResponse($user, 'Utilisateur mis à jour avec succès', 204);
+            return $this->successResponse($user, 'Utilisateur mis à jour avec succès');
         } else {
             return $this->errorResponse('Erreur lors de la mise à jour de l\'utilisateur', 500);
         }
@@ -177,7 +177,7 @@ class AuthController extends Controller
         $userToDelete = User::where('id', $id)->delete();
         // TODO: Gérer la condition si l'user appartient à une company, ou un dossier
         if ($userToDelete) {
-            return $this->successResponse('', 'Utilisateur supprimé avec succès', 204);
+            return $this->successResponse('', 'Utilisateur supprimé avec succès');
         } else {
             return $this->errorResponse('Erreur lors de la suppression de l\'utilisateur', 500);
         }

@@ -131,6 +131,7 @@ class ConvertMEController extends ConvertController
             // Traitement de la date seule
             $data = $this->processSingleAbsenceRecord($data, $record, $codeSilae, $value);
         }
+
         return $data;
     }
 
