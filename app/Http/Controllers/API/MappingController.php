@@ -333,6 +333,8 @@ class MappingController extends Controller
     // Fonction permettant d'enregistrer un nouveau mapping en BDD
     public function storeMapping(Request $request)
     {
+        $this->authorize('create_mapping', Mapping::class);
+
         $validatedRequestData = $this->validateMappingData($request);
         $companyFolderId = $validatedRequestData->company_folder_id;
         $mappedRubriques = Mapping::where('company_folder_id', $companyFolderId)->get();

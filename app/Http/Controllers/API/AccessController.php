@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Employees\UserCompanyFolder;
 use App\Models\Mapping\Mapping;
 use App\Traits\JSONResponseTrait;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -13,6 +14,9 @@ class AccessController extends Controller
 {
     use JSONResponseTrait;
 
+    /**
+     * @throws AuthorizationException
+     */
     public function addUserToCompanyFolder(Request $request)
     {
         $this->authorize('add_user_to_company_folder', UserCompanyFolder::class);
@@ -27,6 +31,8 @@ class AccessController extends Controller
         if ($validator->fails()) {
             return $this->errorResponse($validator->errors(), 422);
         }
+
+        // TODO : Verifier si l'user appartient déjà au dossier
 
         try {
             $employeeFolder = UserCompanyFolder::create([

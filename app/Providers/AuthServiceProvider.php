@@ -8,6 +8,7 @@ use App\Models\Absences\Absence;
 use App\Models\Absences\CustomAbsence;
 use App\Models\Companies\Company;
 use App\Models\Companies\CompanyFolder;
+use App\Models\Employees\UserCompanyFolder;
 use App\Models\Hours\CustomHour;
 use App\Models\Hours\Hour;
 use App\Models\Mapping\Mapping;
@@ -43,6 +44,7 @@ class AuthServiceProvider extends ServiceProvider
         CustomHour::class => CustomHourPolicy::class,
         Company::class => CompanyPolicy::class,
         CompanyFolder::class => CompanyFolderPolicy::class,
+        UserCompanyFolder::class => CompanyFolderPolicy::class,
         InterfaceMapping::class => InterfaceMappingPolicy::class,
         InterfaceSoftware::class => InterfacePolicy::class,
         VariableElement::class => VariableElementPolicy::class,

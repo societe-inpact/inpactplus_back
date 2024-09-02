@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Exceptions\CustomUnauthorizedException;
+use App\Models\Employees\UserCompanyFolder;
 use App\Models\Misc\User;
 
 class CompanyFolderPolicy

@@ -34,6 +34,7 @@ class VerifyUserPermission
             'folders.interfaces',
             'folders.employees',
             'folders',
+            'permissions',
             'company'
         ])->find(Auth::id());
 
