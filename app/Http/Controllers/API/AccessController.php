@@ -21,8 +21,9 @@ class AccessController extends Controller
     {
         $this->authorize('add_user_to_company_folder', UserCompanyFolder::class);
 
+        $userIsExists = UserCompanyFolder::where('user_id', intval($request->user_id))->exists();
+
         $validator = Validator::make($request->all(), [
-            'is_referent' => 'required|boolean',
             'has_access' => 'required|boolean',
             'user_id' => 'required|exists:users,id',
             'company_folder_id' => 'required|exists:company_folders,id',
@@ -32,20 +33,21 @@ class AccessController extends Controller
             return $this->errorResponse($validator->errors(), 422);
         }
 
-        // TODO : Verifier si l'user appartient déjà au dossier
+        if (!$userIsExists){
+            try {
+                $employeeFolder = UserCompanyFolder::create([
+                    'has_access' => $request->has_access,
+                    'user_id' => $request->user_id,
+                    'company_folder_id' => $request->company_folder_id
+                ]);
+                return $this->successResponse($employeeFolder, 'Utilisateur ajouté au dossier avec succès');
 
-        try {
-            $employeeFolder = UserCompanyFolder::create([
-                'is_referent' => $request->is_referent,
-                'has_access' => $request->has_access,
-                'user_id' => $request->user_id,
-                'company_folder_id' => $request->company_folder_id
-            ]);
-            return $this->successResponse($employeeFolder, 'Utilisateur ajouté au dossier avec succès');
-
-        } catch (\Exception $e) {
-            return $this->errorResponse('Une erreur est survenue lors de l\'ajout de l\'utilisateur au dossier', 500);
+            } catch (\Exception $e) {
+                return $this->errorResponse('Une erreur est survenue lors de l\'ajout de l\'utilisateur au dossier', 500);
+            }
         }
+        return $this->errorResponse('L\'utilisateur est déjà associé au dossier', 403);
+
     }
 
     public function deleteUserFromCompanyFolder(Request $request)
