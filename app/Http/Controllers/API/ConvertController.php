@@ -56,7 +56,7 @@ class ConvertController extends BaseController
 
             }
         } else {
-            $idsoftware = Software::findOrFail($idInterface);
+            $idsoftware = InterfaceSoftware::findOrFail($idInterface);
             $columnindex = $this->indexColumn($idsoftware->interface_mapping_id);
             $type_separateur = $columnindex->type_separateur;
             $format = $columnindex->format;
