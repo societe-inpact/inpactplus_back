@@ -81,11 +81,11 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
 
     // ADD AND DELETE USER FROM COMPANY FOLDER
-    Route::post('/company_folder/add-user', [App\Http\Controllers\API\AccessController::class, 'addUserToCompanyFolder'])
+    Route::post('/company_folder/{company_folder_id}/add-user', [App\Http\Controllers\API\AccessController::class, 'addUserToCompanyFolder'])
         ->middleware('can:add_user_to_company_folder, App\Models\Employees\UserCompanyFolder');
 
-    Route::post('/company_folder/delete-user', [App\Http\Controllers\API\AccessController::class, 'deleteUserFromCompanyFolder'])
-        ->middleware('can:delete_user_to_company_folder,App\Models\Employees\UserCompanyFolder');
+    Route::delete('/company_folder/{company_folder_id}/delete-user', [App\Http\Controllers\API\AccessController::class, 'deleteUserFromCompanyFolder'])
+        ->middleware('can:delete_user_from_company_folder,App\Models\Employees\UserCompanyFolder');
 
 
     // CUSTOM ABSENCES
