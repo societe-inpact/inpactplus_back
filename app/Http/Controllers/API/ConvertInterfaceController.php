@@ -75,18 +75,18 @@ class ConvertInterfaceController extends ConvertController
         $data = [];
         $unmapped = [];
 
-        $colonne_matricule = $columnindex->colonne_matricule -1;
-        $colonne_rubrique = $columnindex->colonne_rubrique -1;
-        $colonne_valeur = $columnindex->colonne_valeur -1;
-        $colonne_datedeb = $columnindex->colonne_datedeb -1;
-        $colonne_datefin = $columnindex->colonne_datefin -1;
-        $colonne_hj = $columnindex->colonne_hj -1;
-        $colonne_pourcentagetp = $columnindex->colonne_pourcentagetp -1;
+        $employeeNumberColumn = $columnindex->employee_number -1;
+        $rubricColumn = $columnindex->rubric -1;
+        $valueColumn = $columnindex->value -1;
+        $startDateColumn = $columnindex->start_date -1;
+        $endDateColumn = $columnindex->end_date -1;
+        $hjColumn = $columnindex->hj -1;
+        $percentageTPColumn = $columnindex->percentage_tp -1;
 
 
         // Vérification s'il y a une en-tête en fonction du matricule
 
-        $containsDigit = ctype_digit($records[0][$colonne_matricule]);
+        $containsDigit = ctype_digit($records[0][$employeeNumberColumn]);
         if (($containsDigit) === false) {
             unset($records[0]);
         }
@@ -95,35 +95,35 @@ class ConvertInterfaceController extends ConvertController
 
         foreach ($records as $record) {
 
-            $codeSilae = $this->getSilaeCode($record[$colonne_rubrique], $folderId);
+            $codeSilae = $this->getSilaeCode($record[$rubricColumn], $folderId);
 
-            $matricule = $record[$colonne_matricule];
-            $valeur = $record[$colonne_valeur];
+            $matricule = $record[$employeeNumberColumn];
+            $valeur = $record[$valueColumn];
 
             // vérification s'il y a une valeur à reprendre
 
-            if ($columnindex->colonne_datedeb === null){
-                $datedebut = "";
+            if ($columnindex->start_date === null){
+                $start_date = "";
             }else{
-                $datedebut = $record[$colonne_datedeb];
+                $start_date = $record[$startDateColumn];
             }
 
-            if ($columnindex->colonne_datefin === null){
-                $datefin = "";
+            if ($columnindex->end_date === null){
+                $end_date = "";
             }else{
-                $datefin = $record[$colonne_datefin];
+                $end_date = $record[$endDateColumn];
             }
 
-            if ($columnindex->colonne_hj === null){
+            if ($columnindex->hj === null){
                 $hj = "";
             }else{
-                $hj = $record[$colonne_hj];
+                $hj = $record[$hjColumn];
             }
 
-            if ($columnindex->colonne_pourcentagetp === null){
-                $pourcentagetp = "";
+            if ($columnindex->percentage_tp === null){
+                $percentage_tp = "";
             }else{
-                $pourcentagetp = $record[$colonne_pourcentagetp];
+                $percentage_tp = $record[$percentageTPColumn];
             }
 
             // création de la table data et non mappée
@@ -133,20 +133,20 @@ class ConvertInterfaceController extends ConvertController
                     'Matricule' => $matricule,
                     'Code' => $codeSilae->code,
                     'Valeur' => $valeur,
-                    'Date debut' => $datedebut,
-                    'Date fin' => $datefin,
+                    'Date debut' => $start_date,
+                    'Date fin' => $end_date,
                     'HJ' => $hj,
-                    'PctTP' => $pourcentagetp,
+                    'PctTP' => $percentage_tp,
                 ];
             }else{
                 $unmapped[] = [
                     'Matricule' => $matricule,
-                    'Code' => $record[$colonne_rubrique],
+                    'Code' => $record[$rubricColumn],
                     'Valeur' => $valeur,
-                    'Date debut' => $datedebut,
-                    'Date fin' => $datefin,
+                    'Date debut' => $start_date,
+                    'Date fin' => $end_date,
                     'HJ' => $hj,
-                    'PctTP' => $pourcentagetp,
+                    'PctTP' => $percentage_tp,
                 ];
             }
         }
