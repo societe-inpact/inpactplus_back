@@ -23,6 +23,8 @@ class InterfaceController extends Controller
 
     public function createInterface(Request $request)
     {
+        $this->authorize('create_interface', InterfaceSoftware::class);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'interface_mapping_id' => 'nullable|exists:interface_mapping.id',
@@ -46,6 +48,8 @@ class InterfaceController extends Controller
 
     public function updateInterface(Request $request, $id)
     {
+        $this->authorize('update_interface', InterfaceSoftware::class);
+
         $software = InterfaceSoftware::findOrFail($id);
         $software->name = $request->name;
 
@@ -66,6 +70,8 @@ class InterfaceController extends Controller
 
     public function deleteInterface($id)
     {
+        $this->authorize('delete_interface', InterfaceSoftware::class);
+
         $software = InterfaceSoftware::findOrFail($id);
 
         if ($software->delete()) {

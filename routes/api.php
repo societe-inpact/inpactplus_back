@@ -215,7 +215,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         ->middleware('can:update_interface,App\Models\Misc\InterfaceSoftware');
 
     Route::delete("/interface/delete/{interface_id}", [App\Http\Controllers\API\InterfaceController::class, 'deleteInterface'])
-        ->middleware('can:create_note_company_folder,App\Models\Misc\InterfaceSoftware');
+        ->middleware('can:delete_interface,App\Models\Misc\InterfaceSoftware');
 
 
     // INTERFACES MAPPING
