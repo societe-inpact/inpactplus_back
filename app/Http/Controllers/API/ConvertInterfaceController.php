@@ -168,7 +168,7 @@ class ConvertInterfaceController extends ConvertController
         $idsoftware = $request->get('interface_id');
 
         $softwareId = InterfaceSoftware::findOrFail($idsoftware);
-        $columnindex = $this->indexColumn($softwareId->interface_software_id);
+        $columnindex = $this->indexColumn($softwareId->interface_mapping_id);
 
         $type_separateur = $columnindex->separator_type;
         $format = strtolower($columnindex->extension);

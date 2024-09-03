@@ -39,7 +39,7 @@ class ConvertController extends BaseController
             return $this->errorResponse('L\'interface n\'existe pas', 404);
         }
 
-        $idSoftware = $interfaceSoftware->interface_software_id;
+        $idSoftware = $interfaceSoftware->interface_mapping_id;
 
         if ($idSoftware === null) {
             $softwaresName = strtolower($interfaceSoftware->name);
@@ -57,7 +57,7 @@ class ConvertController extends BaseController
             }
         } else {
             $idsoftware = Software::findOrFail($idInterface);
-            $columnindex = $this->indexColumn($idsoftware->interface_software_id);
+            $columnindex = $this->indexColumn($idsoftware->interface_mapping_id);
             $type_separateur = $columnindex->type_separateur;
             $format = $columnindex->format;
         }
@@ -167,7 +167,7 @@ class ConvertController extends BaseController
             return $this->errorResponse('L\'interface n\'existe pas', 404);
         }
 
-        $idSoftware = $interfaceSoftware->interface_software_id;
+        $idSoftware = $interfaceSoftware->interface_mapping_id;
         $data = [];
 
         if ($idSoftware) {

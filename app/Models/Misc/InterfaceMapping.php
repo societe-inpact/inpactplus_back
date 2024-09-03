@@ -16,7 +16,7 @@ class InterfaceMapping extends Model
     protected $fillable = ['employee_number', 'rubric', 'value','start_date', 'end_date', 'hj','percentage_tp', 'period', 'separator_type', 'extension'];
 
     public function software(){
-        return $this->belongsTo(InterfaceSoftware::class, 'interface_software_id');
+        return $this->belongsTo(InterfaceSoftware::class, 'interface_mapping_id');
     }
 
 }
