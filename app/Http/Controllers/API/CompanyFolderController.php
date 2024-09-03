@@ -81,21 +81,20 @@ class CompanyFolderController extends Controller
             }
 
             $companyFolder = CompanyFolder::create($data);
-            if ($companyFolder){
-                $companyFolder = CompanyFolder::where('folder_number', $request->folder_number)->first();
 
-                if ($companyFolder){
-                    CompanyFolderInterface::create([
-                        'company_folder_id' => $companyFolder->id,
-                        'interface_id' => $request->interface_id
-                    ]);
-                    Mapping::create([
-                        'company_folder_id' => $companyFolder->id,
-                        'data' => [],
-                    ]);
-                    return $this->successResponse($companyFolder, 'Dossier créé avec succès', 201);
-                }
+            if ($companyFolder) {
+                CompanyFolderInterface::create([
+                    'company_folder_id' => $companyFolder->id,
+                    'interface_id' => $request->interface_id
+                ]);
+                Mapping::create([
+                    'company_folder_id' => $companyFolder->id,
+                    'data' => [],
+                ]);
+                $companyFolder = CompanyFolder::where('folder_number', $request->folder_number)->with('modules', 'company', 'interfaces', 'mappings', 'employees', 'referent')->first();
+                return $this->successResponse($companyFolder, 'Dossier créé avec succès', 201);
             }
+
         } catch (\Exception $e) {
             return $this->errorResponse('Une erreur est survenue lors de la création du dossier',500);
         }
