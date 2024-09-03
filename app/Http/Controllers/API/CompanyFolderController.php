@@ -93,7 +93,7 @@ class CompanyFolderController extends Controller
                         'company_folder_id' => $companyFolder->id,
                         'data' => [],
                     ]);
-                    return $this->successResponse('', 'Dossier créé avec succès', 201);
+                    return $this->successResponse($companyFolder, 'Dossier créé avec succès', 201);
                 }
             }
         } catch (\Exception $e) {
