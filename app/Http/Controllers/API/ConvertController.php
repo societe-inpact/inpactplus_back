@@ -76,6 +76,7 @@ class ConvertController extends BaseController
 
         $file = $request->file('csv');
 
+
         return match ($extension) {
             'csv' => $this->handleCsvFile($file, $type_separateur),
             'xls' => $this->errorResponse('Le support XLS n\'est pas encore implémenté'),
@@ -85,7 +86,7 @@ class ConvertController extends BaseController
 
     private function handleCsvFile($file, $delimiter): JsonResponse
     {
-        $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15');
+        $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15')->outputEncoding('UTF-8');;
         $extension = fn(array $row): array => array_map('strtoupper', $row);
 
         $reader = Reader::createFromPath($file->getPathname(), 'r');

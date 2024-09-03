@@ -92,39 +92,18 @@ class ConvertInterfaceController extends ConvertController
         }
 
         // Création de la nouvelle table qui correspond à silae
-
         foreach ($records as $record) {
-
+            $record[$rubricColumn] = utf8_decode($record[$rubricColumn]);
             $codeSilae = $this->getSilaeCode($record[$rubricColumn], $folderId);
 
             $matricule = $record[$employeeNumberColumn];
             $valeur = $record[$valueColumn];
 
-            // vérification s'il y a une valeur à reprendre
-
-            if ($columnindex->start_date === null){
-                $start_date = "";
-            }else{
-                $start_date = $record[$startDateColumn];
-            }
-
-            if ($columnindex->end_date === null){
-                $end_date = "";
-            }else{
-                $end_date = $record[$endDateColumn];
-            }
-
-            if ($columnindex->hj === null){
-                $hj = "";
-            }else{
-                $hj = $record[$hjColumn];
-            }
-
-            if ($columnindex->percentage_tp === null){
-                $percentage_tp = "";
-            }else{
-                $percentage_tp = $record[$percentageTPColumn];
-            }
+            // Vérification s'il y a une valeur à reprendre
+            $start_date = $columnindex->start_date === null ? "" : $record[$startDateColumn];
+            $end_date = $columnindex->end_date === null ? "" : $record[$endDateColumn];
+            $hj = $columnindex->hj === null ? "" : $record[$hjColumn];
+            $percentage_tp = $columnindex->percentage_tp === null ? "" : $record[$percentageTPColumn];
 
             // création de la table data et non mappée
 
@@ -150,7 +129,6 @@ class ConvertInterfaceController extends ConvertController
                 ];
             }
         }
-        // dd($unmapped);
         return [$data, $unmapped];
     }
 
@@ -175,8 +153,8 @@ class ConvertInterfaceController extends ConvertController
 
         switch ($format){
             case "csv":
-                $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15');
-                $formatter = fn(array $row): array => array_map('strtoupper', $row);
+                $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15')->outputEncoding('utf-8');
+                //$formatter = fn(array $row): array => array_map('strtoupper', $row);
 
                 $request->validate([
                     'csv' => 'required|file|mimes:csv,txt',
@@ -188,7 +166,7 @@ class ConvertInterfaceController extends ConvertController
                     $reader = Reader::createFromPath($file->getPathname(), 'r');
                     $reader->addFormatter($encoder);
                     $reader->setDelimiter($type_separateur);
-                    $reader->addFormatter($formatter);
+                    //$reader->addFormatter($formatter);
                     $reader->setHeaderOffset(null);
                     $records = iterator_to_array($reader->getRecords(), true);
                     return $this->convertInter($records, $folderId, $columnindex);
