@@ -27,7 +27,7 @@ class ConvertController extends BaseController
         $controller = new InterfaceMappingController();
         return $controller->getInterfaceMapping($nominterface);
     }
-    
+
 
     public function importFile(Request $request): JsonResponse
     {
@@ -43,14 +43,23 @@ class ConvertController extends BaseController
 
         if ($idSoftware === null) {
             $softwaresName = strtolower($interfaceSoftware->name);
-            if ($softwaresName === 'marathon') {
-                $controller = new ConvertMEController();
-                $columnindex = $controller->formatFilesMarathon();
-            } else {
-                return $this->errorResponse('Paramétrage spécifique de l\'interface manquant', 404);
+            switch ($softwaresName){
+                case "marathon":
+                    $controller = new ConvertMEController();
+                    $columnindex = $controller->formatFilesMarathon();
+                    $type_separateur = $columnindex["separateur"];
+                    $format = $columnindex ["format"];
+                    break;
+
+                default:
+                    return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]);
+
             }
         } else {
-            $columnindex = $this->indexColumn($idSoftware);
+            $idsoftware = Software::findOrFail($idInterface);
+            $columnindex = $this->indexColumn($idsoftware->interface_software_id);
+            $type_separateur = $columnindex->type_separateur;
+            $format = $columnindex->format;
         }
 
         $type_separateur = $columnindex['separator_type'];
