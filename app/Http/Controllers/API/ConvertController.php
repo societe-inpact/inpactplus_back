@@ -47,8 +47,8 @@ class ConvertController extends BaseController
                 case "marathon":
                     $controller = new ConvertMEController();
                     $columnindex = $controller->formatFilesMarathon();
-                    $type_separateur = $columnindex["separateur"];
-                    $format = $columnindex ["format"];
+                    $type_separateur = $columnindex["separator_type"];
+                    $format = $columnindex ["extension"];
                     break;
 
                 default:
