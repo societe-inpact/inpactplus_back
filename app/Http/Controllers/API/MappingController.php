@@ -41,10 +41,11 @@ class MappingController extends Controller
         }
 
         foreach ($companyFolder->interfaces as $interface) {
-            $interface = InterfaceSoftware::findOrFail($interface->id);
+            $interface = InterfaceSoftware::findOrFail($request->interface_id);
 
             if ($interface) {
                 $idInterfaceMapping = $interface->interface_mapping_id;
+
                 if ($idInterfaceMapping !== null) {
                     $columnIndex = InterfaceMapping::findOrFail($idInterfaceMapping);
                     $separatorType = $columnIndex->separator_type;
