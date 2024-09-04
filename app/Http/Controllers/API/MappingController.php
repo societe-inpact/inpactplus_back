@@ -40,50 +40,46 @@ class MappingController extends Controller
             return $this->errorResponse('Aucun fichier importé');
         }
 
-        foreach ($companyFolder->interfaces as $interface) {
-            $interface = InterfaceSoftware::findOrFail($request->interface_id);
+        $interface = InterfaceSoftware::findOrFail($request->interface_id);
+        if ($interface) {
+            $idInterfaceMapping = $interface->interface_mapping_id;
 
-            if ($interface) {
-                $idInterfaceMapping = $interface->interface_mapping_id;
+            if ($idInterfaceMapping !== null) {
+                $columnIndex = InterfaceMapping::findOrFail($idInterfaceMapping);
+                $separatorType = $columnIndex->separator_type;
+                $extension = strtolower($columnIndex->extension);
+                $indexRubrique = $columnIndex->rubric - 1;
+                $colonneMatricule = $columnIndex->employee_number - 1;
 
-                if ($idInterfaceMapping !== null) {
-                    $columnIndex = InterfaceMapping::findOrFail($idInterfaceMapping);
-                    $separatorType = $columnIndex->separator_type;
-                    $extension = strtolower($columnIndex->extension);
-                    $indexRubrique = $columnIndex->rubric - 1;
-                    $colonneMatricule = $columnIndex->employee_number - 1;
-
-                } else {
-                    // interfaces spécifique
-                    $interfaceNames = strtolower($interface->name);
-                    switch ($interfaceNames) {
-                        case "marathon":
-                            $convertMEController = new ConvertMEController();
-                            $columnIndex = $convertMEController->formatFilesMarathon();
-                            $separatorType = $columnIndex["separator_type"];
-                            $extension = $columnIndex["extension"];
-                            $indexRubrique = $columnIndex["index_rubrique"];
-                            $colonneMatricule = 0;
-                            break;
-                        case "rhis":
-                            return $this->errorResponse('Algo de l\'interface à développer');
-                        default:
-                            return null;
-                    }
-                }
-
-                $reader = $this->prepareCsvReader($file->getPathname(), $separatorType);
-                $records = iterator_to_array($reader->getRecords(), true);
-
-                $companyFolderId = $companyFolder->id;
-                $results = $this->processCsvRecords($records, $companyFolderId, $indexRubrique, $colonneMatricule);
-
-                return $this->successResponse($results);
             } else {
-                return $this->errorResponse('L\'interface n\'existe pas', 404);
+                // interfaces spécifique
+                $interfaceNames = strtolower($interface->name);
+                switch ($interfaceNames) {
+                    case "marathon":
+                        $convertMEController = new ConvertMEController();
+                        $columnIndex = $convertMEController->formatFilesMarathon();
+                        $separatorType = $columnIndex["separator_type"];
+                        $extension = $columnIndex["extension"];
+                        $indexRubrique = $columnIndex["index_rubrique"];
+                        $colonneMatricule = 0;
+                        break;
+                    case "rhis":
+                        return $this->errorResponse('Algo de l\'interface à développer');
+                    default:
+                        return null;
+                }
             }
+
+            $reader = $this->prepareCsvReader($file->getPathname(), $separatorType);
+            $records = iterator_to_array($reader->getRecords(), true);
+
+            $companyFolderId = $companyFolder->id;
+            $results = $this->processCsvRecords($records, $companyFolderId, $indexRubrique, $colonneMatricule);
+
+            return $this->successResponse($results);
+        } else {
+            return $this->errorResponse('L\'interface n\'existe pas', 404);
         }
-        return $this->errorResponse('Aucune interface à traiter', 500);
     }
 
 
