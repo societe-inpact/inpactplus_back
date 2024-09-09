@@ -165,7 +165,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post("/company/create", [App\Http\Controllers\API\CompanyController::class, 'createCompany'])
         ->middleware('can:create_company,App\Models\Companies\Company');
 
-    Route::post("/company/update/{company_id}", [App\Http\Controllers\API\CompanyController::class, 'updateCompany'])
+    Route::patch("/company/update/{company_id}", [App\Http\Controllers\API\CompanyController::class, 'updateCompany'])
         ->middleware('can:update_company,App\Models\Companies\Company');
 
     Route::delete("/company/delete/{company_id}", [App\Http\Controllers\API\CompanyController::class, 'deleteCompany'])

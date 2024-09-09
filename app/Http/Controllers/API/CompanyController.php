@@ -7,6 +7,7 @@ use App\Models\Companies\Company;
 use App\Services\CheckBeforeDeleteService;
 use App\Traits\JSONResponseTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -37,6 +38,7 @@ class CompanyController extends Controller
     }
 
     public function createCompany(Request $request){
+        $user = Auth::user();
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string',
@@ -59,11 +61,56 @@ class CompanyController extends Controller
 
             $company = Company::create($data);
             if ($company){
+                $date = now()->format('d/m/Y à H:i');
+                activity()->performedOn($company)->log($user->firstname . ' ' . $user->lastname . ' a créé l\'entreprise ' . $company->name . ' le ' . $date);
                 return $this->successResponse($company, 'Entreprise créée avec succès',201);
             }
 
         } catch (\Exception $e) {
             return $this->errorResponse('Une erreur est survenue lors de la création de l\'entreprise', 500);
+        }
+    }
+
+    public function updateCompany(Request $request, $id){
+        $user = Auth::user();
+        $company = Company::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string',
+            'description' => 'nullable|string',
+            'telephone' => 'nullable|string',
+            'referent_id' => 'exists:users,id',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->errorResponse($validator->errors(), 422);
+        }
+
+        try {
+            $oldName = $company->name;
+
+            $data = [
+                'name' => $request->name,
+                'description' => $request->description,
+                'telephone' => $request->telephone,
+                'referent_id' => $request->referent_id,
+            ];
+
+            $companyUpdated = $company->update($data);
+
+            if ($companyUpdated) {
+                $newName = $company->name;
+                $date = now()->format('d/m/Y à H:i');
+
+                activity()
+                    ->performedOn($company)
+                    ->log($user->firstname . ' ' . $user->lastname . ' a mis à jour l\'entreprise "' . $oldName . '" à "' . $newName . '" le ' . $date);
+
+                return $this->successResponse('', 'Entreprise mise à jour avec succès');
+            }
+
+        } catch (\Exception $e) {
+            return $this->errorResponse('Une erreur est survenue lors de la mise à jour de l\'entreprise', 500);
         }
     }
 
@@ -96,33 +143,31 @@ class CompanyController extends Controller
 
     protected function confirmDeleteCompany(int $id)
     {
+        $user = Auth::user();
+
         DB::beginTransaction();
 
         try {
             $company = Company::find($id);
 
             if (!$company) {
-                return response()->json([
-                    'error' => 'Entreprise non trouvée.',
-                ], 404);
+                return $this->errorResponse('Entreprise non trouvée', 404);
             }
 
-            // Supprime l'entreprise
-            $company->delete();
+            $deletedCompany = $company->delete();
 
             DB::commit();
 
-            return response()->json([
-                'success' => 'Entreprise supprimée avec succès.',
-            ], 200);
+            if ($deletedCompany){
+                $date = now()->format('d/m/Y à H:i');
+                activity()->performedOn($company)->log($user->firstname . ' ' . $user->lastname . ' a supprimé l\'entreprise ' . $company->name . ' le ' . $date);
 
+                return $this->successResponse('', 'Entreprise supprimée avec succès');
+            }
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return response()->json([
-                'error' => 'Une erreur est survenue lors de la suppression.',
-                'details' => $e->getMessage(),
-            ], 500);
+            return $this->errorResponse('Une erreur est survenue lors de la suppression', 500);
         }
     }
 }

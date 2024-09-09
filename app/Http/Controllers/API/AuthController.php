@@ -13,6 +13,7 @@ use App\Models\Misc\Role;
 use App\Models\Misc\User;
 use App\Models\Misc\UserModulePermission;
 use App\Models\Modules\Module;
+use App\Traits\HistoryResponseTrait;
 use App\Traits\JSONResponseTrait;
 use App\Traits\ModuleRetrievingTrait;
 use App\Traits\UserPermissionTrait;
@@ -27,6 +28,7 @@ class AuthController extends Controller
 {
     use ModuleRetrievingTrait;
     use JSONResponseTrait;
+    use HistoryResponseTrait;
 
     public function getUser()
     {
@@ -87,6 +89,9 @@ class AuthController extends Controller
         $user->tokens()->where('name', 'token')->update(['expires_at' => $expiresAt]);
 
         $cookie = cookie('jwt', $token, 1440)->withHttpOnly(); // Token valable pendant 24h
+        $date = 'le ' . now()->format('d/m/Y à H:i');
+
+        $this->setConnectionHistory('Connexion utilisateur', $user, 'login', $date, '');
 
         return $this->successResponse('', 'Connexion réussie')->withCookie($cookie);
     }
@@ -133,7 +138,6 @@ class AuthController extends Controller
             return $this->successResponse($user, 'Utilisateur créé avec succès', 201);
 
         } catch (\Exception $e) {
-            dd($e);
             return $this->errorResponse('Une erreur est survenue lors de la création de l\'utilisateur.', 500);
         }
     }

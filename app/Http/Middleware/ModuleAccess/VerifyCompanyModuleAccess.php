@@ -4,6 +4,7 @@ namespace App\Http\Middleware\ModuleAccess;
 
 use App\Models\Misc\User;
 use App\Models\Modules\Module;
+use App\Traits\JSONResponseTrait;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VerifyCompanyModuleAccess
 {
+    use JSONResponseTrait;
+
     /**
      * Handle an incoming request.
      *

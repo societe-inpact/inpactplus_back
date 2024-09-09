@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Mapping\Mapping;
+use App\Traits\HistoryResponseTrait;
 use App\Traits\JSONResponseTrait;
 use Illuminate\Routing\Controller as BaseController;
 use App\Http\Controllers\RuntimeException;
@@ -12,6 +13,7 @@ use App\Models\Companies\CompanyFolder;
 use App\Models\Misc\InterfaceSoftware;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use League\Csv\CharsetConverter;
 use League\Csv\Exception;
 use League\Csv\Reader;
@@ -21,6 +23,7 @@ use function Symfony\Component\String\s;
 class ConvertController extends BaseController
 {
     use JSONResponseTrait;
+    use HistoryResponseTrait;
 
     public function indexColumn($nominterface)
     {
@@ -31,6 +34,10 @@ class ConvertController extends BaseController
 
     public function importFile(Request $request): JsonResponse
     {
+        $user = Auth::user();
+        $companyFolderId = $request->get('company_folder_id');
+        $companyFolder = CompanyFolder::findOrFail($companyFolderId);
+
         // Récupération et validation de l'interface
         $idInterface = $request->get('interface_id');
         $interfaceSoftware = InterfaceSoftware::find($idInterface);
@@ -47,8 +54,6 @@ class ConvertController extends BaseController
                 case "marathon":
                     $controller = new ConvertMEController();
                     $columnindex = $controller->formatFilesMarathon();
-                    $type_separateur = $columnindex["separator_type"];
-                    $format = $columnindex ["extension"];
                     break;
 
                 default:
@@ -58,11 +63,9 @@ class ConvertController extends BaseController
         } else {
             $idsoftware = InterfaceSoftware::findOrFail($idInterface);
             $columnindex = $this->indexColumn($idsoftware->interface_mapping_id);
-            $type_separateur = $columnindex->type_separateur;
-            $format = $columnindex->format;
         }
 
-        $type_separateur = $columnindex['separator_type'];
+        $separator_type = $columnindex['separator_type'];
         $extension = strtolower($columnindex['extension']);
 
         // Validation du fichier en fonction de l'extension
@@ -75,10 +78,20 @@ class ConvertController extends BaseController
         }
 
         $file = $request->file('csv');
+        $fileName = $file->getClientOriginalName();
 
+        $directory = storage_path(strtolower($companyFolder->company->name) . '/' . strtolower($companyFolder->folder_name) . '/' . 'user' . '/' . $user->id . '/' . 'imported_files' . '/' . 'csv');
+        $csvPath = $directory . '/' . $fileName;
+
+        // Création du dossier s'il n'existe pas
+        if (!is_dir($directory)) {
+            mkdir($directory, 0777, true);
+        }
+
+        Writer::createFromPath($csvPath, 'w+');
 
         return match ($extension) {
-            'csv' => $this->handleCsvFile($file, $type_separateur),
+            'csv' => $this->handleCsvFile($file, $separator_type),
             'xls' => $this->errorResponse('Le support XLS n\'est pas encore implémenté'),
             default => $this->errorResponse('Le format de fichier' . $extension . 'n\'est pas supporté')
         };
@@ -113,13 +126,13 @@ class ConvertController extends BaseController
      * @throws Exception
      * @throws RuntimeException
      */
-    private function writeToFile(array $data, $date)
+    private function writeToFile(array $data, $date, $companyFolder)
     {
-        // TODO : Récupérer l'instance du dossier et de l'utilisateur + path convert
+        $user = Auth::user();
+        $fileName = 'EVY_' . $date; // TODO : Modifier le nom du fichier
 
-        $filename = 'EVY_' . $date; // TODO : Modifier le nom du fichier
-        $directory = storage_path('csv');
-        $csvPath = $directory . '/' . $filename . '.csv';
+        $directory = storage_path(strtolower($companyFolder->company->name) . '/' . strtolower($companyFolder->folder_name) . '/' . 'user' . '/' . $user->id . '/' . 'converted_files' . '/' . 'csv');
+        $csvPath = $directory . '/' . $fileName . '.csv';
 
         // Création du dossier s'il n'existe pas
         if (!is_dir($directory)) {
@@ -136,8 +149,8 @@ class ConvertController extends BaseController
         $csv->insertAll($data[0]);
 
         // Retourne le chemin du fichier enregistré
-        return str_replace('\\', '/', 'http://localhost/evypaie_back/storage/csv/' . $filename . '.csv');
-        // return str_replace('\\', '/', 'http://evyplus.preprod.inpact.fr/evyplus/back/storage/csv/' . $filename . '.csv');
+        return str_replace('\\', '/', 'http://localhost/evypaie_back/storage/csv/' . $fileName . '.csv');
+        // return str_replace('\\', '/', 'http://evyplus.preprod.inpact.fr/evyplus/back/storage/csv/' . $fileName . '.csv');
     }
 
 
@@ -151,6 +164,8 @@ class ConvertController extends BaseController
 
     public function convertFile(Request $request): JsonResponse
     {
+        $file = $request->file('csv');
+
         // Récupération des paramètres de la requête
         $folderId = $request->get('company_folder_id');
         $month = $request->get('month');
@@ -184,7 +199,7 @@ class ConvertController extends BaseController
             }
         }
 
-        return $this->prepareResponse($data, $date, $folderId);
+        return $this->prepareResponse($data, $date, $folderId, $file);
     }
 
     private function handleSpecificInterfaceConversion(string $softwareName, Request $request): ?array
@@ -199,8 +214,12 @@ class ConvertController extends BaseController
         }
     }
 
-    private function prepareResponse(array $data, string $date, int $folderId): JsonResponse
+    private function prepareResponse(array $data, string $date, int $companyFolderId, $file = null): JsonResponse
     {
+        $fileName = $file->getClientOriginalName();
+        $user = Auth::user();
+        $companyFolder = CompanyFolder::findOrFail($companyFolderId);
+
         $mappedRubrics = $data[0];
         $unmappedRubric = $data[1];
 
@@ -208,7 +227,7 @@ class ConvertController extends BaseController
         $unmappedCollection = collect($unmappedRubric);
 
         // Récupérer les rubriques mappées pour le dossier spécifique
-        $mappingRecords = Mapping::where('company_folder_id', $folderId)
+        $mappingRecords = Mapping::where('company_folder_id', $companyFolderId)
             ->get()
             ->pluck('data')
             ->flatten(1);
@@ -232,7 +251,10 @@ class ConvertController extends BaseController
         if ($unmappedCodes) {
             return $this->errorConvertResponse('Conversion impossible, les rubriques suivantes ne sont pas mappées :', implode(', ', $unmappedCodes));
         }
-        $csvConverted = $this->writeToFile($data, $date);
+        $csvConverted = $this->writeToFile($data, $date, $companyFolder);
+        $date = now()->format('d/m/Y à H:i');
+        $this->setConvertHistory('Conversion', $user, $companyFolderId, 'convert', $date, '', $fileName, basename($csvConverted));
+
         return $this->successConvertResponse($mappedRubrics, 'Votre fichier a été converti', $header, $csvConverted);
     }
 

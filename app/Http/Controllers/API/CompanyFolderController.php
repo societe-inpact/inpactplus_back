@@ -10,6 +10,7 @@ use App\Models\Misc\CompanyFolderInterface;
 use App\Models\Misc\InterfaceSoftware;
 use App\Traits\JSONResponseTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class CompanyFolderController extends Controller
@@ -91,6 +92,7 @@ class CompanyFolderController extends Controller
                     'company_folder_id' => $companyFolder->id,
                     'data' => [],
                 ]);
+
                 $companyFolder = CompanyFolder::where('folder_number', $request->folder_number)->with('modules', 'company', 'interfaces', 'mappings', 'employees', 'referent')->first();
                 return $this->successResponse($companyFolder, 'Dossier créé avec succès', 201);
             }
