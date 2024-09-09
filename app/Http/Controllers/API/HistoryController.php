@@ -55,4 +55,8 @@ class HistoryController extends Controller
 
         return $this->errorResponse('Aucun historique pour l\'utilisateur');
     }
+
+    public function getHistoryUserMappings(){
+        // TODO : En cours
+    }
 }

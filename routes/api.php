@@ -250,6 +250,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get("history", [HistoryController::class, 'getAllHistory']);
     Route::get("history/user_connections/{user_id}", [HistoryController::class, 'getHistoryUserConnections']);
     Route::get("history/user_conversions/{user_id}", [HistoryController::class, 'getHistoryUserConversions']);
+    Route::get("history/user_mappings/{user_id}", [HistoryController::class, 'getHistoryUserMappings']);
 
 });
 
