@@ -91,7 +91,7 @@ class AuthController extends Controller
         $cookie = cookie('jwt', $token, 1440)->withHttpOnly(); // Token valable pendant 24h
         $date = 'le ' . now()->format('d/m/Y à H:i');
 
-        $this->setConnectionHistory('Connexion utilisateur', $user, 'login', $date, '');
+        $this->setConnectionHistory('Connexion utilisateur', $user, 'login', $date, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' s\'est connecté' );
 
         return $this->successResponse('', 'Connexion réussie')->withCookie($cookie);
     }

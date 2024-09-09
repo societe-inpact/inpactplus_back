@@ -253,7 +253,7 @@ class ConvertController extends BaseController
         }
         $csvConverted = $this->writeToFile($data, $date, $companyFolder);
         $date = now()->format('d/m/Y à H:i');
-        $this->setConvertHistory('Conversion', $user, $companyFolderId, 'convert', $date, '', $fileName, basename($csvConverted));
+        $this->setConvertHistory('Conversion', $user, $companyFolderId, 'convert', 'le ' . $date, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' a converti un fichier', $fileName, basename($csvConverted));
 
         return $this->successConvertResponse($mappedRubrics, 'Votre fichier a été converti', $header, $csvConverted);
     }
