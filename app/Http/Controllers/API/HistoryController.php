@@ -59,4 +59,7 @@ class HistoryController extends Controller
     public function getHistoryUserMappings(){
         // TODO : En cours
     }
+
+    // TODO : Ressortir les historiques des company
+    // Définir combien d'enregistrements on ressort et quoi ?
 }

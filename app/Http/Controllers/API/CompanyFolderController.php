@@ -145,6 +145,18 @@ class CompanyFolderController extends Controller
         } catch (\Exception $e) {
             return $this->errorResponse('Une erreur est survenue lors de la mise à jour du dossier', 500);
         }
+        // TODO : return ici
+        return null;
+    }
+
+    public function deleteCompanyFolder($id)
+    {
+        $companyFolderToDelete = CompanyFolder::findOrFail($id)->delete();
+        if ($companyFolderToDelete) {
+            return $this->successResponse('', 'Dossier supprimé avec succès');
+        } else {
+            return $this->errorResponse('Erreur lors de la suppression du dossier', 500);
+        }
     }
 
     public function addInterfaceToCompanyFolder(Request $request, $id)

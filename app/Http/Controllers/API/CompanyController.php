@@ -67,8 +67,10 @@ class CompanyController extends Controller
             }
 
         } catch (\Exception $e) {
-            return $this->errorResponse('Une erreur est survenue lors de la création de l\'entreprise', 500);
+            return $this->errorResponse($e->getMessage());
         }
+        return $this->errorResponse('Une erreur est survenue lors de la création de l\'entreprise', 500);
+
     }
 
     public function updateCompany(Request $request, $id){
@@ -110,8 +112,9 @@ class CompanyController extends Controller
             }
 
         } catch (\Exception $e) {
-            return $this->errorResponse('Une erreur est survenue lors de la mise à jour de l\'entreprise', 500);
+            return $this->errorResponse($e->getMessage());
         }
+        return $this->errorResponse('Une erreur est survenue lors de la mise à jour de l\'entreprise', 500);
     }
 
     public function deleteCompany(Request $request, $id)
@@ -166,8 +169,8 @@ class CompanyController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-
-            return $this->errorResponse('Une erreur est survenue lors de la suppression', 500);
+            return $this->errorResponse($e->getMessage());
         }
+        return $this->errorResponse('Une erreur est survenue lors de la suppression', 500);
     }
 }
