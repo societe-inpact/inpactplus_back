@@ -145,6 +145,17 @@ class CompanyFolderController extends Controller
         }
     }
 
+    public function deleteCompanyFolder($id)
+    {
+        $companyFolderId = CompanyFolder::findOrFail($id);
+        if ($companyFolderId){
+            $companyFolderId->delete();
+            return $this->successResponse('', 'Dossier supprimé avec succès');
+
+        }
+        return $this->errorResponse('Une erreur est survenue lors de la suppression du dossier');
+    }
+
     public function addInterfaceToCompanyFolder(Request $request, $id)
     {
         $this->authorize('create_interface_company_folder', InterfaceSoftware::class);
