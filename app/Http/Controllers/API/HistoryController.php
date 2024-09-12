@@ -86,29 +86,22 @@ class HistoryController extends Controller
 
     public function getHistoryCompanyFolderConversions($id)
     {
-        $companyFolder = CompanyFolder::findOrFail($id);
-        $companyFolderId = $companyFolder->id;
-
-        $userIds = UserCompanyFolder::where('company_folder_id', $companyFolderId)
-            ->pluck('user_id');
-
-        if ($userIds->isEmpty()) {
-            return $this->errorResponse('Aucun utilisateur trouvé pour ce dossier');
-        }
-
-        $activities = Activity::whereIn('causer_id', $userIds)
-            ->where('event', 'convert')
+        $activities = Activity::where('event', 'convert')
             ->get();
 
-        $filteredActivity = $activities->map(function($activity) {
-            return json_decode($activity->properties, true);
+        // Filtrer les activités pour ne garder que celles ayant le bon company_folder_id dans les propriétés JSON
+        $filteredActivity = $activities->filter(function($activity) use ($id) {
+            $properties = json_decode($activity->properties, true);
+            return isset($properties['company_folder_id']) && $properties['company_folder_id'] == $id;
         });
 
         if ($filteredActivity->isEmpty()) {
             return $this->errorResponse('Aucun historique de conversion trouvé pour le dossier');
         }
 
-        return $this->successResponse($filteredActivity);
+        return $this->successResponse($filteredActivity->map(function($activity) {
+            return json_decode($activity->properties, true);
+        }));
     }
 
     public function getHistoryCompanyFolderConnections($id)
@@ -140,28 +133,21 @@ class HistoryController extends Controller
 
     public function getHistoryCompanyFolderMappings($id)
     {
-        $companyFolder = CompanyFolder::findOrFail($id);
-        $companyFolderId = $companyFolder->id;
-
-        $userIds = UserCompanyFolder::where('company_folder_id', $companyFolderId)
-            ->pluck('user_id');
-
-        if ($userIds->isEmpty()) {
-            return $this->errorResponse('Aucun utilisateur trouvé pour ce dossier');
-        }
-
-        $activities = Activity::whereIn('causer_id', $userIds)
-            ->where('event', 'mapping')
+        $activities = Activity::where('event', 'mapping')
             ->get();
 
-        $filteredActivity = $activities->map(function($activity) {
-            return json_decode($activity->properties, true);
+        // Filtrer les activités pour ne garder que celles ayant le bon company_folder_id dans les propriétés JSON
+        $filteredActivity = $activities->filter(function($activity) use ($id) {
+            $properties = json_decode($activity->properties, true);
+            return isset($properties['company_folder_id']) && $properties['company_folder_id'] == $id;
         });
 
         if ($filteredActivity->isEmpty()) {
             return $this->errorResponse('Aucun historique de mapping trouvé pour le dossier');
         }
 
-        return $this->successResponse($filteredActivity);
+        return $this->successResponse($filteredActivity->map(function($activity) {
+            return json_decode($activity->properties, true);
+        }));
     }
 }
