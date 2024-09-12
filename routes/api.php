@@ -252,6 +252,10 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get("history/user_conversions/{user_id}", [HistoryController::class, 'getHistoryUserConversions']);
     Route::get("history/user_mappings/{user_id}", [HistoryController::class, 'getHistoryUserMappings']);
 
+    Route::get("history/company_folder/conversions/{company_folder_id}", [HistoryController::class, 'getHistoryCompanyFolderConversions']);
+    Route::get("history/company_folder/connections/{company_folder_id}", [HistoryController::class, 'getHistoryCompanyFolderConnections']);
+    Route::get("history/company_folder/mappings/{company_folder_id}", [HistoryController::class, 'getHistoryCompanyFolderMappings']);
+
 });
 
 

@@ -356,10 +356,9 @@ class MappingController extends Controller
         }
 
         $this->saveMappingData($companyFolderId, $validatedRequestData);
-
         $date = now()->format('d/m/Y à H:i');
-        $this->setMappingHistory('Mapping', $user, 'mapping', 'le ' . $date, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' a mappé un fichier',
-            $validatedRequestData->input_rubrique, $validatedRequestData->output_type, $validatedRequestData->output_rubrique);
+        $this->setMappingHistory('Mapping', $user, $companyFolderId, 'mapping', 'le ' . $date, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' a mappé un fichier',
+            $validatedRequestData->input_rubrique, $validatedRequestData->output_type, $validatedRequestData->is_used ? $validatedRequestData->getSilaeRubric()->code : null);
         return $this->successResponse('', 'Mapping ajouté avec succès', 201);
     }
 

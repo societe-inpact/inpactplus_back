@@ -24,7 +24,7 @@ trait HistoryResponseTrait
             ->log($description);
     }
 
-    public function setMappingHistory($log_name, $user, $event, $date, $description = null, $input_rubric, $type_rubric, $output_rubric){
+    public function setMappingHistory($log_name, $user, $company_folder_id, $event, $date, $description = null, $input_rubric, $type_rubric, $output_rubric){
         return activity()
             ->inLog($log_name)
             ->performedOn($user)
@@ -33,6 +33,7 @@ trait HistoryResponseTrait
                 'user_id' => $user->id,
                 'lastname' => $user->lastname,
                 'firstname' => $user->firstname,
+                'company_folder_id' => $company_folder_id,
                 'date' => $date,
                 'input_rubric' => $input_rubric,
                 'type_rubric' => $type_rubric,
@@ -52,7 +53,10 @@ trait HistoryResponseTrait
                 'firstname' => $user->firstname,
                 'company_folder_id' => $company_folder_id,
                 'date' => $date,
-                'imported_file' => $imported_file,
+                'imported_file' => [
+                    'filename' => $imported_file,
+                    'path' => $imported_file
+                ],
                 'converted_file' => $converted_file,
                 'updated_file' => $updated_file,
             ])
