@@ -53,10 +53,7 @@ trait HistoryResponseTrait
                 'firstname' => $user->firstname,
                 'company_folder_id' => $company_folder_id,
                 'date' => $date,
-                'imported_file' => [
-                    'filename' => $imported_file,
-                    'path' => $imported_file
-                ],
+                'imported_file' => $imported_file,
                 'converted_file' => $converted_file,
                 'updated_file' => $updated_file,
             ])
