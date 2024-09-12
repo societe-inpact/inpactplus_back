@@ -151,16 +151,6 @@ class CompanyFolderController extends Controller
 
     public function deleteCompanyFolder($id)
     {
-        $companyFolderToDelete = CompanyFolder::findOrFail($id)->delete();
-        if ($companyFolderToDelete) {
-            return $this->successResponse('', 'Dossier supprimé avec succès');
-        } else {
-            return $this->errorResponse('Erreur lors de la suppression du dossier', 500);
-        }
-    }
-
-    public function deleteCompanyFolder($id)
-    {
         $companyFolderId = CompanyFolder::findOrFail($id);
         if ($companyFolderId){
             $companyFolderId->delete();
