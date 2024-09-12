@@ -32,7 +32,7 @@ class ClientResource extends JsonResource
                     }),
                 ];
             }),
-            'company' => new CompanyResource($this->company),
+            'companies' => new CompanyResource($this->company),
         ];
     }
 }

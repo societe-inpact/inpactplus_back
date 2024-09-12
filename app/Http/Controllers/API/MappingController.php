@@ -12,10 +12,12 @@ use App\Models\Mapping\Mapping;
 use App\Models\Companies\CompanyFolder;
 use App\Models\Misc\InterfaceMapping;
 use App\Models\Misc\InterfaceSoftware;
+use App\Traits\HistoryResponseTrait;
 use App\Traits\JSONResponseTrait;
 use http\Client\Curl\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Auth;
 use League\Csv\CharsetConverter;
 use League\Csv\Reader;
 use Illuminate\Support\Facades\Validator;
@@ -23,6 +25,8 @@ use Illuminate\Support\Facades\Validator;
 class MappingController extends Controller
 {
     use JSONResponseTrait;
+    use HistoryResponseTrait;
+
 
     // Fonction permettant de récupérer les mappings existants d'un dossier
     public function getMapping(Request $request, $id)
@@ -332,6 +336,7 @@ class MappingController extends Controller
     {
         $this->authorize('create_mapping', Mapping::class);
 
+        $user = Auth::user();
         $validatedRequestData = $this->validateMappingData($request);
         $companyFolderId = $validatedRequestData->company_folder_id;
         $mappedRubriques = Mapping::where('company_folder_id', $companyFolderId)->get();
@@ -349,7 +354,12 @@ class MappingController extends Controller
                 }
             }
         }
+
         $this->saveMappingData($companyFolderId, $validatedRequestData);
+
+        $date = now()->format('d/m/Y à H:i');
+        $this->setMappingHistory('Mapping', $user, 'mapping', 'le ' . $date, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' a mappé un fichier',
+            $validatedRequestData->input_rubrique, $validatedRequestData->output_type, $validatedRequestData->output_rubrique);
         return $this->successResponse('', 'Mapping ajouté avec succès', 201);
     }
 
@@ -476,7 +486,6 @@ class MappingController extends Controller
                         $dataBis[] = $entry;
                     }
                 } else {
-
                     // supprimer la valeur
                 }
             } else {

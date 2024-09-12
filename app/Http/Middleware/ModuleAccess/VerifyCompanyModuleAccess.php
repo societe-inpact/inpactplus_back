@@ -4,6 +4,7 @@ namespace App\Http\Middleware\ModuleAccess;
 
 use App\Models\Misc\User;
 use App\Models\Modules\Module;
+use App\Traits\JSONResponseTrait;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VerifyCompanyModuleAccess
 {
+    use JSONResponseTrait;
+
     /**
      * Handle an incoming request.
      *
@@ -32,7 +35,10 @@ class VerifyCompanyModuleAccess
             'folders.interfaces',
             'folders.employees',
             'folders',
-            'company'
+            'company',
+            'folders.referent',
+            'permissions',
+            'roles',
         ])->find(Auth::id());
 
         if (!$user) {
@@ -43,7 +49,7 @@ class VerifyCompanyModuleAccess
             return $next($request);
         }
 
-        $companyIds = $user->folders->pluck('company.id')->unique()->toArray();
+        $companyIds = $user->company->pluck('id')->unique()->toArray();
         $companyHasAccess = Module::where('name', $moduleName)
             ->whereHas('companyAccess', function ($query) use ($companyIds) {
                 $query->where('has_access', true)

@@ -32,7 +32,10 @@ class VerifyUserModuleAccess
             'folders.interfaces',
             'folders.employees',
             'folders',
-            'company'
+            'company',
+            'folders.referent',
+            'permissions',
+            'roles',
         ])->find(Auth::id());
 
         if (!$user) {

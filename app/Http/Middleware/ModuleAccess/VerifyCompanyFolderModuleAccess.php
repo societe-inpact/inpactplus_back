@@ -34,14 +34,19 @@ class VerifyCompanyFolderModuleAccess
             'folders.interfaces',
             'folders.employees',
             'folders',
-            'company'
+            'company',
+            'folders.referent',
+            'permissions',
+            'roles',
         ])->find(Auth::id());
 
         if (!$user) {
             return $this->errorResponse('Vous n\'êtes pas connecté', 401);
         }
 
-        if ($user->hasRole('inpact')) {
+        $isReferentFolder = $user->id === $user->company->id;
+
+        if ($user->hasRole('inpact') || $isReferentFolder) {
             return $next($request);
         }
 
