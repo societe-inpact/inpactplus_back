@@ -32,7 +32,7 @@ class ReferentResource extends JsonResource
                     }),
                 ];
             }),
-            'company' => new CompanyResource($this->company),
+            'companies' => new CompanyResource($this->company),
         ];
     }
 }

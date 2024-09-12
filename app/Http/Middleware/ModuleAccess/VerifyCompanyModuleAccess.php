@@ -35,7 +35,10 @@ class VerifyCompanyModuleAccess
             'folders.interfaces',
             'folders.employees',
             'folders',
-            'company'
+            'company',
+            'folders.referent',
+            'permissions',
+            'roles',
         ])->find(Auth::id());
 
         if (!$user) {
@@ -46,7 +49,7 @@ class VerifyCompanyModuleAccess
             return $next($request);
         }
 
-        $companyIds = $user->folders->pluck('company.id')->unique()->toArray();
+        $companyIds = $user->company->pluck('id')->unique()->toArray();
         $companyHasAccess = Module::where('name', $moduleName)
             ->whereHas('companyAccess', function ($query) use ($companyIds) {
                 $query->where('has_access', true)

@@ -41,6 +41,7 @@ class AuthController extends Controller
             'folders.employees',
             'folders.referent',
             'permissions',
+            'roles',
             'company'
         ])->find(Auth::id());
 
@@ -57,6 +58,7 @@ class AuthController extends Controller
             });
         });
 
+
         $roles = $user->roles->pluck('name')->toArray();
 
         $response = match (true) {
@@ -65,6 +67,7 @@ class AuthController extends Controller
             in_array('inpact', $roles) => new InpactResource($user),
             default => null,
         };
+
 
         if ($response) {
             return $response->additional([
