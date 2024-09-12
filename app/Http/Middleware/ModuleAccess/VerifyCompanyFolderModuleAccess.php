@@ -44,11 +44,15 @@ class VerifyCompanyFolderModuleAccess
             return $this->errorResponse('Vous n\'êtes pas connecté', 401);
         }
 
-        $isReferentFolder = $user->id === $user->company->id;
+        $isReferentFolder = false;
+        if (!$user->hasRole('inpact')) {
+            $isReferentFolder = $user->id === $user->company->id;
+        }
 
         if ($user->hasRole('inpact') || $isReferentFolder) {
             return $next($request);
         }
+
 
         $companyFolderIds = $user->folders->pluck('id')->unique()->toArray();
         $companyFolderHasAccess = Module::where('name', $moduleName)
