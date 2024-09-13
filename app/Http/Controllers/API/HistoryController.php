@@ -39,7 +39,7 @@ class HistoryController extends Controller
             return $this->successResponse($userConnections);
         }
 
-        return $this->errorResponse('Aucun historique pour l\'utilisateur');
+        return $this->errorHistoryResponse([], 'Aucun historique de connexion trouvé pour l\'utilisateur', 404);
     }
 
     public function getHistoryUserConversions()
@@ -59,7 +59,7 @@ class HistoryController extends Controller
             return $this->successResponse($userConnections);
         }
 
-        return $this->errorResponse('Aucun historique pour l\'utilisateur');
+        return $this->errorHistoryResponse([], 'Aucun historique de conversion trouvé pour l\'utilisateur', 404);
     }
 
     public function getHistoryUserMappings()
@@ -79,7 +79,7 @@ class HistoryController extends Controller
             return $this->successResponse($userMappings);
         }
 
-        return $this->errorResponse('Aucun historique pour l\'utilisateur');
+        return $this->errorHistoryResponse([], 'Aucun historique de mapping trouvé pour l\'utilisateur', 404);
     }
 
     // HISTORIQUE DU COMPANY FOLDER
@@ -96,7 +96,7 @@ class HistoryController extends Controller
         });
 
         if ($filteredActivity->isEmpty()) {
-            return $this->errorResponse('Aucun historique de conversion trouvé pour le dossier');
+            return $this->errorHistoryResponse([], 'Aucun historique de conversion trouvé pour le dossier', 404);
         }
 
         return $this->successResponse($filteredActivity->map(function($activity) {
@@ -125,7 +125,7 @@ class HistoryController extends Controller
         });
 
         if ($filteredActivity->isEmpty()) {
-            return $this->errorResponse('Aucun historique de connexion trouvé pour le dossier');
+            return $this->errorHistoryResponse([], 'Aucun historique de connexion trouvé pour le dossier', 404);
         }
 
         return $this->successResponse($filteredActivity);
@@ -143,7 +143,7 @@ class HistoryController extends Controller
         });
 
         if ($filteredActivity->isEmpty()) {
-            return $this->errorResponse('Aucun historique de mapping trouvé pour le dossier');
+            return $this->errorHistoryResponse([], 'Aucun historique de mapping trouvé pour le dossier', 404);
         }
 
         return $this->successResponse($filteredActivity->map(function($activity) {

@@ -26,6 +26,15 @@ trait JSONResponseTrait
         ], $status);
     }
 
+    public function errorHistoryResponse($data = [], $message = 'Error', $status = 400)
+    {
+        return response()->json([
+            'status' => 'error',
+            'message' => $message,
+            'data' => $data
+        ], $status);
+    }
+
     // ------------------------------------- //
 
     public function successConvertResponse($data = [], $message = 'Success', $header = null, $convertedFile = null, $status = 200)
