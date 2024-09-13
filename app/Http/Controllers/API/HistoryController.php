@@ -99,9 +99,12 @@ class HistoryController extends Controller
             return $this->errorHistoryResponse([], 'Aucun historique de conversion trouvé pour le dossier', 404);
         }
 
-        return $this->successResponse($filteredActivity->map(function($activity) {
-            return json_decode($activity->properties, true);
-        }));
+        // Mapper chaque activité en un objet JSON (stdClass)
+        $result = $filteredActivity->map(function($activity) {
+            return (object) json_decode($activity->properties, true); // Cast en objet
+        })->values(); // Assurer que les clés sont réindexées
+
+        return $this->successResponse($result->toArray());
     }
 
     public function getHistoryCompanyFolderConnections($id)
