@@ -56,4 +56,14 @@ trait JSONResponseTrait
             'unmapped_rubrics' => $unmappedRubrics,
         ], $status);
     }
+
+    public function successImportedFileResponse($imported_file_path, $data = [], $message = 'Success', $status = 200)
+    {
+        return response()->json([
+            'data' => $data,
+            'status' => 'success',
+            'message' => $message,
+            'imported_file_path' => $imported_file_path,
+        ], $status);
+    }
 }

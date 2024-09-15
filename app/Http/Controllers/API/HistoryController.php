@@ -26,17 +26,9 @@ class HistoryController extends Controller
     {
         $user = Auth::user();
         $historyUserConnections = Activity::where('causer_id', $user->id)->where('event', 'login')->get();
-        $userConnections = [];
 
         if ($historyUserConnections) {
-            foreach ($historyUserConnections as $historyUserConnection) {
-                $userConnections[] = [
-                    'label' => $historyUserConnection->log_name,
-                    'description' => $historyUserConnection->description,
-                    'details' => $historyUserConnection->properties,
-                ];
-            }
-            return $this->successResponse($userConnections);
+            return $this->successResponse($historyUserConnections);
         }
 
         return $this->errorHistoryResponse([], 'Aucun historique de connexion trouvé pour l\'utilisateur', 404);
@@ -46,17 +38,9 @@ class HistoryController extends Controller
     {
         $user = Auth::user();
         $historyUserConversions = Activity::where('causer_id', $user->id)->where('event', 'convert')->get();
-        $userConnections = [];
 
         if ($historyUserConversions) {
-            foreach ($historyUserConversions as $historyUserConversion) {
-                $userConnections[] = [
-                    'label' => $historyUserConversion->log_name,
-                    'description' => $historyUserConversion->description,
-                    'details' => $historyUserConversion->properties,
-                ];
-            }
-            return $this->successResponse($userConnections);
+            return $this->successResponse($historyUserConversions);
         }
 
         return $this->errorHistoryResponse([], 'Aucun historique de conversion trouvé pour l\'utilisateur', 404);
@@ -66,17 +50,9 @@ class HistoryController extends Controller
     {
         $user = Auth::user();
         $historyUserMappings = Activity::where('causer_id', $user->id)->where('event', 'mapping')->get();
-        $userMappings = [];
 
         if ($historyUserMappings) {
-            foreach ($historyUserMappings as $historyUserMapping) {
-                $userMappings[] = [
-                    'label' => $historyUserMapping->log_name,
-                    'description' => $historyUserMapping->description,
-                    'details' => $historyUserMapping->properties,
-                ];
-            }
-            return $this->successResponse($userMappings);
+            return $this->successResponse($historyUserMappings);
         }
 
         return $this->errorHistoryResponse([], 'Aucun historique de mapping trouvé pour l\'utilisateur', 404);

@@ -220,7 +220,7 @@ class MappingController extends Controller
 
     public function translateOutputModel($outputType)
     {
-        if(isset($outputType)){
+        if (isset($outputType)) {
             preg_match('/[^\\\]+$/', $outputType, $matches);
             $outputType = $matches[0];
 
@@ -240,6 +240,7 @@ class MappingController extends Controller
     // Fonction permettant de mettre à jour un mapping existant
     public function updateMapping(Request $request, $id)
     {
+        $user = Auth::user();
         $companyFolder = CompanyFolder::with('mappings')->findOrFail($request->company_folder_id);
 
         if (!$companyFolder) {
@@ -258,6 +259,8 @@ class MappingController extends Controller
         $updateResult = $this->updateMappingData($mapping, $validatedData);
 
         if ($updateResult === 'updated') {
+            $date = now()->format('d/m/Y à H:i');
+            $this->setMappingHistory('Mapping', $user, $companyFolder->id, 'mapping', 'le ' . $date, 'Modification', $validatedData->input_rubrique, $validatedData->output_type, $validatedData->is_used ? $validatedData->getSilaeRubric()->code : null, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' a mis à jour le mapping d\'un fichier',);
             return $this->successResponse('', 'Mapping mis à jour avec succès');
         } else {
             return $this->errorResponse('La rubrique est introuvable', 404);
@@ -357,20 +360,9 @@ class MappingController extends Controller
 
         $this->saveMappingData($companyFolderId, $validatedRequestData);
         $date = now()->format('d/m/Y à H:i');
-        $this->setMappingHistory('Mapping', $user, $companyFolderId, 'mapping', 'le ' . $date, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' a mappé un fichier',
-            $validatedRequestData->input_rubrique, $validatedRequestData->output_type, $validatedRequestData->is_used ? $validatedRequestData->getSilaeRubric()->code : null);
-        return $this->successResponse('', 'Mapping ajouté avec succès', 201);
-    }
+        $this->setMappingHistory('Mapping', $user, $companyFolderId, 'mapping', 'le ' . $date, 'Création', $validatedRequestData->input_rubrique, $this->translateOutputModel($validatedRequestData->output_type), $validatedRequestData->is_used ? $validatedRequestData->getSilaeRubric()->code : null, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' a créé un mapping d\'un fichier',);
 
-    // Fonction permettant de transformer la rubrique d'entrée mappée en rubrique de sortie SILAE
-    private function getSilaeRubrique($rubrique)
-    {
-        $typeRubrique = $rubrique['output_type'];
-        $outputRubrique = $rubrique['output_rubrique_id'];
-        if (class_exists($typeRubrique)) {
-            return $typeRubrique::find($outputRubrique);
-        }
-        return false;
+        return $this->successResponse('', 'Mapping ajouté avec succès', 201);
     }
 
     // Fonction permettant d'enregistrer un nouveau mapping en BDD
@@ -449,21 +441,24 @@ class MappingController extends Controller
 
     public function deleteOneLineMappingData(Request $request)
     {
+        $user = Auth::user();
         $validator = Validator::make($request->all(), [
-            'companyFolderId' => 'required|integer',
-            'output_rubrique_id' => 'required|integer',
-            'nameRubrique' => 'required|string',
-            'input_rubrique' => ''
+            'company_folder_id' => 'required|integer',
+            'output_rubric_id' => 'required|integer',
+            'name_rubric' => 'required|string',
+            'input_rubric' => '',
+            'output_type' => ''
         ]);
 
         if ($validator->fails()) {
             return $this->errorResponse($validator->errors(), 422);
         }
-
-        $companyFolderId = $request ["companyFolderId"];
-        $output_rubrique_id = $request ["output_rubrique_id"];
-        $nameRubrique = $request ["nameRubrique"];
-        $input_rubrique = $request ["input_rubrique"];
+        $companyFolderId = $request['company_folder_id'];
+        $outputRubricId = $request['output_rubric_id'];
+        $nameRubric = $request['name_rubric'];
+        $inputRubric = $request['input_rubric'];
+        $outputType = $request['output_type'];
+        $isUsed = $request['is_used'];
 
         // permet de récupérer le mapping
         $mappingCompagny = Mapping::where("company_folder_id", $companyFolderId)->first();
@@ -473,13 +468,13 @@ class MappingController extends Controller
         // permet d'enregister les modifications
         foreach ($data as $entry) {
             // si c'est une valeur ne pas utiliser, il faut modifier le 'name_rubrique'
-            if ($entry['name_rubrique'] === null) {
-                $entry['name_rubrique'] = "Ne pas utiliser";
+            if (!$entry['name_rubric']) {
+                $entry['is_used'] = false;
                 $entry['output_rubrique_id'] = 0;
             }
-            if ((string)$entry['output_rubrique_id'] === (string)$output_rubrique_id && $entry['name_rubrique'] === $nameRubrique) {
-                if ($input_rubrique !== "") {
-                    if ((string)$entry['input_rubrique'] === (string)$input_rubrique) {
+            if ((string)$entry['output_rubric_id'] === (string)$outputRubricId && $entry['name_rubric'] === $nameRubric) {
+                if ($inputRubric) {
+                    if ((string)$entry['input_rubric'] === (string)$inputRubric) {
                         // supprimer la valeur
                     } else {
                         $dataBis[] = $entry;
@@ -495,6 +490,8 @@ class MappingController extends Controller
         if ($data !== $dataBis) {
             $mappingCompagny->data = $dataBis;
             $mappingCompagny->save();
+            $date = now()->format('d/m/Y à H:i');
+            $this->setMappingHistory('Mapping', $user, $companyFolderId, 'mapping', 'le ' . $date, 'Suppression', $input_rubrique, $nameRubrique, $output_rubrique_id->getSilaeRubric()->code, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' a supprimé une ligne de mapping d\'un fichier');
             return $this->successResponse('', 'Ligne de mapping supprimée du dossier avec succès');
         } else {
             return $this->successResponse('', 'Ligne de mapping non modifiée');

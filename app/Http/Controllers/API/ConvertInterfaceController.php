@@ -150,12 +150,10 @@ class ConvertInterfaceController extends ConvertController
 
         $type_separateur = $columnindex->separator_type;
         $format = strtolower($columnindex->extension);
+        $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15')->outputEncoding('utf-8');
 
         switch ($format){
             case "csv":
-                $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15')->outputEncoding('utf-8');
-                //$formatter = fn(array $row): array => array_map('strtoupper', $row);
-
                 $request->validate([
                     'csv' => 'required|file|mimes:csv,txt',
                 ]);
@@ -166,14 +164,64 @@ class ConvertInterfaceController extends ConvertController
                     $reader = Reader::createFromPath($file->getPathname(), 'r');
                     $reader->addFormatter($encoder);
                     $reader->setDelimiter($type_separateur);
-                    //$reader->addFormatter($formatter);
                     $reader->setHeaderOffset(null);
                     $records = iterator_to_array($reader->getRecords(), true);
                     return $this->convertInter($records, $folderId, $columnindex);
 
                 }
-            default :
-                return $this->errorResponse('Conversion impossible, le format n\'est pas pris en charge', 400);
+                break;
+            case "txt":
+                $request->validate([
+                    'txt' => 'required|file|mimes:txt',
+                ]);
+
+                if ($request->hasFile('txt'))
+                {
+                    $file = $request->file('txt');
+                    $reader = Reader::createFromPath($file->getPathname(), 'r');
+                    $reader->addFormatter($encoder);
+                    $reader->setDelimiter($type_separateur);
+                    $reader->setHeaderOffset(null);
+                    $records = iterator_to_array($reader->getRecords(), true);
+                    return $this->convertInter($records, $folderId, $columnindex);
+
+                }
+                break;
+            case "xls":
+                $request->validate([
+                    'xls' => 'required|file|mimes:xls',
+                ]);
+
+                if ($request->hasFile('xls'))
+                {
+                    $file = $request->file('xls');
+                    $reader = Reader::createFromPath($file->getPathname(), 'r');
+                    $reader->addFormatter($encoder);
+                    $reader->setDelimiter($type_separateur);
+                    $reader->setHeaderOffset(null);
+                    $records = iterator_to_array($reader->getRecords(), true);
+                    return $this->convertInter($records, $folderId, $columnindex);
+
+                }
+                break;
+            case "xlsx":
+                $request->validate([
+                    'xlsx' => 'required|file|mimes:xlsx',
+                ]);
+
+                if ($request->hasFile('xlsx'))
+                {
+                    $file = $request->file('xlsx');
+                    $reader = Reader::createFromPath($file->getPathname(), 'r');
+                    $reader->addFormatter($encoder);
+                    $reader->setDelimiter($type_separateur);
+                    $reader->setHeaderOffset(null);
+                    $records = iterator_to_array($reader->getRecords(), true);
+                    return $this->convertInter($records, $folderId, $columnindex);
+
+                }
+                break;
         }
+        return $this->errorResponse('Conversion impossible, le format n\'est pas pris en charge', 400);
     }
 }

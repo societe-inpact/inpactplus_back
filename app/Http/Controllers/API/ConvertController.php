@@ -50,19 +50,18 @@ class ConvertController extends BaseController
 
         if ($idSoftware === null) {
             $softwaresName = strtolower($interfaceSoftware->name);
-            switch ($softwaresName){
+            switch ($softwaresName) {
                 case "marathon":
                     $controller = new ConvertMEController();
                     $columnindex = $controller->formatFilesMarathon();
                     break;
 
                 default:
-                    return response()->json(['success' => false, 'message' => 'il manque le paramétrage spécifique se l\'interface !','status' => 400]);
-
+                    return response()->json(['success' => false, 'message' => 'Il manque le paramétrage spécifique de l\'interface !', 'status' => 400]);
             }
         } else {
-            $idsoftware = InterfaceSoftware::findOrFail($idInterface);
-            $columnindex = $this->indexColumn($idsoftware->interface_mapping_id);
+            $idSoftware = InterfaceSoftware::findOrFail($idInterface);
+            $columnindex = $this->indexColumn($idSoftware->interface_mapping_id);
         }
 
         $separator_type = $columnindex['separator_type'];
@@ -79,32 +78,34 @@ class ConvertController extends BaseController
 
         $file = $request->file('csv');
         $fileName = $file->getClientOriginalName();
-        $folderName = str_replace(' ', '_', $companyFolder->folder_name);
-        $companyName = str_replace(' ', '_', $companyFolder->company->name);
 
-        $directory = storage_path(strtolower($companyName) . '/' . strtolower($folderName) . '/' . 'user' . '/' . $user->id . '/' . 'imported_files' . '/' . 'csv');
-        $csvPath = $directory . '/' . $fileName . '.csv';
+        // Répertoire pour les fichiers importés
+        $importDirectory = storage_path('app/public/');
+        $importPath = $importDirectory . '/' . $fileName;
 
         // Création du dossier s'il n'existe pas
-        if (!is_dir($directory)) {
-            mkdir($directory, 0777, true);
+        if (!is_dir($importDirectory)) {
+            mkdir($importDirectory, 0777, true);
         }
 
-        Writer::createFromPath($csvPath, 'w+');
-
+        // Déplacement du fichier dans le répertoire importé
+        $file->move($importDirectory, $fileName);
+        // Traiter le fichier en fonction de l'extension
         return match ($extension) {
-            'csv' => $this->handleCsvFile($file, $separator_type),
+            'csv' => $this->handleCsvFile($importPath, $separator_type),
             'xls' => $this->errorResponse('Le support XLS n\'est pas encore implémenté'),
-            default => $this->errorResponse('Le format de fichier' . $extension . 'n\'est pas supporté')
+            default => $this->errorResponse('Le format de fichier ' . $extension . ' n\'est pas supporté')
         };
     }
 
-    private function handleCsvFile($file, $delimiter): JsonResponse
+
+    private function handleCsvFile($csvPath, $delimiter): JsonResponse
     {
-        $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15')->outputEncoding('UTF-8');;
+        $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15')->outputEncoding('UTF-8');
         $extension = fn(array $row): array => array_map('strtoupper', $row);
 
-        $reader = Reader::createFromPath($file->getPathname(), 'r');
+        // Lire le fichier CSV depuis le chemin où il a été déplacé
+        $reader = Reader::createFromPath($csvPath, 'r');
         $reader->addFormatter($encoder);
         $reader->setDelimiter($delimiter);
         $reader->addFormatter($extension);
@@ -112,12 +113,15 @@ class ConvertController extends BaseController
 
         $records = iterator_to_array($reader->getRecords(), true);
 
+        $relativePath = str_replace(storage_path('app/public') . '/', '', $csvPath);
+        $importedFileUrl = url('storage/' . $relativePath);
         if ($records) {
-            return $this->successResponse($records, 'Votre fichier a été importé');
+            return $this->successImportedFileResponse($importedFileUrl, $records, 'Votre fichier a bien été importé');
         }
 
         return $this->errorResponse('Aucun enregistrement trouvé dans le fichier', 400);
     }
+
 
 
     /**
@@ -128,14 +132,11 @@ class ConvertController extends BaseController
      * @throws Exception
      * @throws RuntimeException
      */
-    private function writeToFile(array $data, $date, $companyFolder)
+    private function writeToFile(array $data, $date)
     {
-        $user = Auth::user();
         $fileName = 'EVY_' . $date; // TODO : Modifier le nom du fichier
-        $folderName = str_replace(' ', '_', $companyFolder->folder_name);
-        $companyName = str_replace(' ', '_', $companyFolder->company->name);
 
-        $directory = storage_path(strtolower($companyName) . '/' . strtolower($folderName) . '/' . 'user' . '/' . $user->id . '/' . 'converted_files' . '/' . 'csv');
+        $directory = storage_path('app/public/');
         $csvPath = $directory . '/' . $fileName . '.csv';
 
         // Création du dossier s'il n'existe pas
@@ -152,9 +153,8 @@ class ConvertController extends BaseController
         // Écriture des collections dans le fichier CSV
         $csv->insertAll($data[0]);
 
-        // Retourne le chemin du fichier enregistré
-        return $csvPath;
-        // return str_replace('\\', '/', 'http://evyplus.preprod.inpact.fr/evyplus/back/storage/' . $directory . $fileName . '.csv');
+        $relativePath = str_replace(storage_path('app/public/'), '', $csvPath);
+        return url('storage' . $relativePath);
     }
 
 
@@ -255,13 +255,15 @@ class ConvertController extends BaseController
         if ($unmappedCodes) {
             return $this->errorConvertResponse('Conversion impossible, les rubriques suivantes ne sont pas mappées :', implode(', ', $unmappedCodes));
         }
-        $fileConverted = $this->writeToFile($data, $date, $companyFolder);
+        $fileConvertedPath = $this->writeToFile($data, $date);
         $date = now()->format('d/m/Y à H:i');
+        $directory = storage_path('app/public/');
+        $csvPath = $directory . '/' . $importedFileName;
 
-        $this->setConvertHistory('Conversion', $user, $companyFolderId, 'convert', $date, '', $importedFileName, basename($fileConverted));
+        $relativePath = str_replace(storage_path('app/public/'), '', $csvPath);
+        $this->setConvertHistory('Conversion', $user, $companyFolderId, 'convert', $date, $importedFileName, basename($fileConvertedPath), url('storage' . $relativePath), $fileConvertedPath, '', '');
 
-        return $this->successConvertResponse($mappedRubrics, 'Votre fichier a été converti', $header, $fileConverted);
+        return $this->successConvertResponse($mappedRubrics, 'Votre fichier a été converti', $header, $fileConvertedPath);
     }
-
 
 }

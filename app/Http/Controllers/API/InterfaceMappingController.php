@@ -26,6 +26,14 @@ class InterfaceMappingController extends ConvertController
 
     public function createInterfaceMapping(Request $request){
 
+        match (true) {
+            $request->separator_type == 'Virgule' => $request->separator_type = ',',
+            $request->separator_type == 'Point-virgule' => $request->separator_type = ';',
+            $request->separator_type == 'Tabulation' => $request->separator_type = '\t',
+            default => null,
+        };
+
+
         $validator = Validator::make($request->all(), [
             'employee_number' => 'required|integer',
             'rubric' => 'required|integer',
