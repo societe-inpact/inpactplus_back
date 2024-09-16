@@ -90,16 +90,17 @@ class ConvertController extends BaseController
 
         // Déplacement du fichier dans le répertoire importé
         $file->move($importDirectory, $fileName);
+        $this->handleFile($importPath, $separator_type);
         // Traiter le fichier en fonction de l'extension
-        return match ($extension) {
-            'csv' => $this->handleCsvFile($importPath, $separator_type),
-            'xls' => $this->errorResponse('Le support XLS n\'est pas encore implémenté'),
-            default => $this->errorResponse('Le format de fichier ' . $extension . ' n\'est pas supporté')
-        };
+        //return match ($extension) {
+        //    'csv' => $this->handleFile($importPath, $separator_type),
+        //    'xls' => $this->handleFile($importPath, $separator_type),
+        //    default => $this->errorResponse('Le format de fichier ' . $extension . ' n\'est pas supporté')
+        //};
     }
 
 
-    private function handleCsvFile($csvPath, $delimiter): JsonResponse
+    private function handleFile($csvPath, $delimiter): JsonResponse
     {
         $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15')->outputEncoding('UTF-8');
         $extension = fn(array $row): array => array_map('strtoupper', $row);
