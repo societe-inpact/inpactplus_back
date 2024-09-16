@@ -69,7 +69,7 @@ class ConvertController extends BaseController
 
         // Validation du fichier en fonction de l'extension
         $request->validate([
-            'csv' => 'required|file|mimes:csv,txt',
+            'file' => 'required|file|mimes:csv,txt, xls, xlsx',
         ]);
 
         if (!$request->hasFile('file')) {
