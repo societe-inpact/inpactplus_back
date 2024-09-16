@@ -408,7 +408,7 @@ class MappingController extends Controller
                                 'therapeutic_part_time' => $request->therapeutic_part_time ?? null,
                                 'company_folder_id' => $companyFolder,
                             ]);
-                            $absenceController = new AbsenceController();
+                            $absenceController = new CustomAbsenceController();
                             $absenceController->createCustomAbsence($createNewCustomAbsenceRequest);
                         }
                     }
