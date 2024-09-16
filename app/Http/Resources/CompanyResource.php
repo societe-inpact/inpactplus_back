@@ -19,6 +19,7 @@ class CompanyResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'referent' => new UserResource($this->referent),
+            'notes' => $this->notes,
             'modules' => $this->modules->map(function ($module) {
                 return [
                     'id' => $module->id,
