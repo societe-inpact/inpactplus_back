@@ -280,7 +280,7 @@ class ConvertMEController extends ConvertController
         $formatter = fn(array $row): array => array_map('strtoupper', $row);
 
         $request->validate([
-            'csv' => 'required|file|mimes:csv,txt',
+            'file' => 'required|file|mimes:csv,txt',
         ]);
 
         if ($request->hasFile('file')) {
