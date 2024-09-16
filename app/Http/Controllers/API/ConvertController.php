@@ -90,7 +90,7 @@ class ConvertController extends BaseController
 
         // Déplacement du fichier dans le répertoire importé
         $file->move($importDirectory, $fileName);
-        $this->handleFile($importPath, $separator_type);
+        return $this->handleFile($importPath, $separator_type);
         // Traiter le fichier en fonction de l'extension
         //return match ($extension) {
         //    'csv' => $this->handleFile($importPath, $separator_type),
