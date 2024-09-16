@@ -27,9 +27,9 @@ class InterfaceMappingController extends ConvertController
     public function createInterfaceMapping(Request $request){
 
         match (true) {
-            $request->separator_type == 'Virgule' => $request->separator_type = ',',
-            $request->separator_type == 'Point-virgule' => $request->separator_type = ';',
-            $request->separator_type == 'Tabulation' => $request->separator_type = '\t',
+            $request->separator_type == 'comma' => $request->separator_type = ',',
+            $request->separator_type == 'semicolon' => $request->separator_type = ';',
+            $request->separator_type == 'tab' => $request->separator_type = '\t',
             default => null,
         };
 

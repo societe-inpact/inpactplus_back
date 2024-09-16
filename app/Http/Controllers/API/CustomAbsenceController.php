@@ -28,7 +28,7 @@ class CustomAbsenceController extends Controller
             'code' => ['required', new CustomRubricRule],
             'base_calcul' => 'required|string|max:255',
             'company_folder_id' => 'required|integer',
-            'therapeutic_part_time' => 'nullable|string',
+            'therapeutic_part_time' => 'nullable|numeric',
         ]);
 
         // Nettoyage du champ 'code' avant l'enregistrement
@@ -77,7 +77,7 @@ class CustomAbsenceController extends Controller
             'code' => ['required', new CustomRubricRule],
             'base_calcul' => 'required|string|max:255',
             'company_folder_id' => 'required|integer',
-            'therapeutic_part_time' => 'nullable|string',
+            'therapeutic_part_time' => 'nullable|numeric',
         ]);
 
         // Nettoyage du champ 'code' avant l'enregistrement

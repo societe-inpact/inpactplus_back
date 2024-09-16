@@ -63,7 +63,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
         Route::post("/convert", [ConvertController::class, 'convertFile']);
 
-        Route::post("/mapping/store", [\App\Http\Controllers\API\MappingController::class, 'storeMapping'])
+        Route::post("/mapping/store", [App\Http\Controllers\API\MappingController::class, 'storeMapping'])
             ->middleware('can:create_mapping,App\Models\Mapping\Mapping');
 
         Route::post("/mapping/{id}", [MappingController::class, 'getMapping'])

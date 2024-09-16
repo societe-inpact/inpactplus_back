@@ -277,10 +277,12 @@ class MappingController extends Controller
             'input_rubrique' => 'required|string|max:255',
             'name_rubrique' => 'nullable|string|max:255',
             'output_rubrique_id' => 'nullable|integer',
+            'therapeutic_part_time' => 'nullable|numeric',
             'company_folder_id' => 'required',
             'output_type' => 'nullable|string',
             'is_used' => 'required|boolean',
         ]);
+
         $rubric = new Rubric($rubric);
         $rubric->output_type = $this->resolveOutputModel($rubric->output_type, $rubric->output_rubrique_id);
         return $rubric;
@@ -295,6 +297,7 @@ class MappingController extends Controller
                 $entry['name_rubrique'] = $rubricRequest->name_rubrique;
                 $entry['output_rubrique_id'] = $rubricRequest->output_rubrique_id;
                 $entry['output_type'] = $rubricRequest->output_type;
+                $entry['therapeutic_part_time'] = $rubricRequest->therapeutic_part_time;
                 $entry['is_used'] = $rubricRequest->is_used;
                 $mapping->data = $data;
                 $mapping->save();
@@ -321,6 +324,7 @@ class MappingController extends Controller
                                 "is_used" => $data['is_used'],
                                 "output_type" => $rubricRequest->output_type,
                                 "name_rubrique" => $rubricRequest->name_rubrique,
+                                "therapeutic_part_time" => $rubricRequest->therapeutic_part_time,
                                 "output_rubrique_id" => $existingCustomAbsence->id
                             ];
                             // Mise à jour des données du mapping
@@ -374,6 +378,7 @@ class MappingController extends Controller
             'input_rubrique' => $validatedData->input_rubrique,
             'name_rubrique' => $validatedData->name_rubrique,
             'output_rubrique_id' => $validatedData->output_rubrique_id,
+            'therapeutic_part_time' => $validatedData->therapeutic_part_time,
             'output_type' => $validatedData->output_type,
             'is_used' => $validatedData->is_used,
         ];

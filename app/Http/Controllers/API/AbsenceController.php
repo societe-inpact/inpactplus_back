@@ -69,7 +69,7 @@ class AbsenceController extends Controller
             'label' => 'required|string|max:255',
             'code' => ['required', new CustomRubricRule()],
             'base_calcul' => 'required|string|max:255',
-            'therapeutic_part_time' => 'nullable|string',
+            'therapeutic_part_time' => 'nullable|numeric',
         ]);
 
         // Nettoyage du champ 'code' avant l'enregistrement

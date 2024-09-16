@@ -16,7 +16,7 @@ class Absence extends Model
         "code",
         "label",
         "base_calcul",
-        "therapeutic_part-time"
+        "therapeutic_part_time"
     ];
 
     public function mappings()
