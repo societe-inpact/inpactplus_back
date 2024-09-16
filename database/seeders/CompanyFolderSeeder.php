@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Companies\Company;
 use App\Models\Companies\CompanyFolder;
 use App\Models\Mapping\Mapping;
+use App\Models\Misc\CompanyFolderInterface;
 use App\Models\Misc\User;
 use App\Models\Misc\UserRole;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;

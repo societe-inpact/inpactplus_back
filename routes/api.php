@@ -175,7 +175,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // COMPANIES
     Route::get("/companies", [CompanyController::class, 'getCompanies'])
-        ->middleware('can:read_companies,App\Models\Companies\Company');
+        ->middleware('can:read_company,App\Models\Companies\Company');
 
     Route::post("/company/create", [CompanyController::class, 'createCompany'])
         ->middleware('can:create_company,App\Models\Companies\Company');

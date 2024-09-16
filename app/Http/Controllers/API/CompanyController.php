@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Companies\Company;
+use App\Models\Employees\UserCompanyFolder;
 use App\Services\CheckBeforeDeleteService;
 use App\Traits\JSONResponseTrait;
 use Illuminate\Http\Request;
@@ -23,6 +24,8 @@ class CompanyController extends Controller
     }
 
     public function getCompanies(){
+        $this->authorize('read_company', Company::class);
+
         $companies = Company::with([
             'folders',
             'folders.referent',

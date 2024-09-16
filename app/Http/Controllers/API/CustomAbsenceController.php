@@ -131,6 +131,8 @@ class CustomAbsenceController extends Controller
 
         $controller = new MappingController();
         $controller->deleteOneLineMappingData($deletMapping);
+        // TODO : Delete le mapping lié à la custom absence
+        dd($deletMapping);
 
         // supprime l'absence custom
         $deleteCustomAbsence = CustomAbsence::find($id)->delete();

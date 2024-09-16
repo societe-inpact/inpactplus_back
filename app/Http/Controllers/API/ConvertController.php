@@ -72,11 +72,11 @@ class ConvertController extends BaseController
             'csv' => 'required|file|mimes:csv,txt',
         ]);
 
-        if (!$request->hasFile('csv')) {
+        if (!$request->hasFile('file')) {
             return $this->errorResponse('Veuillez importer un fichier', 400);
         }
 
-        $file = $request->file('csv');
+        $file = $request->file('file');
         $fileName = $file->getClientOriginalName();
 
         // Répertoire pour les fichiers importés
@@ -168,7 +168,7 @@ class ConvertController extends BaseController
 
     public function convertFile(Request $request): JsonResponse
     {
-        $file = $request->file('csv');
+        $file = $request->file('file');
 
         // Récupération des paramètres de la requête
         $folderId = $request->get('company_folder_id');

@@ -33,7 +33,7 @@ class MappingController extends Controller
     {
         $this->authorize('read_mapping', Mapping::class);
 
-        $file = $request->file('csv');
+        $file = $request->file('file');
         $companyFolder = CompanyFolder::with('interfaces')->findOrFail($id);
 
         if (!$companyFolder) {

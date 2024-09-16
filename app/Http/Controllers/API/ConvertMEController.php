@@ -283,8 +283,8 @@ class ConvertMEController extends ConvertController
             'csv' => 'required|file|mimes:csv,txt',
         ]);
 
-        if ($request->hasFile('csv')) {
-            $file = $request->file('csv');
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
             $reader = Reader::createFromPath($file->getPathname(), 'r');
             $reader->addFormatter($encoder);
             $reader->setDelimiter(';');

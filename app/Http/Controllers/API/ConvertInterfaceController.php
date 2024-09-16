@@ -158,9 +158,9 @@ class ConvertInterfaceController extends ConvertController
                     'csv' => 'required|file|mimes:csv,txt',
                 ]);
 
-                if ($request->hasFile('csv'))
+                if ($request->hasFile('file'))
                 {
-                    $file = $request->file('csv');
+                    $file = $request->file('file');
                     $reader = Reader::createFromPath($file->getPathname(), 'r');
                     $reader->addFormatter($encoder);
                     $reader->setDelimiter($type_separateur);
