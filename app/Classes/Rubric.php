@@ -12,6 +12,7 @@ class Rubric
 {
     public $is_used;
     public ?string $output_type;
+    public ?string $therapeutic_part_time;
     public $name_rubrique;
     public $input_rubrique;
     public $output_rubrique_id;
@@ -22,6 +23,7 @@ class Rubric
         $this->is_used = $data['is_used'];
         $this->output_type = $data['output_type'] ?? null;
         $this->name_rubrique = $data['name_rubrique'] ?? null;
+        $this->therapeutic_part_time = $data['therapeutic_part_time'] ?? null;
         $this->input_rubrique = $data['input_rubrique'];
         $this->output_rubrique_id = $data['output_rubrique_id'] ?? null;
         $this->company_folder_id = $data['company_folder_id'] ?? null;
