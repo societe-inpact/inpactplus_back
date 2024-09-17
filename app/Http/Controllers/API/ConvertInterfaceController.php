@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\App;
 use League\Csv\CharsetConverter;
 use League\Csv\Exception;
 use League\Csv\Reader;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 
 class ConvertInterfaceController extends ConvertController
@@ -151,7 +152,6 @@ class ConvertInterfaceController extends ConvertController
         $type_separateur = $columnindex->separator_type;
         $format = strtolower($columnindex->extension);
         $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15')->outputEncoding('utf-8');
-
         switch ($format){
             case "csv":
                 $request->validate([
@@ -175,7 +175,7 @@ class ConvertInterfaceController extends ConvertController
                     'txt' => 'required|file|mimes:txt',
                 ]);
 
-                if ($request->hasFile('txt'))
+                if ($request->hasFile('file'))
                 {
                     $file = $request->file('txt');
                     $reader = Reader::createFromPath($file->getPathname(), 'r');
@@ -192,9 +192,9 @@ class ConvertInterfaceController extends ConvertController
                     'xls' => 'required|file|mimes:xls',
                 ]);
 
-                if ($request->hasFile('xls'))
+                if ($request->hasFile('file'))
                 {
-                    $file = $request->file('xls');
+                    $file = $request->file('file');
                     $reader = Reader::createFromPath($file->getPathname(), 'r');
                     $reader->addFormatter($encoder);
                     $reader->setDelimiter($type_separateur);
@@ -204,21 +204,31 @@ class ConvertInterfaceController extends ConvertController
 
                 }
                 break;
-            case "xlsx":
+            case "xlsx" :
                 $request->validate([
-                    'xlsx' => 'required|file|mimes:xlsx',
+                    'file' => 'required|file|mimes:xlsx',
                 ]);
 
-                if ($request->hasFile('xlsx'))
-                {
-                    $file = $request->file('xlsx');
-                    $reader = Reader::createFromPath($file->getPathname(), 'r');
-                    $reader->addFormatter($encoder);
-                    $reader->setDelimiter($type_separateur);
-                    $reader->setHeaderOffset(null);
-                    $records = iterator_to_array($reader->getRecords(), true);
-                    return $this->convertInter($records, $folderId, $columnindex);
 
+                if ($request->hasFile('file'))
+                {
+                    $file = $request->file('file');
+                    $spreadsheet = IOFactory::load($file); // Charge le fichier
+                    $worksheet = $spreadsheet->getActiveSheet();
+                    $rows = [];
+
+                    foreach ($worksheet->getRowIterator() as $row) {
+                        $cellIterator = $row->getCellIterator();
+                        $cellIterator->setIterateOnlyExistingCells(false); // Inclure les cellules vides
+                        $rowData = [];
+
+                        foreach ($cellIterator as $cell) {
+                            $rowData[] = $cell->getValue(); // Récupère les valeurs des cellules
+                        }
+
+                        $rows[] = $rowData; // Ajoute chaque ligne au tableau
+                    }
+                    return $this->convertInter($rows, $folderId, $columnindex);
                 }
                 break;
         }

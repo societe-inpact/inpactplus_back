@@ -511,7 +511,7 @@ class MappingController extends Controller
             $mappingCompagny->data = $dataBis;
             $mappingCompagny->save();
             $date = now()->format('d/m/Y à H:i');
-            $this->setMappingHistory('Mapping', $user, $companyFolderId, 'mapping', 'le ' . $date, 'Suppression', $input_rubrique, $nameRubrique, $output_rubrique_id->getSilaeRubric()->code, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' a supprimé une ligne de mapping d\'un fichier');
+            $this->setMappingHistory('Mapping', $user, $companyFolderId, 'mapping', 'le ' . $date, 'Suppression', $inputRubric, $nameRubric, $outputRubricId->getSilaeRubric()->code, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' a supprimé une ligne de mapping d\'un fichier');
             return $this->successResponse('', 'Ligne de mapping supprimée du dossier avec succès');
         } else {
             return $this->successResponse('', 'Ligne de mapping non modifiée');
