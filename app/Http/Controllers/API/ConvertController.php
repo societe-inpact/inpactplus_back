@@ -18,6 +18,7 @@ use League\Csv\CharsetConverter;
 use League\Csv\Exception;
 use League\Csv\Reader;
 use League\Csv\Writer;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use function Symfony\Component\String\s;
 
 class ConvertController extends BaseController
@@ -80,7 +81,7 @@ class ConvertController extends BaseController
         $fileName = $file->getClientOriginalName();
 
         // Répertoire pour les fichiers importés
-        $importDirectory = storage_path('app/public/');
+        $importDirectory = storage_path('app/public');
         $importPath = $importDirectory . '/' . $fileName;
 
         // Création du dossier s'il n'existe pas
@@ -90,14 +91,34 @@ class ConvertController extends BaseController
 
         // Déplacement du fichier dans le répertoire importé
         $file->move($importDirectory, $fileName);
-        return $this->handleFile($importPath, $separator_type);
-        // Traiter le fichier en fonction de l'extension
-        //return match ($extension) {
-        //    'csv' => $this->handleFile($importPath, $separator_type),
-        //    'xls' => $this->handleFile($importPath, $separator_type),
-        //    default => $this->errorResponse('Le format de fichier ' . $extension . ' n\'est pas supporté')
-        //};
+        return match ($extension) {
+            'csv' => $this->handleFile($importPath, $separator_type),
+            'xlsx' => $this->importExcel($importPath),
+            default => $this->errorResponse('Le format de fichier ' . $extension . ' n\'est pas supporté')
+        };
     }
+
+    public function importExcel($file)
+    {
+        $spreadsheet = IOFactory::load($file); // Charge le fichier
+        $worksheet = $spreadsheet->getActiveSheet();
+        $rows = [];
+
+        foreach ($worksheet->getRowIterator() as $row) {
+            $cellIterator = $row->getCellIterator();
+            $cellIterator->setIterateOnlyExistingCells(false); // Inclure les cellules vides
+            $rowData = [];
+
+            foreach ($cellIterator as $cell) {
+                $rowData[] = $cell->getValue(); // Récupère les valeurs des cellules
+            }
+
+            $rows[] = $rowData; // Ajoute chaque ligne au tableau
+        }
+        return $this->successImportedFileResponse($file, $rows, 'Votre fichier a bien été importé');
+
+    }
+
 
 
     private function handleFile($csvPath, $delimiter): JsonResponse
