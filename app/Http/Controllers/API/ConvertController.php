@@ -116,7 +116,6 @@ class ConvertController extends BaseController
             $rows[] = $rowData; // Ajoute chaque ligne au tableau
         }
         return $this->successImportedFileResponse($file, $rows, 'Votre fichier a bien été importé');
-
     }
 
 

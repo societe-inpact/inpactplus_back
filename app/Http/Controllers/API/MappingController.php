@@ -77,8 +77,21 @@ class MappingController extends Controller
             $reader = $this->prepareCsvReader($file->getPathname(), $separatorType);
             $records = iterator_to_array($reader->getRecords(), true);
 
+            $fileExtension = strtolower($file->getClientOriginalExtension());
+            if ($fileExtension === 'csv') {
+                $reader = $this->prepareCsvReader($file->getPathname(), $separatorType);
+                $records = iterator_to_array($reader->getRecords(), true);
+            } elseif ($fileExtension === 'xlsx') {
+                // Utilisation de PhpSpreadsheet pour les fichiers XLSX
+                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getPathname());
+                $worksheet = $spreadsheet->getActiveSheet();
+                $records = $worksheet->toArray();
+            } else {
+                return $this->errorResponse('Format de fichier non supporté');
+            }
+
             $companyFolderId = $companyFolder->id;
-            $results = $this->processCsvRecords($records, $companyFolderId, $indexRubrique, $colonneMatricule);
+            $results = $this->processFileRecords($records, $companyFolderId, $indexRubrique, $colonneMatricule);
 
             return $this->successResponse($results);
         } else {
@@ -100,7 +113,7 @@ class MappingController extends Controller
 
 
     // Fonction permettant de récupérer les mappings existants d'un dossier
-    protected function processCsvRecords($records, $companyFolderId, $indexRubrique, $colonneMatricule)
+    protected function processFileRecords($records, $companyFolderId, $indexRubrique, $colonneMatricule)
     {
         $processedRecords = collect();
         $unmatchedRubriques = [];
