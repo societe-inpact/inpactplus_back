@@ -214,8 +214,11 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
 
         // CREATE-AND-UPDATE NOTES FROM FOLDER
-        Route::post('company_folder/notes/create', [\App\Http\Controllers\API\NoteController::class, 'createUpdateDeleteNote'])
+        Route::post('company_folder/notes/create', [\App\Http\Controllers\API\NoteController::class, 'createUpdateDeleteNoteToCompanyFolder'])
             ->middleware('can:create_note_company_folder,App\Models\Companies\CompanyFolder');
+
+        Route::post('company/notes/create', [\App\Http\Controllers\API\NoteController::class, 'createUpdateDeleteNoteToCompany'])
+            ->middleware('can:create_note_company,App\Models\Companies\Company');
     });
 
 

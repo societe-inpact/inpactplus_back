@@ -93,7 +93,7 @@ class ConvertController extends BaseController
         $file->move($importDirectory, $fileName);
         return match ($extension) {
             'csv' => $this->handleFile($importPath, $separator_type),
-            'xlsx' => $this->importExcel($importPath),
+            'xlsx', 'xls' => $this->importExcel($importPath),
             default => $this->errorResponse('Le format de fichier ' . $extension . ' n\'est pas supporté')
         };
     }

@@ -66,4 +66,15 @@ class CompanyPolicy
         }
         return true;
     }
+
+    /**
+     * @throws CustomUnauthorizedException
+     */
+    public function create_note_company(User $user)
+    {
+        if (!$user->hasPermission('create') && !$user->hasPermission('crud') && !$user->hasRole(['inpact'])) {
+            throw new CustomUnauthorizedException();
+        }
+        return true;
+    }
 }
