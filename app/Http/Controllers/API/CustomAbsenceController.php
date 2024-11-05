@@ -122,17 +122,17 @@ class CustomAbsenceController extends Controller
         $companyFolderId = $companyFolder->company_folder_id;
         $nameRubrique = "Absence personnalisée";
 
-        $deletMapping = new Request([
-            "companyFolderId" => $companyFolderId,
-            "output_rubrique_id" => $id,
-            "nameRubrique" => $nameRubrique,
-            "input_rubrique" => ""
+        $deleteMapping = new Request([
+            "company_folder_id" => $companyFolderId,
+            "output_rubric_id" => $id,
+            "name_rubric" => $nameRubrique,
+            "input_rubric" => ""
         ]);
 
         $controller = new MappingController();
-        $controller->deleteOneLineMappingData($deletMapping);
+        $controller->deleteOneLineMappingData($deleteMapping);
         // TODO : Delete le mapping lié à la custom absence
-        dd($deletMapping);
+        dd($deleteMapping);
 
         // supprime l'absence custom
         $deleteCustomAbsence = CustomAbsence::find($id)->delete();

@@ -37,7 +37,12 @@ class HistoryController extends Controller
     public function getHistoryUserConversions()
     {
         $user = Auth::user();
-        $historyUserConversions = Activity::where('causer_id', $user->id)->where('event', 'convert')->get();
+        $historyUserConversions = Activity::where('causer_id', $user->id)
+        ->where('event', 'convert')
+        ->get()
+        ->map(function($activity) {
+            return json_decode($activity->properties, true);
+        });
 
         if ($historyUserConversions) {
             return $this->successResponse($historyUserConversions);
@@ -49,7 +54,12 @@ class HistoryController extends Controller
     public function getHistoryUserMappings()
     {
         $user = Auth::user();
-        $historyUserMappings = Activity::where('causer_id', $user->id)->where('event', 'mapping')->get();
+        $historyUserMappings = Activity::where('causer_id', $user->id)
+        ->where('event', 'mapping')
+        ->get()
+        ->map(function($activity) {
+            return json_decode($activity->properties, true);
+        });
 
         if ($historyUserMappings) {
             return $this->successResponse($historyUserMappings);

@@ -287,9 +287,9 @@ class MappingController extends Controller
     protected function validateMappingData(Request $request)
     {
         $rubric = $request->validate([
-            'input_rubrique' => 'required|string|max:255',
-            'name_rubrique' => 'nullable|string|max:255',
-            'output_rubrique_id' => 'nullable|integer',
+            'input_rubric' => 'required|string|max:255',
+            'name_rubric' => 'nullable|string|max:255',
+            'output_rubric_id' => 'nullable|integer',
             'therapeutic_part_time' => 'nullable|numeric',
             'company_folder_id' => 'required',
             'output_type' => 'nullable|string',
@@ -297,7 +297,7 @@ class MappingController extends Controller
         ]);
 
         $rubric = new Rubric($rubric);
-        $rubric->output_type = $this->resolveOutputModel($rubric->output_type, $rubric->output_rubrique_id);
+        $rubric->output_type = $this->resolveOutputModel($rubric->output_type, $rubric->output_rubric_id);
         return $rubric;
     }
 
@@ -308,7 +308,7 @@ class MappingController extends Controller
         foreach ($data as &$entry) {
             if ($entry['input_rubrique'] === $rubricRequest->input_rubrique) {
                 $entry['name_rubrique'] = $rubricRequest->name_rubrique;
-                $entry['output_rubrique_id'] = $rubricRequest->output_rubrique_id;
+                $entry['output_rubric_id'] = $rubricRequest->output_rubric_id;
                 $entry['output_type'] = $rubricRequest->output_type;
                 $entry['therapeutic_part_time'] = $rubricRequest->therapeutic_part_time;
                 $entry['is_used'] = $rubricRequest->is_used;
@@ -326,19 +326,19 @@ class MappingController extends Controller
         $mapping = Mapping::where('company_folder_id', $companyFolderId)->first();
         $mappingData = $mapping->data;
         if (str_contains($rubricRequest->output_type, 'CustomAbsence')) {
-            $existingCustomAbsence = CustomAbsence::find($rubricRequest->output_rubrique_id);
+            $existingCustomAbsence = CustomAbsence::find($rubricRequest->output_rubric_id);
             if ($existingCustomAbsence) {
                 $existingAbsence = Absence::where('code', $existingCustomAbsence->code)->first();
                 if ($existingAbsence) {
                     foreach ($mappingData as $key => $data) {
-                        if ($data['name_rubrique'] === 'Absence' && $data['output_rubrique_id'] === $existingAbsence->id) {
+                        if ($data['name_rubrique'] === 'Absence' && $data['output_rubric_id'] === $existingAbsence->id) {
                             $mappingData[$key] = [
                                 "input_rubrique" => $data['input_rubrique'],
                                 "is_used" => $data['is_used'],
                                 "output_type" => $rubricRequest->output_type,
                                 "name_rubrique" => $rubricRequest->name_rubrique,
                                 "therapeutic_part_time" => $rubricRequest->therapeutic_part_time,
-                                "output_rubrique_id" => $existingCustomAbsence->id
+                                "output_rubric_id" => $existingCustomAbsence->id
                             ];
                             // Mise à jour des données du mapping
                             $mapping->data = $mappingData;
@@ -357,40 +357,69 @@ class MappingController extends Controller
     public function storeMapping(Request $request)
     {
         $this->authorize('create_mapping', Mapping::class);
-
+        
         $user = Auth::user();
         $validatedRequestData = $this->validateMappingData($request);
         $companyFolderId = $validatedRequestData->company_folder_id;
         $mappedRubriques = Mapping::where('company_folder_id', $companyFolderId)->get();
         $validatedRequestData = $this->checkExistingAbsence($validatedRequestData, $companyFolderId);
+        
         foreach ($mappedRubriques as $mappedRubrique) {
             $allMappedRubriques = $mappedRubrique->data;
             foreach ($allMappedRubriques as $inputMappedRubrique) {
                 $isUsed = filter_var($validatedRequestData->is_used, FILTER_VALIDATE_BOOLEAN) || filter_var($inputMappedRubrique['is_used'], FILTER_VALIDATE_BOOLEAN);
-                if ($inputMappedRubrique['input_rubrique'] === $validatedRequestData->input_rubrique) {
+                if ($inputMappedRubrique['input_rubric'] === $validatedRequestData->input_rubric) {
                     if ($isUsed === false) {
-                        return $this->errorResponse('La rubrique d\'entrée ' . $validatedRequestData->input_rubrique . ' n\'est pas utilisée', 409);
+                        return $this->errorResponse('La rubrique d\'entrée ' . $validatedRequestData->input_rubric . ' n\'est pas utilisée', 409);
                     } else {
-                        return $this->errorResponse('La rubrique d\'entrée ' . $validatedRequestData->input_rubrique . ' est déjà associée à la rubrique ' . $validatedRequestData->getSilaeRubric()->code, 409);
+                        $silaeCode = $validatedRequestData->getSilaeRubric() ? $validatedRequestData->getSilaeRubric()->code : 'non défini';
+                        return $this->errorResponse('La rubrique d\'entrée ' . $validatedRequestData->input_rubric . ' est déjà associée à la rubrique ' . $silaeCode, 409);
                     }
                 }
             }
         }
 
-        $this->saveMappingData($companyFolderId, $validatedRequestData);
+        $savedMapping = $this->saveMappingData($companyFolderId, $validatedRequestData);
         $date = now()->format('d/m/Y à H:i');
-        $this->setMappingHistory('Mapping', $user, $companyFolderId, 'mapping', 'le ' . $date, 'Création', $validatedRequestData->input_rubrique, $this->translateOutputModel($validatedRequestData->output_type), $validatedRequestData->is_used ? $validatedRequestData->getSilaeRubric()->code : null, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' a créé un mapping d\'un fichier',);
+        
+        $silaeCode = null;
+        if ($validatedRequestData->is_used && method_exists($validatedRequestData, 'getSilaeRubric')) {
+            $silaeRubric = $validatedRequestData->getSilaeRubric();
+            $silaeCode = $silaeRubric ? $silaeRubric->code : null;
+        }
+        
+        $this->setMappingHistory(
+            'Mapping', 
+            $user, 
+            $companyFolderId, 
+            'mapping', 
+            'le ' . $date, 
+            'Création', 
+            $validatedRequestData->input_rubric, 
+            $this->translateOutputModel($validatedRequestData->output_type), 
+            $silaeCode,
+            'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' a créé un mapping d\'un fichier'
+        );
 
-        return $this->successResponse('', 'Mapping ajouté avec succès', 201);
+        // Retourner une réponse plus détaillée
+        return $this->successResponse(
+            [
+                'mapping' => $savedMapping,
+                'company_folder_id' => $companyFolderId,
+                'created_at' => $date
+            ],
+            'Le mapping a été créé avec succès',
+            201
+        );
     }
 
     // Fonction permettant d'enregistrer un nouveau mapping en BDD
     protected function saveMappingData($companyFolder, $validatedData, ?Request $request = null)
     {
         $newMapping = [
-            'input_rubrique' => $validatedData->input_rubrique,
-            'name_rubrique' => $validatedData->name_rubrique,
-            'output_rubrique_id' => $validatedData->output_rubrique_id,
+            'input_rubric' => $validatedData->input_rubric,
+            'name_rubric' => $validatedData->name_rubric,
+            'output_rubric_id' => $validatedData->output_rubric_id,
             'therapeutic_part_time' => $validatedData->therapeutic_part_time,
             'output_type' => $validatedData->output_type,
             'is_used' => $validatedData->is_used,
@@ -401,7 +430,7 @@ class MappingController extends Controller
             switch ($this->translateOutputModel($validatedData->output_type)) {
                 case 'CustomHour' :
                 {
-                    $existingCustomHour = CustomHour::all()->where('id', '=', $validatedData->output_rubrique_id);
+                    $existingCustomHour = CustomHour::all()->where('id', '=', $validatedData->output_rubric_id);
                     if ($existingCustomHour->isEmpty()) {
                         if ($request) {
                             $createNewCustomHourRequest = new Request([
@@ -416,7 +445,7 @@ class MappingController extends Controller
                 }
                 case 'CustomAbsence' :
                 {
-                    $existingCustomAbsence = CustomAbsence::all()->where('id', '=', $validatedData->output_rubrique_id);
+                    $existingCustomAbsence = CustomAbsence::all()->where('id', '=', $validatedData->output_rubric_id);
                     if ($existingCustomAbsence->isEmpty()) {
                         if ($request) {
                             $createNewCustomAbsenceRequest = new Request([
@@ -469,7 +498,7 @@ class MappingController extends Controller
             'input_rubric' => '',
             'output_type' => ''
         ]);
-
+        
         if ($validator->fails()) {
             return $this->errorResponse($validator->errors(), 422);
         }
@@ -487,10 +516,10 @@ class MappingController extends Controller
 
         // permet d'enregister les modifications
         foreach ($data as $entry) {
-            // si c'est une valeur ne pas utiliser, il faut modifier le 'name_rubrique'
-            if (!$entry['name_rubric']) {
+            // si c'est une valeur ne pas utiliser, il faut modifier le 'name_rubric'
+            if (!isset($entry['name_rubric'])) {
                 $entry['is_used'] = false;
-                $entry['output_rubrique_id'] = 0;
+                $entry['output_rubric_id'] = 0;
             }
             if ((string)$entry['output_rubric_id'] === (string)$outputRubricId && $entry['name_rubric'] === $nameRubric) {
                 if ($inputRubric) {

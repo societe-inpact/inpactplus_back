@@ -123,15 +123,15 @@ class CustomHourController extends Controller
         $companyFolderId = $companyFolder->company_folder_id;
         $nameRubrique = "Heure personnalisée";
 
-        $deletMapping =new Request([
-            "companyFolderId" => $companyFolderId,
-            "output_rubrique_id" => $id,
-            "nameRubrique" => $nameRubrique,
-            "input_rubrique" => ""
+        $deleteMapping = new Request([
+            "company_folder_id" => $companyFolderId,
+            "output_rubric_id" => $id,
+            "name_rubric" => $nameRubrique,
+            "input_rubric" => ""
         ]);
 
         $controller = new MappingController();
-        $controller->deleteOneLineMappingData($deletMapping);
+        $controller->deleteOneLineMappingData($deleteMapping);
 
         // supprime la customhour
         $deleteCustomHour = CustomHour::find($id)->delete();

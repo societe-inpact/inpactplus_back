@@ -32,7 +32,6 @@ class ConvertController extends BaseController
         return $controller->getInterfaceMapping($nominterface);
     }
 
-
     public function importFile(Request $request): JsonResponse
     {
         $user = Auth::user();
@@ -118,8 +117,6 @@ class ConvertController extends BaseController
         return $this->successImportedFileResponse($file, $rows, 'Votre fichier a bien été importé');
     }
 
-
-
     private function handleFile($csvPath, $delimiter): JsonResponse
     {
         $encoder = (new CharsetConverter())->inputEncoding('iso-8859-15')->outputEncoding('UTF-8');
@@ -142,8 +139,6 @@ class ConvertController extends BaseController
 
         return $this->errorResponse('Aucun enregistrement trouvé dans le fichier', 400);
     }
-
-
 
     /**
      * Écrit les collections dans un fichier CSV.
@@ -177,8 +172,7 @@ class ConvertController extends BaseController
         $relativePath = str_replace(storage_path('app/public/'), '', $csvPath);
         return url('storage' . $relativePath);
     }
-
-
+    
     /**
      * Convertit un fichier CSV.
      *
