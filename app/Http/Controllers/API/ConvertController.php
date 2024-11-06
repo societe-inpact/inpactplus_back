@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
 use App\Models\Mapping\Mapping;
 use App\Traits\HistoryResponseTrait;
 use App\Traits\JSONResponseTrait;
@@ -19,7 +18,6 @@ use League\Csv\Exception;
 use League\Csv\Reader;
 use League\Csv\Writer;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use function Symfony\Component\String\s;
 
 class ConvertController extends BaseController
 {
@@ -146,7 +144,7 @@ class ConvertController extends BaseController
      * @param array $data Collections converties
      *
      * @throws Exception
-     * @throws RuntimeException
+     * @throws \RuntimeException
      */
     private function writeToFile(array $data, $date)
     {
@@ -242,33 +240,33 @@ class ConvertController extends BaseController
         $mappedRubrics = $data[0];
         $unmappedRubric = $data[1];
 
-        // Convertir les rubriques non mappées en une collection Laravel
+        // Convertir les rubrics non mappées en une collection Laravel
         $unmappedCollection = collect($unmappedRubric);
 
-        // Récupérer les rubriques mappées pour le dossier spécifique
+        // Récupérer les rubrics mappées pour le dossier spécifique
         $mappingRecords = Mapping::where('company_folder_id', $companyFolderId)
             ->get()
             ->pluck('data')
             ->flatten(1);
 
-        // Convertir les rubriques mappées en une collection Laravel
+        // Convertir les rubrics mappées en une collection Laravel
         $mappingCollection = collect($mappingRecords);
 
-        // Extraire les codes des rubriques mappées
-        $mappedCodes = $mappingCollection->pluck('input_rubrique')->all();
+        // Extraire les codes des rubrics mappées
+        $mappedCodes = $mappingCollection->pluck('input_rubric')->all();
 
-        // Trouver toutes les rubriques non mappées en évitant les doublons
+        // Trouver toutes les rubrics non mappées en évitant les doublons
         $allUnmappedRubrics = $unmappedCollection->filter(function ($item) use ($mappedCodes) {
             return !in_array($item['Code'], $mappedCodes);
         })->unique('Code');
 
-        // Extraire uniquement les codes des rubriques non mappées
+        // Extraire uniquement les codes des rubrics non mappées
         $unmappedCodes = $allUnmappedRubrics->pluck('Code')->all();
 
         $header = ['Matricule', 'Code', 'Valeur', 'Date debut', 'Date fin'];
 
         if ($unmappedCodes) {
-            return $this->errorConvertResponse('Conversion impossible, les rubriques suivantes ne sont pas mappées :', implode(', ', $unmappedCodes));
+            return $this->errorConvertResponse('Conversion impossible, les rubrics suivantes ne sont pas mappées :', implode(', ', $unmappedCodes));
         }
         $fileConvertedPath = $this->writeToFile($data, $date);
         $date = now()->format('d/m/Y à H:i');

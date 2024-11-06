@@ -71,9 +71,9 @@ class CustomHourController extends Controller
                 return $this->successResponse($customHour, 'Heure personnalisée créée avec succès', 201);
             }
         }else{
-            return $this->errorResponse('Le code rubrique doit commencer par HS-');
+            return $this->errorResponse('Le code rubric doit commencer par HS-');
         }
-        return $this->errorResponse('Impossible de créer la rubrique personnalisée', 500);
+        return $this->errorResponse('Impossible de créer la rubric personnalisée', 500);
     }
 
     public function updateCustomHour(Request $request, $id)
@@ -111,9 +111,9 @@ class CustomHourController extends Controller
                 return $this->successResponse('', 'Heure personnalisée mise à jour avec succès');
             }
         }else{
-            return $this->errorResponse('Le code rubrique doit commencer par HS-');
+            return $this->errorResponse('Le code rubric doit commencer par HS-');
         }
-        return $this->errorResponse('Impossible de modifier la rubrique personnalisée', 500);
+        return $this->errorResponse('Impossible de modifier la rubric personnalisée', 500);
     }
 
     public function deleteCustomHour($id)
@@ -121,12 +121,12 @@ class CustomHourController extends Controller
         // permet de supprimer dans la mapping la custom hour supprimée
         $companyFolder = CustomHour::where('id', $id)->first();
         $companyFolderId = $companyFolder->company_folder_id;
-        $nameRubrique = "Heure personnalisée";
+        $nameRubric = "Heure personnalisée";
 
         $deleteMapping = new Request([
             "company_folder_id" => $companyFolderId,
             "output_rubric_id" => $id,
-            "name_rubric" => $nameRubrique,
+            "type_rubric" => $nameRubric,
             "input_rubric" => ""
         ]);
 

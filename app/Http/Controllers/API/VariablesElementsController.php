@@ -58,7 +58,7 @@ class VariablesElementsController extends Controller
         }
 
 
-        // Création de l'élément variable si le code rubrique commence par EV-
+        // Création de l'élément variable si le code rubric commence par EV-
         if (str_starts_with($validated['code'], 'EV-')) {
             $variableElement = VariableElement::create([
                 'label' => $validated['label'],
@@ -69,9 +69,9 @@ class VariablesElementsController extends Controller
                 return $this->successResponse($variableElement, 'Élément variable créé avec succès', 201);
             }
         } else {
-            return $this->errorResponse('Le code rubrique doit commencer par EV-');
+            return $this->errorResponse('Le code rubric doit commencer par EV-');
         }
-        return $this->errorResponse('Impossible de créer la rubrique personnalisée', 500);
+        return $this->errorResponse('Impossible de créer la rubric personnalisée', 500);
     }
 
     public function updateVariableElement(Request $request, $id)
@@ -97,7 +97,7 @@ class VariablesElementsController extends Controller
         }
 
 
-        // Création de l'élément variable si le code rubrique commence par EV-
+        // Création de l'élément variable si le code rubric commence par EV-
         if (str_starts_with($validated['code'], 'EV-')) {
 
             $variableElement = VariableElement::where('id', $id)->update([
@@ -108,9 +108,9 @@ class VariablesElementsController extends Controller
                 return $this->successResponse($variableElement, 'L\'élément variable a été mis à jour avec succès');
             }
         } else {
-            return $this->errorResponse('Le code rubrique doit commencer par EV-');
+            return $this->errorResponse('Le code rubric doit commencer par EV-');
         }
-        return $this->errorResponse('Impossible de modifier la rubrique personnalisée', 500);
+        return $this->errorResponse('Impossible de modifier la rubric personnalisée', 500);
     }
 
     public function deleteVariableElement($id)
@@ -118,13 +118,13 @@ class VariablesElementsController extends Controller
         // permet de supprimer dans la mapping la custom hour supprimée
         $companyFolder = VariableElement::where('id', $id)->first();
         $companyFolderId = $companyFolder->company_folder_id;
-        $nameRubrique = "Élément variable";
+        $nameRubric = "Élément variable";
 
         $deletMapping = new Request([
             "companyFolderId" => $companyFolderId,
-            "output_rubrique_id" => $id,
-            "nameRubrique" => $nameRubrique,
-            "input_rubrique" => ""
+            "output_rubric_id" => $id,
+            "nameRubric" => $nameRubric,
+            "input_rubric" => ""
         ]);
 
         $controller = new MappingController();

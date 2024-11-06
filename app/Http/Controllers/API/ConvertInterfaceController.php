@@ -36,29 +36,29 @@ class ConvertInterfaceController extends ConvertController
     }
 
     /**
-     * Retourne le code Silae correspondant à une rubrique donnée.
+     * Retourne le code Silae correspondant à une rubric donnée.
      *
-     * @param string $rubrique Rubrique à convertir
+     * @param string $rubric Rubric à convertir
      * @return string|null Code Silae correspondant
      */
 
-    protected function resolveOutputModel($outputType, $outputRubriqueId)
+    protected function resolveOutputModel($outputType, $outputRubricId)
     {
         if (!class_exists($outputType)) {
             return null;
         }
 
         $outputModelClass = App::make($outputType);
-        return $outputModelClass->find($outputRubriqueId);
+        return $outputModelClass->find($outputRubricId);
     }
 
-    private function getSilaeCode(string $rubrique, $folderId)
+    private function getSilaeCode(string $rubric, $folderId)
     {
         $mappings = $this->getMappingsFolder($folderId);
         foreach ($mappings as $mapping){
             foreach ($mapping->data as $mappedRow){
-                $output = $this->resolveOutputModel($mappedRow['output_type'], $mappedRow['output_rubrique_id']);
-                if ($mappedRow['input_rubrique'] === $rubrique){
+                $output = $this->resolveOutputModel($mappedRow['output_type'], $mappedRow['output_rubric_id']);
+                if ($mappedRow['input_rubric'] === $rubric){
                     return $output;
                 }
             }
@@ -108,7 +108,7 @@ class ConvertInterfaceController extends ConvertController
 
             // création de la table data et non mappée
 
-            if ($codeSilae){
+            if ($codeSilae && is_object($codeSilae)){
                 $data[] = [
                     'Matricule' => $matricule,
                     'Code' => $codeSilae->code,

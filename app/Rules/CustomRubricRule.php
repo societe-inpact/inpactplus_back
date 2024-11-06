@@ -9,7 +9,7 @@ use Illuminate\Translation\PotentiallyTranslatedString;
 class CustomRubricRule implements ValidationRule
 {
     /**
-     * Règle de contrôle qui s'assure qu'il n'y a pas d'espace dans la chaîne de caractère du code rubrique.
+     * Règle de contrôle qui s'assure qu'il n'y a pas d'espace dans la chaîne de caractère du code rubric.
      * Exemple : EV - Nom => EV-Nom
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void

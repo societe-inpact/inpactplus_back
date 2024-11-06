@@ -7,20 +7,18 @@ use App\Http\Controllers\Controller;
 use App\Models\Absences\Absence;
 use App\Models\Absences\CustomAbsence;
 use App\Models\Hours\CustomHour;
-use App\Models\Hours\Hour;
 use App\Models\Mapping\Mapping;
 use App\Models\Companies\CompanyFolder;
 use App\Models\Misc\InterfaceMapping;
 use App\Models\Misc\InterfaceSoftware;
 use App\Traits\HistoryResponseTrait;
 use App\Traits\JSONResponseTrait;
-use http\Client\Curl\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use League\Csv\CharsetConverter;
 use League\Csv\Reader;
 use Illuminate\Support\Facades\Validator;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class MappingController extends Controller
 {
@@ -52,7 +50,7 @@ class MappingController extends Controller
                 $columnIndex = InterfaceMapping::findOrFail($idInterfaceMapping);
                 $separatorType = $columnIndex->separator_type;
                 $extension = strtolower($columnIndex->extension);
-                $indexRubrique = $columnIndex->rubric - 1;
+                $indexRubric = $columnIndex->rubric - 1;
                 $colonneMatricule = $columnIndex->employee_number - 1;
 
             } else {
@@ -64,7 +62,7 @@ class MappingController extends Controller
                         $columnIndex = $convertMEController->formatFilesMarathon();
                         $separatorType = $columnIndex["separator_type"];
                         $extension = $columnIndex["extension"];
-                        $indexRubrique = $columnIndex["index_rubrique"];
+                        $indexRubric = $columnIndex["index_rubric"];
                         $colonneMatricule = 0;
                         break;
                     case "rhis":
@@ -83,7 +81,7 @@ class MappingController extends Controller
                 $records = iterator_to_array($reader->getRecords(), true);
             } elseif ($fileExtension === 'xlsx') {
                 // Utilisation de PhpSpreadsheet pour les fichiers XLSX
-                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getPathname());
+                $spreadsheet = IOFactory::load($file->getPathname());
                 $worksheet = $spreadsheet->getActiveSheet();
                 $records = $worksheet->toArray();
             } else {
@@ -91,7 +89,7 @@ class MappingController extends Controller
             }
 
             $companyFolderId = $companyFolder->id;
-            $results = $this->processFileRecords($records, $companyFolderId, $indexRubrique, $colonneMatricule);
+            $results = $this->processFileRecords($records, $companyFolderId, $indexRubric, $colonneMatricule);
 
             return $this->successResponse($results);
         } else {
@@ -113,10 +111,10 @@ class MappingController extends Controller
 
 
     // Fonction permettant de récupérer les mappings existants d'un dossier
-    protected function processFileRecords($records, $companyFolderId, $indexRubrique, $colonneMatricule)
+    protected function processFileRecords($records, $companyFolderId, $indexRubric, $colonneMatricule)
     {
         $processedRecords = collect();
-        $unmatchedRubriques = [];
+        $unmatchedRubrics = [];
         $results = [];
 
         $containsDigit = ctype_digit($records[0][$colonneMatricule]);
@@ -127,22 +125,22 @@ class MappingController extends Controller
         foreach ($records as $record) {
 
             // colonne à ne pas prendre en compte
-            if (!isset($record[$indexRubrique])) {
+            if (!isset($record[$indexRubric])) {
                 continue;
             }
 
-            $inputRubrique = $record[$indexRubrique];
+            $inputRubric = $record[$indexRubric];
 
-            if ($inputRubrique && !$processedRecords->contains($inputRubrique)) {
-                $processedRecords->push($inputRubrique);
-                $mappingResult = $this->findMapping($inputRubrique, $companyFolderId);
+            if ($inputRubric && !$processedRecords->contains($inputRubric)) {
+                $processedRecords->push($inputRubric);
+                $mappingResult = $this->findMapping($inputRubric, $companyFolderId);
                 if ($mappingResult) {
                     $results[] = $mappingResult;
                 } else {
-                    $unmatchedRubriques[] = [
-                        'input_rubrique' => $inputRubrique,
-                        'type_rubrique' => null,
-                        'output_rubrique' => null,
+                    $unmatchedRubrics[] = [
+                        'input_rubric' => $inputRubric,
+                        'type_rubric' => null,
+                        'output_rubric' => null,
                         'base_calcul' => null,
                         'label' => null,
                         'therapeutic_part_time' => null,
@@ -153,21 +151,21 @@ class MappingController extends Controller
                 }
             }
         }
-        return array_merge($results, $unmatchedRubriques);
+        return array_merge($results, $unmatchedRubrics);
     }
 
-    // Fonction permettant de récupérer une rubrique d'entrée
-    protected function findInputRubrique($rubrique, $regex)
+    // Fonction permettant de récupérer une rubric d'entrée
+    protected function findInputRubric($rubric, $regex)
     {
-        // Vérification si la rubrique correspond au regex
-        if (preg_match($regex, $rubrique)) {
-            return $rubrique;
+        // Vérification si la rubric correspond au regex
+        if (preg_match($regex, $rubric)) {
+            return $rubric;
         }
         return null;
     }
 
     // Fonction permettant de récupérer les mappings existants d'un dossier
-    protected function findMapping($inputRubrique, $companyFolder)
+    protected function findMapping($inputRubric, $companyFolder)
     {
         $mappings = Mapping::with('folder')
             ->where('company_folder_id', $companyFolder)
@@ -176,12 +174,12 @@ class MappingController extends Controller
         foreach ($mappings as $mapping) {
             foreach ($mapping->data as $data) {
                 $data = new Rubric($data);
-                if ($data->input_rubrique === $inputRubrique) {
+                if ($data->input_rubric === $inputRubric) {
                     if ($data->output_type) {
                         return [
-                            'input_rubrique' => $data->input_rubrique,
-                            'type_rubrique' => $this->translateOutputModel($data->output_type),
-                            'output_rubrique' => $data->getSilaeRubric()->code,
+                            'input_rubric' => $data->input_rubric,
+                            'type_rubric' => $this->translateOutputModel($data->output_type),
+                            'output_rubric' => $data->getSilaeRubric()->code,
                             'base_calcul' => $data->getSilaeRubric()->base_calcul,
                             'label' => $data->getSilaeRubric()->label,
                             'therapeutic_part_time' => $data->therapeutic_part_time,
@@ -191,9 +189,9 @@ class MappingController extends Controller
                         ];
                     } else {
                         return [
-                            'input_rubrique' => $data->input_rubrique,
-                            'type_rubrique' => $this->translateOutputModel($data->output_type),
-                            'output_rubrique' => '',
+                            'input_rubric' => $data->input_rubric,
+                            'type_rubric' => $this->translateOutputModel($data->output_type),
+                            'output_rubric' => '',
                             'base_calcul' => '',
                             'label' => '',
                             'is_used' => $data->is_used,
@@ -207,8 +205,8 @@ class MappingController extends Controller
         return null;
     }
 
-    // Fonction permettant de récupérer le Model d'une rubrique
-    public function resolveOutputModel($outputType, $outputRubriqueId = null)
+    // Fonction permettant de récupérer le Model d'une rubric
+    public function resolveOutputModel($outputType, $outputRubricId = null)
     {
         $modelTranslate = [
             'Absence' => 'Absences',
@@ -275,10 +273,10 @@ class MappingController extends Controller
 
         if ($updateResult === 'updated') {
             $date = now()->format('d/m/Y à H:i');
-            $this->setMappingHistory('Mapping', $user, $companyFolder->id, 'mapping', 'le ' . $date, 'Modification', $validatedData->input_rubrique, $validatedData->output_type, $validatedData->is_used ? $validatedData->getSilaeRubric()->code : null, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' a mis à jour le mapping d\'un fichier',);
+            $this->setMappingHistory('Mapping', $user, $companyFolder->id, 'mapping', 'le ' . $date, 'Modification', $validatedData->input_rubric, $validatedData->output_type, $validatedData->is_used ? $validatedData->getSilaeRubric()->code : null, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' a mis à jour le mapping d\'un fichier',);
             return $this->successResponse('', 'Mapping mis à jour avec succès');
         } else {
-            return $this->errorResponse('La rubrique est introuvable', 404);
+            return $this->errorResponse('La rubric est introuvable', 404);
         }
     }
 
@@ -288,7 +286,7 @@ class MappingController extends Controller
     {
         $rubric = $request->validate([
             'input_rubric' => 'required|string|max:255',
-            'name_rubric' => 'nullable|string|max:255',
+            'type_rubric' => 'nullable|string|max:255',
             'output_rubric_id' => 'nullable|integer',
             'therapeutic_part_time' => 'nullable|numeric',
             'company_folder_id' => 'required',
@@ -306,8 +304,8 @@ class MappingController extends Controller
     {
         $data = $mapping->data;
         foreach ($data as &$entry) {
-            if ($entry['input_rubrique'] === $rubricRequest->input_rubrique) {
-                $entry['name_rubrique'] = $rubricRequest->name_rubrique;
+            if ($entry['input_rubric'] === $rubricRequest->input_rubric) {
+                $entry['type_rubric'] = $rubricRequest->type_rubric;
                 $entry['output_rubric_id'] = $rubricRequest->output_rubric_id;
                 $entry['output_type'] = $rubricRequest->output_type;
                 $entry['therapeutic_part_time'] = $rubricRequest->therapeutic_part_time;
@@ -331,12 +329,12 @@ class MappingController extends Controller
                 $existingAbsence = Absence::where('code', $existingCustomAbsence->code)->first();
                 if ($existingAbsence) {
                     foreach ($mappingData as $key => $data) {
-                        if ($data['name_rubrique'] === 'Absence' && $data['output_rubric_id'] === $existingAbsence->id) {
+                        if ($data['type_rubric'] === 'Absence' && $data['output_rubric_id'] === $existingAbsence->id) {
                             $mappingData[$key] = [
-                                "input_rubrique" => $data['input_rubrique'],
+                                "input_rubric" => $data['input_rubric'],
                                 "is_used" => $data['is_used'],
                                 "output_type" => $rubricRequest->output_type,
-                                "name_rubrique" => $rubricRequest->name_rubrique,
+                                "type_rubric" => $rubricRequest->type_rubric,
                                 "therapeutic_part_time" => $rubricRequest->therapeutic_part_time,
                                 "output_rubric_id" => $existingCustomAbsence->id
                             ];
@@ -361,25 +359,25 @@ class MappingController extends Controller
         $user = Auth::user();
         $validatedRequestData = $this->validateMappingData($request);
         $companyFolderId = $validatedRequestData->company_folder_id;
-        $mappedRubriques = Mapping::where('company_folder_id', $companyFolderId)->get();
+        $mappedRubrics = Mapping::where('company_folder_id', $companyFolderId)->get();
         $validatedRequestData = $this->checkExistingAbsence($validatedRequestData, $companyFolderId);
         
-        foreach ($mappedRubriques as $mappedRubrique) {
-            $allMappedRubriques = $mappedRubrique->data;
-            foreach ($allMappedRubriques as $inputMappedRubrique) {
-                $isUsed = filter_var($validatedRequestData->is_used, FILTER_VALIDATE_BOOLEAN) || filter_var($inputMappedRubrique['is_used'], FILTER_VALIDATE_BOOLEAN);
-                if ($inputMappedRubrique['input_rubric'] === $validatedRequestData->input_rubric) {
+        foreach ($mappedRubrics as $mappedRubric) {
+            $allMappedRubrics = $mappedRubric->data;
+            foreach ($allMappedRubrics as $inputMappedRubric) {
+                $isUsed = filter_var($validatedRequestData->is_used, FILTER_VALIDATE_BOOLEAN) || filter_var($inputMappedRubric['is_used'], FILTER_VALIDATE_BOOLEAN);
+                if ($inputMappedRubric['input_rubric'] === $validatedRequestData->input_rubric) {
                     if ($isUsed === false) {
-                        return $this->errorResponse('La rubrique d\'entrée ' . $validatedRequestData->input_rubric . ' n\'est pas utilisée', 409);
+                        return $this->errorResponse('La rubric d\'entrée ' . $validatedRequestData->input_rubric . ' n\'est pas utilisée', 409);
                     } else {
                         $silaeCode = $validatedRequestData->getSilaeRubric() ? $validatedRequestData->getSilaeRubric()->code : 'non défini';
-                        return $this->errorResponse('La rubrique d\'entrée ' . $validatedRequestData->input_rubric . ' est déjà associée à la rubrique ' . $silaeCode, 409);
+                        return $this->errorResponse('La rubric d\'entrée ' . $validatedRequestData->input_rubric . ' est déjà associée à la rubric ' . $silaeCode, 409);
                     }
                 }
             }
         }
 
-        $savedMapping = $this->saveMappingData($companyFolderId, $validatedRequestData);
+        $savedMapping = $this->saveMappingData($companyFolderId, $validatedRequestData, $request);
         $date = now()->format('d/m/Y à H:i');
         
         $silaeCode = null;
@@ -418,7 +416,7 @@ class MappingController extends Controller
     {
         $newMapping = [
             'input_rubric' => $validatedData->input_rubric,
-            'name_rubric' => $validatedData->name_rubric,
+            'type_rubric' => $validatedData->type_rubric,
             'output_rubric_id' => $validatedData->output_rubric_id,
             'therapeutic_part_time' => $validatedData->therapeutic_part_time,
             'output_type' => $validatedData->output_type,
@@ -468,8 +466,9 @@ class MappingController extends Controller
             $existingData[] = $newMapping;
             $mapping->data = $existingData;
             $mapping->save();
+            return $mapping;
         } else {
-            Mapping::create([
+            return Mapping::create([
                 'company_folder_id' => $companyFolder,
                 'data' => [$newMapping],
             ]);
@@ -491,56 +490,75 @@ class MappingController extends Controller
     public function deleteOneLineMappingData(Request $request)
     {
         $user = Auth::user();
+
         $validator = Validator::make($request->all(), [
             'company_folder_id' => 'required|integer',
             'output_rubric_id' => 'required|integer',
-            'name_rubric' => 'required|string',
+            'type_rubric' => 'required|string',
             'input_rubric' => '',
             'output_type' => ''
         ]);
-        
+
         if ($validator->fails()) {
             return $this->errorResponse($validator->errors(), 422);
         }
+
         $companyFolderId = $request['company_folder_id'];
         $outputRubricId = $request['output_rubric_id'];
-        $nameRubric = $request['name_rubric'];
+        $nameRubric = $request['type_rubric'];
         $inputRubric = $request['input_rubric'];
         $outputType = $request['output_type'];
-        $isUsed = $request['is_used'];
 
-        // permet de récupérer le mapping
+        // Récupérer le mapping du dossier
         $mappingCompagny = Mapping::where("company_folder_id", $companyFolderId)->first();
         $data = $mappingCompagny->data;
         $dataBis = [];
 
-        // permet d'enregister les modifications
+        // Enregistrer les modifications
         foreach ($data as $entry) {
-            // si c'est une valeur ne pas utiliser, il faut modifier le 'name_rubric'
-            if (!isset($entry['name_rubric'])) {
-                $entry['is_used'] = false;
-                $entry['output_rubric_id'] = 0;
-            }
-            if ((string)$entry['output_rubric_id'] === (string)$outputRubricId && $entry['name_rubric'] === $nameRubric) {
+            if ((string)$entry['output_rubric_id'] === (string)$outputRubricId && $entry['type_rubric'] === $nameRubric) {
                 if ($inputRubric) {
                     if ((string)$entry['input_rubric'] === (string)$inputRubric) {
-                        // supprimer la valeur
+                        // Supprimer la valeur
+                        continue;
                     } else {
                         $dataBis[] = $entry;
                     }
                 } else {
-                    // supprimer la valeur
+                    // Supprimer la valeur
+                    continue;
                 }
             } else {
                 $dataBis[] = $entry;
             }
         }
 
+        // $isTrue = $data === $dataBis;
+        // dd($isTrue);
+        // Vérifie si des modifications ont été apportées
         if ($data !== $dataBis) {
             $mappingCompagny->data = $dataBis;
             $mappingCompagny->save();
-            $date = now()->format('d/m/Y à H:i');
-            $this->setMappingHistory('Mapping', $user, $companyFolderId, 'mapping', 'le ' . $date, 'Suppression', $inputRubric, $nameRubric, $outputRubricId->getSilaeRubric()->code, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' a supprimé une ligne de mapping d\'un fichier');
+
+            // Récupérer l'objet correspondant à output_rubric_id
+            $outputRubric = $this->resolveOutputModel($outputType, $outputRubricId);
+
+            // Vérifiez si l'objet a été trouvé avant d'appeler getSilaeRubric()
+            if ($outputRubric) {
+                $this->setMappingHistory(
+                    'Mapping',
+                    $user,
+                    $companyFolderId,
+                    'mapping',
+                    now()->format('d/m/Y à H:i'),
+                    'Suppression',
+                    $inputRubric,
+                    $nameRubric,
+                    $outputRubricId ? $outputRubricId->getSilaeRubric()->code : null,
+                    "L'utilisateur {$user->firstname} {$user->lastname} a supprimé une ligne de mapping d'un fichier"
+                );
+            }
+
             return $this->successResponse('', 'Ligne de mapping supprimée du dossier avec succès');
         } else {
             return $this->successResponse('', 'Ligne de mapping non modifiée');

@@ -50,9 +50,9 @@ class HourController extends Controller
                 return $this->successResponse('', 'Heure générique créée avec succès', 201);
             }
         }else{
-            return $this->errorResponse('Le code rubrique doit commencer par HS-');
+            return $this->errorResponse('Le code rubric doit commencer par HS-');
         }
-        return $this->errorResponse('Impossible de créer la rubrique', 500);
+        return $this->errorResponse('Impossible de créer la rubric', 500);
     }
 
     public function updateHour()

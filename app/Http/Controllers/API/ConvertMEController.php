@@ -6,7 +6,6 @@ use App\Classes\Rubric;
 use App\Traits\JSONResponseTrait;
 use Illuminate\Http\Request;
 use App\Models\Mapping\Mapping;
-use Illuminate\Support\Facades\App;
 use League\Csv\CharsetConverter;
 use League\Csv\Exception;
 use League\Csv\Reader;
@@ -26,7 +25,7 @@ class ConvertMEController extends ConvertController
 
     public function formatFilesMarathon()
     {
-        return ["extension" => "csv", "separator_type" => ";", "index_rubrique" => 3];
+        return ["extension" => "csv", "separator_type" => ";", "index_rubric" => 3];
     }
 
     public function getMappingsFolder($folderId)
@@ -42,20 +41,20 @@ class ConvertMEController extends ConvertController
     }
 
     /**
-     * Retourne le code Silae correspondant à une rubrique donnée.
+     * Retourne le code Silae correspondant à une rubric donnée.
      *
-     * @param string $rubrique Rubrique à convertir
+     * @param string $rubric Rubric à convertir
      * @return string|null Code Silae correspondant
      */
 
 
-    private function getSilaeCode(string $rubrique, $folderId)
+    private function getSilaeCode(string $rubric, $folderId)
     {
         $mappings = $this->getMappingsFolder($folderId);
         foreach ($mappings as $mapping) {
             foreach ($mapping->data as $mappedRow) {
                 $mappedRubric = new Rubric($mappedRow);
-                if ($mappedRow['input_rubrique'] === $rubrique && $mappedRow['is_used']) {
+                if ($mappedRow['input_rubric'] === $rubric && $mappedRow['is_used']) {
                     return $mappedRubric->getSilaeRubric();
                 }
             }
@@ -86,21 +85,24 @@ class ConvertMEController extends ConvertController
             $value = $record[4];
             if ($codeSilae) {
                 preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $value, $matches);
-                if (str_starts_with($codeSilae->code, "AB-")) {
-                    // Cas où l'absence contient un montant en int comme valeur
-                    if (is_numeric($value)) {
-                        $mappedrubrics[] = [
-                            'Matricule' => $matricule,
-                            'Code' => $codeSilae->code,
-                            'Valeur' => $value,
-                            'Date debut' => '',
-                            'Date fin' => ''
-                        ];
-                    } else {
-                        // Cas où l'absence contient une date comme valeur
-                        $mappedrubrics = $this->processAbsenceRecord($mappedrubrics, $record, $codeSilae, $value);
+                if (str_starts_with($codeSilae, "AB-")) {
+                    // Vérification si $codeSilae est un objet avant d'accéder à ses propriétés
+                    if (is_object($codeSilae)) {
+                        // Cas où l'absence contient un montant en int comme valeur
+                        if (is_numeric($value)) {
+                            $mappedrubrics[] = [
+                                'Matricule' => $matricule,
+                                'Code' => $codeSilae->code,
+                                'Valeur' => $value,
+                                'Date debut' => '',
+                                'Date fin' => ''
+                            ];
+                        } else {
+                            // Cas où l'absence contient une date comme valeur
+                            $mappedrubrics = $this->processAbsenceRecord($mappedrubrics, $record, $codeSilae, $value);
+                        }
                     }
-                } elseif (str_starts_with($codeSilae->code, "EV-") || str_starts_with($codeSilae->code, "HS-")) {
+                } elseif (is_object($codeSilae) && (str_starts_with($codeSilae->code, "EV-") || str_starts_with($codeSilae->code, "HS-"))) {
                     $mappedrubrics = $this->convertNegativeOrDotValue($mappedrubrics, $record, $codeSilae);
                 }
             } else {

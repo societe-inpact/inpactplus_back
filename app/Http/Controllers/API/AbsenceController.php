@@ -55,9 +55,9 @@ class AbsenceController extends Controller
                 return $this->successResponse($absence, 'Absence générique créée', 201);
             }
         } else {
-            return $this->errorResponse('Le code rubrique doit commencer par AB-');
+            return $this->errorResponse('Le code rubric doit commencer par AB-');
         }
-        return $this->errorResponse('Impossible de créer la rubrique', 500);
+        return $this->errorResponse('Impossible de créer la rubric', 500);
     }
 
     public function updateAbsence(Request $request, $id)

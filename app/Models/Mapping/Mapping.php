@@ -22,7 +22,7 @@ class Mapping extends Model
 
     public function output()
     {
-        return $this->morphTo('output_rubrique', 'output_type', 'output_rubrique_id');
+        return $this->morphTo('output_rubric', 'output_type', 'output_rubric_id');
     }
 
     public function folder()

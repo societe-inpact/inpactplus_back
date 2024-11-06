@@ -64,9 +64,9 @@ class CustomAbsenceController extends Controller
                 return $this->successResponse($customAbsence, 'Absence personnalisée créée avec succès', 201);
             }
         } else {
-            return $this->errorResponse('Le code rubrique doit commencer par AB-');
+            return $this->errorResponse('Le code rubric doit commencer par AB-');
         }
-        return $this->errorResponse('Impossible de créer la rubrique personnalisée', 500);
+        return $this->errorResponse('Impossible de créer la rubric personnalisée', 500);
     }
 
     public function updateCustomAbsence(Request $request, $id)
@@ -110,9 +110,9 @@ class CustomAbsenceController extends Controller
                 return $this->successResponse('', 'L\'absence personnalisée a été mis à jour avec succès');
             }
         } else {
-            return $this->errorResponse('Le code rubrique doit commencer par AB-');
+            return $this->errorResponse('Le code rubric doit commencer par AB-');
         }
-        return $this->errorResponse('Impossible de modifier la rubrique personnalisée', 500);
+        return $this->errorResponse('Impossible de modifier la rubric personnalisée', 500);
     }
 
     public function deleteCustomAbsence($id)
@@ -120,19 +120,19 @@ class CustomAbsenceController extends Controller
         // permet de supprimer dans la mapping la custom hour supprimée
         $companyFolder = CustomAbsence::where('id', $id)->first();
         $companyFolderId = $companyFolder->company_folder_id;
-        $nameRubrique = "Absence personnalisée";
+        $nameRubric = "Absence personnalisée";
 
         $deleteMapping = new Request([
             "company_folder_id" => $companyFolderId,
             "output_rubric_id" => $id,
-            "name_rubric" => $nameRubrique,
+            "type_rubric" => $nameRubric,
             "input_rubric" => ""
         ]);
 
         $controller = new MappingController();
         $controller->deleteOneLineMappingData($deleteMapping);
         // TODO : Delete le mapping lié à la custom absence
-        dd($deleteMapping);
+        // dd($deleteMapping);
 
         // supprime l'absence custom
         $deleteCustomAbsence = CustomAbsence::find($id)->delete();
