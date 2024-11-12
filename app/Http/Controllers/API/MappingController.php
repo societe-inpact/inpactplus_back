@@ -19,33 +19,47 @@ use League\Csv\CharsetConverter;
 use League\Csv\Reader;
 use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Illuminate\Http\JsonResponse;
 
 class MappingController extends Controller
 {
     use JSONResponseTrait;
     use HistoryResponseTrait;
 
-
-    // Fonction permettant de récupérer les mappings existants d'un dossier
+    /**
+     * Récupère les mappings existants d'un dossier.
+     * 
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
+     */
     public function getMapping(Request $request, $id)
     {
+        // Vérifie si l'utilisateur a l'autorisation de lire les mappings
         $this->authorize('read_mapping', Mapping::class);
 
+        // Récupère le fichier envoyé dans la requête
         $file = $request->file('file');
+        // Récupère le dossier de l'entreprise avec ses interfaces
         $companyFolder = CompanyFolder::with('interfaces')->findOrFail($id);
 
+        // Vérifie si le dossier existe
         if (!$companyFolder) {
             return $this->errorResponse('L\'id du dossier est requis');
         }
 
+        // Vérifie si un fichier a été importé
         if (!$file) {
             return $this->errorResponse('Aucun fichier importé');
         }
 
+        // Récupère l'interface associée à l'ID fourni
         $interface = InterfaceSoftware::findOrFail($request->interface_id);
         if ($interface) {
+            // Récupère l'ID de mapping de l'interface
             $idInterfaceMapping = $interface->interface_mapping_id;
 
+            // Si l'ID de mapping existe, récupère les informations de mapping
             if ($idInterfaceMapping !== null) {
                 $columnIndex = InterfaceMapping::findOrFail($idInterfaceMapping);
                 $separatorType = $columnIndex->separator_type;
@@ -54,10 +68,11 @@ class MappingController extends Controller
                 $colonneMatricule = $columnIndex->employee_number - 1;
 
             } else {
-                // interfaces spécifique
+                // Gestion des interfaces spécifiques
                 $interfaceNames = strtolower($interface->name);
                 switch ($interfaceNames) {
                     case "marathon":
+                        // Traitement spécifique pour l'interface Marathon
                         $convertMEController = new ConvertMEController();
                         $columnIndex = $convertMEController->formatFilesMarathon();
                         $separatorType = $columnIndex["separator_type"];
@@ -72,9 +87,11 @@ class MappingController extends Controller
                 }
             }
 
+            // Prépare le lecteur CSV avec le séparateur spécifié
             $reader = $this->prepareCsvReader($file->getPathname(), $separatorType);
             $records = iterator_to_array($reader->getRecords(), true);
 
+            // Vérifie l'extension du fichier et traite en conséquence
             $fileExtension = strtolower($file->getClientOriginalExtension());
             if ($fileExtension === 'csv') {
                 $reader = $this->prepareCsvReader($file->getPathname(), $separatorType);
@@ -88,17 +105,25 @@ class MappingController extends Controller
                 return $this->errorResponse('Format de fichier non supporté');
             }
 
+            // Récupère l'ID du dossier de l'entreprise
             $companyFolderId = $companyFolder->id;
+            // Traite les enregistrements du fichier et récupère les résultats
             $results = $this->processFileRecords($records, $companyFolderId, $indexRubric, $colonneMatricule);
 
+            // Retourne la réponse de succès avec les résultats
             return $this->successResponse($results);
         } else {
             return $this->errorResponse('L\'interface n\'existe pas', 404);
         }
     }
 
-
-    // Fonction permettant de configurer l'import du fichier
+    /**
+     * Prépare le lecteur CSV avec le chemin et le type de séparateur spécifiés.
+     * 
+     * @param string $path
+     * @param string $separatorType
+     * @return Reader
+     */
     protected function prepareCsvReader($path, $separatorType)
     {
         $reader = Reader::createFromPath($path, 'r');
@@ -109,34 +134,43 @@ class MappingController extends Controller
         return $reader;
     }
 
-
-    // Fonction permettant de récupérer les mappings existants d'un dossier
+    /**
+     *  Fonction permettant de récupérer les mappings existants d'un dossier
+     * 
+     * @param array $records
+     * @param int $companyFolderId
+     * @param int $indexRubric
+     * @param int $colonneMatricule
+     * @return array
+     */
     protected function processFileRecords($records, $companyFolderId, $indexRubric, $colonneMatricule)
     {
         $processedRecords = collect();
         $unmatchedRubrics = [];
         $results = [];
 
+        // Vérifie si la première colonne contient un chiffre
         $containsDigit = ctype_digit($records[0][$colonneMatricule]);
         if (($containsDigit) === false) {
-            unset($records[0]);
+            unset($records[0]); // Supprime la première ligne si elle ne contient pas de chiffres
         }
 
         foreach ($records as $record) {
-
-            // colonne à ne pas prendre en compte
+            // Vérifie si la colonne de la rubrique existe
             if (!isset($record[$indexRubric])) {
-                continue;
+                continue; // Ignore les enregistrements sans rubrique
             }
 
             $inputRubric = $record[$indexRubric];
 
+            // Traite les rubriques non déjà traitées
             if ($inputRubric && !$processedRecords->contains($inputRubric)) {
                 $processedRecords->push($inputRubric);
                 $mappingResult = $this->findMapping($inputRubric, $companyFolderId);
                 if ($mappingResult) {
-                    $results[] = $mappingResult;
+                    $results[] = $mappingResult; // Ajoute le résultat de mapping
                 } else {
+                    // Ajoute les rubriques non appariées
                     $unmatchedRubrics[] = [
                         'input_rubric' => $inputRubric,
                         'type_rubric' => null,
@@ -151,7 +185,7 @@ class MappingController extends Controller
                 }
             }
         }
-        return array_merge($results, $unmatchedRubrics);
+        return array_merge($results, $unmatchedRubrics); // Retourne les résultats et les rubriques non appariées
     }
 
     // Fonction permettant de récupérer une rubric d'entrée
@@ -533,8 +567,6 @@ class MappingController extends Controller
             }
         }
 
-        // $isTrue = $data === $dataBis;
-        // dd($isTrue);
         // Vérifie si des modifications ont été apportées
         if ($data !== $dataBis) {
             $mappingCompagny->data = $dataBis;

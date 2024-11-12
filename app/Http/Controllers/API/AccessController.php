@@ -5,7 +5,6 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Companies\CompanyFolder;
 use App\Models\Employees\UserCompanyFolder;
-use App\Models\Mapping\Mapping;
 use App\Traits\JSONResponseTrait;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
@@ -16,6 +15,9 @@ class AccessController extends Controller
     use JSONResponseTrait;
 
     /**
+     * Ajoute un utilisateur à un dossier d'entreprise après avoir vérifié les autorisations.
+     * Valide les données d'entrée et crée un nouvel enregistrement dans la base de données.
+     * 
      * @throws AuthorizationException
      */
     public function addUserToCompanyFolder(Request $request, $id)
@@ -51,6 +53,12 @@ class AccessController extends Controller
 
     }
 
+    /**
+     * Supprime un utilisateur d'un dossier d'entreprise après avoir vérifié les autorisations.
+     * Valide les données d'entrée et effectue la suppression dans la base de données.
+     * 
+     * @throws AuthorizationException
+     */
     public function deleteUserFromCompanyFolder(Request $request, $id)
     {
         $this->authorize('delete_user_from_company_folder', UserCompanyFolder::class);

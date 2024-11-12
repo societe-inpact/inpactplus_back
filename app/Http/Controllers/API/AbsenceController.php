@@ -4,10 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Absences\Absence;
-use App\Models\Absences\CustomAbsence;
 use App\Rules\CustomRubricRule;
 use App\Traits\JSONResponseTrait;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 
@@ -24,6 +22,10 @@ class AbsenceController extends Controller
         return $this->successResponse($absences,'');
     }
 
+    /**
+     * Crée une nouvelle absence après validation des données fournies par la requête.
+     * Vérifie si l'absence existe déjà et nettoie le champ 'code' avant l'enregistrement.
+     */
     public function createAbsence(Request $request)
     {
         // Validation des données
@@ -60,6 +62,10 @@ class AbsenceController extends Controller
         return $this->errorResponse('Impossible de créer la rubric', 500);
     }
 
+    /**
+     * Met à jour une absence existante identifiée par son ID.
+     * Valide les données fournies et vérifie si le code de l'absence existe déjà pour une autre absence.
+     */
     public function updateAbsence(Request $request, $id)
     {
         $absence = Absence::findOrFail($id);
@@ -92,6 +98,10 @@ class AbsenceController extends Controller
         }
     }
 
+    /**
+     * Supprime une absence existante identifiée par son ID.
+     * Renvoie une réponse de succès ou d'erreur selon le résultat de la suppression.
+     */
     public function deleteAbsence($id)
     {
         $absence = Absence::findOrFail($id);
