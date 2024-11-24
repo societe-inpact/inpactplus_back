@@ -1,0 +1,42 @@
+FROM php:8.3-fpm
+
+# Installation des dépendances
+RUN apt-get update && apt-get install -y \
+    default-mysql-client \
+    libzip-dev \
+    unzip \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+        pdo \
+        pdo_mysql \
+        zip \
+        bcmath \
+        gd
+
+# Installation de Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
+# Définir le répertoire de travail
+WORKDIR /var/www/html
+
+# Copier d'abord les fichiers de dépendances
+COPY inpactplus_back/composer.json composer.json
+COPY inpactplus_back/composer.lock composer.lock
+
+# Installer les dépendances
+RUN composer install --no-scripts --no-autoloader
+
+# Copier le reste des fichiers du projet
+COPY inpactplus_back/ .
+
+# Générer l'autoloader optimisé
+RUN composer dump-autoload --optimize
+
+EXPOSE 8080
+
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
