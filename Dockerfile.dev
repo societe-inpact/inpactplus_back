@@ -37,6 +37,7 @@ COPY inpactplus_back/ .
 # Générer l'autoloader optimisé
 RUN composer dump-autoload --optimize
 
-EXPOSE 9091
+EXPOSE 4002
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=9091"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=4002"]
+
