@@ -25,19 +25,24 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 WORKDIR /var/www/html
 
 # Copier d'abord les fichiers de dépendances
-COPY inpactplus_back/composer.json composer.json
-COPY inpactplus_back/composer.lock composer.lock
+COPY composer.json composer.json
+COPY composer.lock composer.lock
 
 # Installer les dépendances
 RUN composer install --no-scripts --no-autoloader
 
 # Copier le reste des fichiers du projet
-COPY inpactplus_back/ .
+COPY . .
 
 # Générer l'autoloader optimisé
 RUN composer dump-autoload --optimize
 
+# Créer le lien symbolique pour le stockage
+RUN php artisan storage:link
+
+# Exposer le port
 EXPOSE 4002
 
+# Commande pour démarrer le serveur intégré de PHP
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=4002"]
 

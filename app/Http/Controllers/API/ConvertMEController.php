@@ -50,10 +50,13 @@ class ConvertMEController extends ConvertController
 
     private function getSilaeCode(string $rubric, $folderId)
     {
-        $mappings = $this->getMappingsFolder($folderId);
+        $mappings = $this->getMappingsFolder($folderId); // Récupération des mappings
         foreach ($mappings as $mapping) {
+            // Parcours de chaque mapping
             foreach ($mapping->data as $mappedRow) {
+                // Création d'un objet Rubric à partir de la ligne mappée
                 $mappedRubric = new Rubric($mappedRow);
+                // Vérification si la rubrique d'entrée correspond à la rubrique donnée et si elle est utilisée
                 if ($mappedRow['input_rubric'] === $rubric && $mappedRow['is_used']) {
                     return $mappedRubric->getSilaeRubric();
                 }
@@ -69,12 +72,13 @@ class ConvertMEController extends ConvertController
      */
     private function marathonInterface($records, $folderId): array
     {
-        $mappedrubrics = [];
-        $unmappedRubrics = [];
-
+        $mappedrubrics = []; // Tableau qui contiendra les rubriques converties
+        $unmappedRubrics = []; // Tableau qui contiendra les rubriques non converties
+        
         // Vérification s'il y a une en-tête en fonction du matricule
-        $containsDigit = ctype_digit($records[0][0]);
+        $containsDigit = ctype_digit($records[0][0]); // Vérification si le premier élément du premier tableau est un nombre
         if (($containsDigit) === false) {
+            // Si le premier élément du premier tableau n'est pas un nombre, on le supprime
             unset($records[0]);
         }
 
@@ -85,7 +89,7 @@ class ConvertMEController extends ConvertController
             $value = $record[4];
             if ($codeSilae) {
                 preg_match('/((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{4})(\d{2})(\d{2})([A-Z]))-((\d{3})-(\d{2}:\d{2}))/i', $value, $matches);
-                if (str_starts_with($codeSilae, "AB-")) {
+                if (str_starts_with($codeSilae->code, "AB-")) {
                     // Vérification si $codeSilae est un objet avant d'accéder à ses propriétés
                     if (is_object($codeSilae)) {
                         // Cas où l'absence contient un montant en int comme valeur
@@ -284,7 +288,7 @@ class ConvertMEController extends ConvertController
         $request->validate([
             'file' => 'required|file|mimes:csv,txt',
         ]);
-
+        
         if ($request->hasFile('file')) {
             $file = $request->file('file');
             $reader = Reader::createFromPath($file->getPathname(), 'r');
@@ -293,6 +297,7 @@ class ConvertMEController extends ConvertController
             $reader->addFormatter($formatter);
             $reader->setHeaderOffset(null);
             $header = $reader->getHeader();
+            // dd($header);
             $records = iterator_to_array($reader->getRecords(), true);
             $result = $this->marathonInterface($records, $folderId);
             return $result;
