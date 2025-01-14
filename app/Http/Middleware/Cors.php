@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Log;
 
 class Cors
 {
@@ -16,6 +17,8 @@ class Cors
      */
     public function handle($request, Closure $next)
     {
+        Log::info('CORS middleware exécuté');
+
         $response = $next($request);
 
         $response->headers->set('Access-Control-Allow-Origin', 'http://localhost:3002');

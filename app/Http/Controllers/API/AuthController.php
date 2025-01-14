@@ -23,12 +23,18 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Validator;
 use Spatie\Permission\Models\Permission;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
     use ModuleRetrievingTrait;
     use JSONResponseTrait;
     use HistoryResponseTrait;
+
+    public function __construct()
+    {
+        Log::info('AuthController instancié');
+    }
 
     public function getUser()
     {
@@ -82,21 +88,29 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            return $this->errorResponse('Email ou mot de passe invalides', 401);
+        Log::info('Tentative de connexion avec les identifiants : ' . json_encode($request->only('email', 'password')));
+
+        try {
+            if (!Auth::attempt($request->only('email', 'password'))) {
+                return $this->errorResponse('Email ou mot de passe invalides', 401);
+            }
+
+            $user = Auth::user();
+            $token = $user->createToken('token')->plainTextToken;
+            $expiresAt = now()->addDays(1); // Le token expire dans 1 jour
+
+            $user->tokens()->where('name', 'token')->update(['expires_at' => $expiresAt]);
+
+            $cookie = cookie('jwt', $token, 1440)->withHttpOnly(); // Token valable pendant 24h
+            $date = 'le ' . now()->format('d/m/Y à H:i');
+
+            $this->setConnectionHistory('Connexion utilisateur', $user, 'login', $date, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' s\'est connecté');
+
+            return $this->successResponse('', 'Connexion réussie')->withCookie($cookie);
+        } catch (\Exception $e) {
+            Log::error('Login error: ' . $e->getMessage());
+            return $this->errorResponse('Une erreur est survenue lors de la connexion.', 500);
         }
-        $user = Auth::user();
-        $token = $user->createToken('token')->plainTextToken;
-        $expiresAt = now()->addDays(1); // Le token expire dans 1 jour
-
-        $user->tokens()->where('name', 'token')->update(['expires_at' => $expiresAt]);
-
-        $cookie = cookie('jwt', $token, 1440)->withHttpOnly(); // Token valable pendant 24h
-        $date = 'le ' . now()->format('d/m/Y à H:i');
-
-        $this->setConnectionHistory('Connexion utilisateur', $user, 'login', $date, 'L\'utilisateur ' . $user->firstname . ' ' . $user->lastname . ' s\'est connecté' );
-
-        return $this->successResponse('', 'Connexion réussie')->withCookie($cookie);
     }
 
     public function register(Request $request)

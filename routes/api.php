@@ -24,6 +24,13 @@ use Illuminate\Support\Facades\Route;
 */
 
 // --------------------------------------------------------- PUBLIC ROUTES --------------------------------------------------------- //
+
+// Ajout de la route de test en dehors du groupe CORS
+Route::get('/hello-world', function () {
+    return response()->json(['message' => 'Hello World']);
+});
+
+// Routes avec middleware CORS
 Route::group(['middleware' => 'cors'], function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/register', [AuthController::class, 'register']); // Controle et actions à définir pour cette fonction
