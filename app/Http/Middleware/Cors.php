@@ -21,7 +21,12 @@ class Cors
 
         $response = $next($request);
 
-        $response->headers->set('Access-Control-Allow-Origin', 'http://localhost:3002');
+        // Définir l'origine autorisée en fonction de l'environnement
+        $allowedOrigin = config('app.env') === 'production' ? 'https://inpactplus.inpact.fr' : 
+                         (config('app.env') === 'preprod' ? 'https://inpactplus.preprod.inpact.fr' : 
+                         'http://localhost:3002');
+
+        $response->headers->set('Access-Control-Allow-Origin', $allowedOrigin);
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, X-Requested-With');
 
